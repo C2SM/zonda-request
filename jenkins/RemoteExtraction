@@ -33,33 +33,27 @@ pipeline {
                 """
             }
         }
-        stage('Clone Zephyr') {
+        stage('Prepare workspace') {
             steps {
                 sh """
-                git clone -b ${zephyr_version} git@github.com:C2SM/zephyr.git
+                mkdir -p ${WORKSPACE}/extpar
+                mkdir -p ${WORKSPACE}/icontools
                 """
             }
         }
-        stage('Setup Python Environment') {
+        stage('Generate ICON grid') {
             steps {
                 sh """ 
-                python3 -m venv zephyr_venv
-                source zephyr_venv/bin/activate
-                pip install -r zephyr/tools/requirements/requirements.txt
-                cd zephyr
-                pip install -e .
+                cd ${WORKSPACE}/icontools
+                echo "Generating ICON grid"
                 """
             }
         }
-        stage('Process Data') {
+        stage('Generate external parameters') {
             steps {
-                script {
-                    env.VERSION = readFile('VERSION').trim()
-                }
-                sh """
-                source zephyr_venv/bin/activate
-                cd zephyr/run
-                python launch_zephyr.py --json_path=${WORKSPACE}/config.json --output_directory=${WORKSPACE}/output/data --github_issue_id=${ghprbPullId} --zephyr_request_version=${VERSION}
+                sh """ 
+                cd ${WORKSPACE}/extpar
+                echo "Generating external parameters"
                 """
             }
         }
