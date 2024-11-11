@@ -1,0 +1,62 @@
+name: Report PR status as label
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  reportPRStatusAsLabel:
+    if: github.event.issue.pull_request && contains(github.event.issue.labels.*.name, 'auto-generated')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install jq
+        run: sudo apt-get install jq
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set env variables
+        run: |
+          echo "PR_FAIL=$(jq -r '.PR_FAIL' keywords.json)" >> $GITHUB_ENV
+          echo "PR_SUCCESS=$(jq -r '.PR_SUCCESS' keywords.json)" >> $GITHUB_ENV
+          echo "PR_ABORT=$(jq -r '.PR_ABORT' keywords.json)" >> $GITHUB_ENV
+      - name: Update label
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const pr = await github.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            const branchName = pr.data.head.ref;
+            const issueNumber = branchName.split('-')[1].split('/')[0];
+            if (context.payload.comment.body.includes(process.env.PR_FAIL) || 
+                context.payload.comment.body.includes(process.env.PR_SUCCESS) || 
+                context.payload.comment.body.includes(process.env.PR_ABORT)) {
+              await github.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                name: 'submitted'
+              });
+            } if (context.payload.comment.body.includes(process.env.PR_FAIL)) {
+              await github.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['failed']
+              });
+            } if (context.payload.comment.body.includes(process.env.PR_SUCCESS)){
+              await github.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['completed']
+              });
+            } if (context.payload.comment.body.includes(process.env.PR_ABORT)){
+              await github.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['aborted']
+              });
+            }

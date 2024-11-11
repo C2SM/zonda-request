@@ -1,0 +1,54 @@
+name: Close PR and delete branch
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  CloseFinishedPR:
+    if: github.event.issue.pull_request && contains(github.event.issue.labels.*.name, 'auto-generated')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install jq
+        run: sudo apt-get install jq
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set env variables
+        run: |
+          echo "PR_DELETE=$(jq -r '.PR_DELETE' keywords.json)" >> $GITHUB_ENV
+      - name: Close PR
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const prComment = context.payload.comment.body;
+            if (!prComment.includes(process.env.PR_DELETE)) {
+              console.log(`The PR comment does not contain the string "${process.env.PR_DELETE}".`);
+              return;
+            }
+            await github.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              state: 'closed'
+            });
+      - name: Delete branch
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const prComment = context.payload.comment.body;
+            if (!prComment.includes(process.env.PR_DELETE)) {
+              console.log(`The PR comment does not contain the string "${process.env.PR_DELETE}".`);
+              return;
+            }
+            const pr = await github.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            const branchName = pr.data.head.ref;
+            await github.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/' + branchName
+            });

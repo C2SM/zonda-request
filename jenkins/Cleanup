@@ -1,0 +1,23 @@
+def https_public_root = '/net/co2/c2sm-data/jenkins/extpar-request'
+
+pipeline {
+    agent {
+        node {
+            label 'atmos'
+        }
+    }
+    stages {
+        stage('Cleanup HTTPS-server') {
+            steps {
+                sh """
+                python3 src/cleanup.py --path ${https_public_root} --threshold 7 --exclude ${https_public_root}/file_index
+                """
+            }
+        }
+    }
+    post {
+        always {
+            deleteDir()
+        }
+    }
+}

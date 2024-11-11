@@ -1,0 +1,99 @@
+def https_public_root = '/net/co2/c2sm-data/jenkins/extpar-request/'
+
+pipeline {
+    agent {
+        node {
+            label 'atmos'
+        }
+    }
+    options {
+    timeout(time: 3, unit: 'HOURS')
+    }
+    stages {
+        stage('Create archive') {
+            steps {
+                sh """
+                mkdir -p ${WORKSPACE}/output/logs
+                """
+            }
+        }
+        stage('Create Hash from Build ID') {
+            steps {
+                sh """
+                python3 src/hash.py --build-id ${BUILD_ID} --hash-file ${WORKSPACE}/hash.txt
+                """
+            }
+        }
+        stage('Validate User Input') {
+            steps {
+                sh """
+                python3 src/validate_user_input.py --comment_body '${env.ghprbCommentBody}' || 
+                (echo "The request you submitted is not valid! \n Please check for typos or wrong format of JSON" > ${WORKSPACE}/output/logs/pipeline.log &&
+                exit 1)
+                """
+            }
+        }
+        stage('Clone Zephyr') {
+            steps {
+                sh """
+                git clone -b ${zephyr_version} git@github.com:C2SM/zephyr.git
+                """
+            }
+        }
+        stage('Setup Python Environment') {
+            steps {
+                sh """ 
+                python3 -m venv zephyr_venv
+                source zephyr_venv/bin/activate
+                pip install -r zephyr/tools/requirements/requirements.txt
+                cd zephyr
+                pip install -e .
+                """
+            }
+        }
+        stage('Process Data') {
+            steps {
+                script {
+                    env.VERSION = readFile('VERSION').trim()
+                }
+                sh """
+                source zephyr_venv/bin/activate
+                cd zephyr/run
+                python launch_zephyr.py --json_path=${WORKSPACE}/config.json --output_directory=${WORKSPACE}/output/data --github_issue_id=${ghprbPullId} --zephyr_request_version=${VERSION}
+                """
+            }
+        }
+    }
+    post {
+        success {
+            sh "mkdir -p zephyr/run/log && touch zephyr/run/log/ignore"
+            sh "cp zephyr/run/log/* ${WORKSPACE}/output/logs"
+            sh "zip -r output.zip output"
+            sh "python3 src/copy_zip.py --zip-file output.zip --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
+            withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
+                sh "python3 src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id ${ghprbPullId} --hash-file ${WORKSPACE}/hash.txt --keyword-file ${WORKSPACE}/keywords.json"
+            }
+            deleteDir()
+        }
+        failure {
+            sh "mkdir -p zephyr/run/log && touch zephyr/run/log/ignore"
+            sh "cp zephyr/run/log/* ${WORKSPACE}/output/logs"
+            sh "zip -r output.zip output"
+            sh "python3 src/copy_zip.py --zip-file output.zip --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
+            withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
+                sh "python3 src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id ${ghprbPullId} --hash-file ${WORKSPACE}/hash.txt --failure --keyword-file ${WORKSPACE}/keywords.json"
+            }
+            deleteDir()
+        }
+        aborted {
+            sh "mkdir -p zephyr/run/log && touch zephyr/run/log/ignore"
+            sh "cp zephyr/run/log/* ${WORKSPACE}/output/logs"
+            sh "zip -r output.zip output"
+            sh "python3 src/copy_zip.py --zip-file output.zip --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
+            withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
+                sh "python3 src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id ${ghprbPullId} --hash-file ${WORKSPACE}/hash.txt --keyword-file ${WORKSPACE}/keywords.json --abort"
+            }
+            deleteDir()
+        }
+    }
+}
