@@ -1,0 +1,26 @@
+&gridgen_nml
+  centre              = 1
+  subcentre           = 2
+  lspring_dynamics    = .false.
+  maxit               = 10000
+  parent_id           = 0,1
+  basegrid%grid_root   = 3
+  basegrid%grid_level  = 5
+  initial_refinement = .false.
+  dom(1)%outfile = "icon_uzbekistan"
+  dom(1)%region_type  = 3
+  dom(1)%center_lon   = 63.5
+  dom(1)%center_lat   = 42.16
+  dom(1)%hwidth_lon   = 20.0
+  dom(1)%hwidth_lat   = 20.0
+  dom(1)%number_of_grid_used = 99
+  dom(1)%lwrite_parent = .false.
+  dom(2)%outfile = "icon_uzbekistan"
+  dom(2)%region_type  = 3
+  dom(2)%center_lon   = 63.5
+  dom(2)%center_lat   = 42.16
+  dom(2)%hwidth_lon   = 5.0
+  dom(2)%hwidth_lat   = 5.0
+  dom(2)%number_of_grid_used = 99
+/
+
