@@ -3,7 +3,7 @@ def https_public_root = '/net/co2/c2sm-data/jenkins/extpar-request/'
 pipeline {
     agent {
         node {
-            label 'atmos'
+            label 'co2'
         }
     }
     options {
@@ -80,8 +80,7 @@ pipeline {
     }
     post {
         success {
-            sh "mkdir -p zephyr/run/log && touch zephyr/run/log/ignore"
-            sh "cp zephyr/run/log/* ${WORKSPACE}/output/logs"
+            sh "cp extpar/*.log ${WORKSPACE}/output/logs"
             sh "zip -r output.zip output"
             sh "python3 src/copy_zip.py --zip-file output.zip --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
@@ -90,8 +89,7 @@ pipeline {
             deleteDir()
         }
         failure {
-            sh "mkdir -p zephyr/run/log && touch zephyr/run/log/ignore"
-            sh "cp zephyr/run/log/* ${WORKSPACE}/output/logs"
+            sh "cp extpar/*.log ${WORKSPACE}/output/logs"
             sh "zip -r output.zip output"
             sh "python3 src/copy_zip.py --zip-file output.zip --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
@@ -100,8 +98,7 @@ pipeline {
             deleteDir()
         }
         aborted {
-            sh "mkdir -p zephyr/run/log && touch zephyr/run/log/ignore"
-            sh "cp zephyr/run/log/* ${WORKSPACE}/output/logs"
+            sh "cp extpar/*.log ${WORKSPACE}/output/logs"
             sh "zip -r output.zip output"
             sh "python3 src/copy_zip.py --zip-file output.zip --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
