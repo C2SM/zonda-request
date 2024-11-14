@@ -81,6 +81,9 @@ pipeline {
     post {
         success {
             sh "cp extpar/*.log ${WORKSPACE}/output/logs"
+            sh "cp extpar/external_parameter.nc ${WORKSPACE}/output/."
+            sh "cp icontools/*.nc ${WORKSPACE}/output/."
+            sh "cp icontools/*.html ${WORKSPACE}/output/."
             sh "zip -r output.zip output"
             sh "python3 src/copy_zip.py --zip-file output.zip --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
@@ -90,6 +93,9 @@ pipeline {
         }
         failure {
             sh "cp extpar/*.log ${WORKSPACE}/output/logs"
+            sh "cp extpar/external_parameter.nc ${WORKSPACE}/output/. || true"
+            sh "cp icontools/*.nc ${WORKSPACE}/output/. || true"
+            sh "cp icontools/*.html ${WORKSPACE}/output/. || true"
             sh "zip -r output.zip output"
             sh "python3 src/copy_zip.py --zip-file output.zip --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
@@ -99,6 +105,9 @@ pipeline {
         }
         aborted {
             sh "cp extpar/*.log ${WORKSPACE}/output/logs"
+            sh "cp extpar/external_parameter.nc ${WORKSPACE}/output/. || true"
+            sh "cp icontools/*.nc ${WORKSPACE}/output/. || true"
+            sh "cp icontools/*.html ${WORKSPACE}/output/. || true"
             sh "zip -r output.zip output"
             sh "python3 src/copy_zip.py --zip-file output.zip --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
