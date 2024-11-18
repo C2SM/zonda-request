@@ -1,10 +1,10 @@
-name: Forward request to PR
+name: Create branch from issue
 on:
   issues:
     types: [labeled]
 
 jobs:
-  createPullRequest:
+  createNewBranch:
     if: github.event.label.name == 'data request'
     runs-on: ubuntu-latest
     steps:

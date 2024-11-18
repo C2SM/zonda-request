@@ -1,0 +1,73 @@
+name: Cleanup branches and issues
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run this workflow every day at midnight
+  workflow_dispatch:
+
+env:
+  DAYS: 7
+jobs:
+  deleteOldBranches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Fetch all branches
+        run: git fetch --all
+
+      - name: Delete old branches
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PATTERN="issue-*"
+          NOW=$(date +%s)
+          DAYS_MAX=${DAYS}
+          MAX_AGE = $((DAYS_MAX * 24 * 60 * 60 * 1000))
+
+          # Get all branches matching the pattern
+          BRANCHES=$(git branch -r | grep "$PATTERN" | sed 's/origin\///')
+
+          for BRANCH in $BRANCHES; do
+            # Get the last commit date of the branch
+            LAST_COMMIT_DATE=$(git log -1 --format=%ct origin/$BRANCH)
+            AGE=$((NOW - LAST_COMMIT_DATE))
+
+            if [ $AGE -gt $MAX_AGE ]; then
+              echo "Deleting branch $BRANCH"
+              # Delete the branch
+              curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$BRANCH"
+            fi
+          done
+
+  closeOldIssues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close old data request issues
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const max_age = process.env.DAYS * 24 * 60 * 60 * 1000;
+            const now = new Date();
+            const issues = await github.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'data request',
+              state: 'open'
+            });
+            for (const issue of issues.data) {
+              const createdAt = new Date(issue.created_at);
+              if (now - createdAt > max_age) {
+                await github.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed'
+                });
+              }
+            }
