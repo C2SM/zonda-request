@@ -1,11 +1,11 @@
 ---
-name: Data Request
-about: Use this template to submit a request for data processing
+name: ICON External Parameter Request
+about: Use this template to submit a request for an ICON grid and external parameters
 labels: data request
 
 ---
 
-# Zephyr Data Request
+# ICON External Parameter Request
 
 ## Instructions
 
@@ -17,10 +17,10 @@ PASTE_YOUR_REQUEST_HERE
 3. Click on "Preview" to verify that the JSON format of your request is correctly formatted and displayed within a code block.
 4. Click on "Submit new issue".
 
-Zephyr Data Request will now process your data based on the request you provided here. Once the processing is successful, it will post a link in this issue. 
+Extpar Data Request will now process your data based on the request you provided here. Once the processing is successful, it will post a link in this issue. 
 The processed data will be available under that link for up to **7 days**.
 
-If you encounter any problems, please open a discussion in the [C2SM forum](https://github.com/C2SM/Tasks-Support/discussions).
+If you encounter any problems, please add the label ![Static Badge](https://img.shields.io/badge/help_wanted-orange) to the issue. Make sure you post all relevant information from the logfiles in the issue directly.
 
 ## Status Labels
 
