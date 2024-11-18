@@ -1,7 +1,0 @@
-{
-    "PR_DELETE": "Close and delete please",
-    "PR_FAIL": "Request failed",
-    "PR_ABORT": "Request aborted",
-    "PR_SUCCESS": "Request succesful",
-    "DOWNLOAD_LINK": "https://data.iac.ethz.ch"
-}
