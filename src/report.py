@@ -8,28 +8,22 @@ class GitHubRepo:
         self.group: str = group
         self.repo: str = repo
         self.auth_token: str = auth_token
+        self.headers = {'Content-Type': 'application/json'}
+        self.headers['Authorization'] = 'token ' + self.auth_token
 
     def comment(self, issue_id: str, text: str) -> None:
         url = f'https://api.github.com/repos/{self.group}/{self.repo}/issues/{issue_id}/comments'
 
-        headers = {'Content-Type': 'application/json'}
-        if self.auth_token is not None:
-            headers['Authorization'] = 'token ' + self.auth_token
-
-        requests.post(url, headers=headers, json={'body': text})
+        requests.post(url, headers=self.headers, json={'body': text})
 
     def update_labels(self, issue_id, remove_label, add_label):
-        headers = {'Content-Type': 'application/json'}
-
-        if self.auth_token is not None:
-            headers['Authorization'] = 'token ' + self.auth_token
 
         if remove_label:
             url = f'https://api.github.com/repos/{self.group}/{self.repo}/issues/{issue_id}/labels/{remove_label}'
-            requests.delete(url, headers=headers)
+            requests.delete(url, headers=self.headers)
         if add_label:
             url = f'https://api.github.com/repos/{self.group}/{self.repo}/issues/{issue_id}/labels'
-            requests.post(url, headers=headers, json={'labels': [add_label]})
+            requests.post(url, headers=self.headers, json={'labels': [add_label]})
 
 
 if __name__ == "__main__":
@@ -66,7 +60,7 @@ if __name__ == "__main__":
 
     url = f'https://data.iac.ethz.ch/extpar-request/{hash}'
 
-    repo.comment(issue_id=args.issue_id, text=f'{url}')
+    repo.comment(issue_id=issue_id, text=f'{url}')
 
     if args.failure:
         repo.comment(issue_id=issue_id, text=PR_FAIL)
@@ -79,5 +73,5 @@ if __name__ == "__main__":
         add_label = 'completed'
 
     repo.update_labels(issue_id=issue_id, remove_label='submitted', add_label=add_label)
-    repo.comment(issue_id=args.issue_id, text=PR_DELETE)
+    repo.comment(issue_id=issue_id, text=PR_DELETE)
 
