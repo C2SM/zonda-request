@@ -26,7 +26,7 @@ jobs:
           PATTERN="issue-*"
           NOW=$(date +%s)
           DAYS_MAX=${DAYS}
-          MAX_AGE = $((DAYS_MAX * 24 * 60 * 60 * 1000))
+          MAX_AGE=$((DAYS_MAX * 24 * 60 * 60 * 1000))
 
           # Get all branches matching the pattern
           BRANCHES=$(git branch -r | grep "$PATTERN" | sed 's/origin\///')
