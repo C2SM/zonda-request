@@ -24,6 +24,12 @@ class GitHubRepo:
         if add_label:
             url = f'https://api.github.com/repos/{self.group}/{self.repo}/issues/{issue_id}/labels'
             requests.post(url, headers=self.headers, json={'labels': [add_label]})
+    
+    def get_issue(self, issue_id: str) -> dict:
+        url = f'https://api.github.com/repos/{self.group}/{self.repo}/issues/{issue_id}'
+        response = requests.get(url, headers=self.headers)
+        return response.json()['body']
+
 
 
 if __name__ == "__main__":
@@ -59,6 +65,8 @@ if __name__ == "__main__":
 
 
     url = f'https://data.iac.ethz.ch/extpar-request/{hash}'
+
+    print(repo.get_issue(issue_id=issue_id))
 
     repo.comment(issue_id=issue_id, text=f'{url}')
 

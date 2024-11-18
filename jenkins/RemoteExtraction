@@ -26,11 +26,13 @@ pipeline {
         }
         stage('Validate User Input') {
             steps {
-                sh """
-                python3 src/validate_user_input.py --comment_body '${env.ghprbCommentBody}' || 
-                (echo "The request you submitted is not valid! \n Please check for typos or wrong format of JSON" > ${WORKSPACE}/output/logs/pipeline.log &&
-                exit 1)
-                """
+                withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
+                    sh """
+                    python3 src/validate_user_input.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt ||
+                    (echo "The request you submitted is not valid! \n Please check for typos or wrong format of JSON" > ${WORKSPACE}/output/logs/pipeline.log &&
+                    exit 1)
+                    """
+                }
             }
         }
         stage('Prepare workspace') {

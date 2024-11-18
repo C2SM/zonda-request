@@ -1,9 +1,15 @@
 import argparse
 import json
+import re
+from report import GitHubRepo
 
 def validate_user_input(comment_body):
-    # Add your validation logic here
-    print(comment_body)
+    # Use regex to extract JSON content between ```json and ```
+    match = re.search(r'```json(.*?)```', comment_body, re.DOTALL)
+    if match:
+        json_content = match.group(1).strip()
+        return json_content
+    raise ValueError('No JSON content found in the comment body')
 
 def convert_to_json(comment_body):
     # Convert the dictionary back to a JSON string
@@ -15,12 +21,18 @@ def convert_to_json(comment_body):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Validate user input")
-    parser.add_argument("--comment_body", type=str, help="User input from the comment body.")
+    parser.add_argument('--auth_token', type=str, required=False)
+    parser.add_argument('--issue_id_file', type=str, required=True)
+
     args = parser.parse_args()
 
-    comment = args.comment_body.replace('\\r\\n', ' ').replace('submit request', '').replace('\\', '')
+    with open(args.issue_id_file, 'r') as f:
+        issue_id = f.read()
 
-    # Validate the user input
-    validate_user_input(comment)
+    repo = GitHubRepo(group='c2sm',
+                      repo='extpar-request',
+                      auth_token=args.auth_token)
+
+    comment = validate_user_input(repo.get_issue(issue_id)).replace('\\r\\n', ' ').replace('\\', '')
 
     convert_to_json(comment)
