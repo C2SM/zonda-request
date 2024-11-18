@@ -16,9 +16,9 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git checkout -b issue-${{ github.event.issue.number }}/request
-          echo "This is a new file" > newfile.txt
-          git add newfile.txt
-          git commit -m "Add new file for issue #${{ github.event.issue.number }}"
+          echo "${{ github.event.issue.number }}" > issue.txt
+          git add issue.txt
+          git commit -m "Add file for issue #${{ github.event.issue.number }}"
           git push origin issue-${{ github.event.issue.number }}/request
 
       - name: Create Pull Request
