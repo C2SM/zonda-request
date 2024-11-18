@@ -18,6 +18,19 @@ class GitHubRepo:
 
         requests.post(url, headers=headers, json={'body': text})
 
+    def update_labels(self, issue_id, remove_label, add_label):
+        headers = {'Content-Type': 'application/json'}
+
+        if self.auth_token is not None:
+            headers['Authorization'] = 'token ' + self.auth_token
+
+        if remove_label:
+            url = f'https://api.github.com/repos/{self.group}/{self.repo}/issues/{issue_id}/labels/{remove_label}'
+            requests.delete(url, headers=headers)
+        if add_label:
+            url = f'https://api.github.com/repos/{self.group}/{self.repo}/issues/{issue_id}/labels'
+            requests.post(url, headers=headers, json={'labels': [add_label]})
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -54,10 +67,14 @@ if __name__ == "__main__":
 
     if args.failure:
         repo.comment(issue_id=args.issue_id, text=PR_FAIL)
+        add_label = 'failed'
     elif args.abort:
         repo.comment(issue_id=args.issue_id, text=PR_ABORT)
+        add_label = 'aborted'
     else:
         repo.comment(issue_id=args.issue_id, text=PR_SUCCESS)
+        add_label = 'completed'
 
+    repo.update_labels(issue_id=args.issue_id, remove_label='submitted', add_label=add_label)
     repo.comment(issue_id=args.issue_id, text=PR_DELETE)
 
