@@ -37,7 +37,6 @@ if __name__ == "__main__":
     parser.add_argument('--auth_token', type=str, required=False)
     parser.add_argument('--issue_id_file', type=str, required=True)
     parser.add_argument('--hash-file', type=str, required=True)
-    parser.add_argument('--keyword-file', type=str, required=True)
 
     # Create a mutually exclusive group for the --abort and --failure arguments
     group = parser.add_mutually_exclusive_group()
@@ -56,19 +55,11 @@ if __name__ == "__main__":
     with open(args.issue_id_file, 'r') as f:
         issue_id = f.read()
 
-    with open(args.keyword_file, 'r') as f:
-        keywords = json.load(f)
-        PR_DELETE = keywords['PR_DELETE']
-        PR_FAIL = keywords['PR_FAIL']
-        PR_ABORT = keywords['PR_ABORT']
-        PR_SUCCESS = keywords['PR_SUCCESS']
-
-
     url = f'https://data.iac.ethz.ch/extpar-request/{hash}'
 
-    print(repo.get_issue(issue_id=issue_id))
-
-    repo.comment(issue_id=issue_id, text=f'{url}')
+    PR_FAIL =f"Something went wrong. Please check the [logfiles]({url}) for more information."
+    PR_ABORT = f"Your request has been aborted. Please check the [logfiles]({url}) for more information."
+    PR_SUCCESS = f"Your data is ready for up to 7 days under this [link]({url})."
 
     if args.failure:
         repo.comment(issue_id=issue_id, text=PR_FAIL)
@@ -81,5 +72,4 @@ if __name__ == "__main__":
         add_label = 'completed'
 
     repo.update_labels(issue_id=issue_id, remove_label='submitted', add_label=add_label)
-    repo.comment(issue_id=issue_id, text=PR_DELETE)
 
