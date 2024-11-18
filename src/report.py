@@ -1,6 +1,5 @@
 import requests
 import argparse
-import json
 
 class GitHubRepo:
 
@@ -57,19 +56,18 @@ if __name__ == "__main__":
 
     url = f'https://data.iac.ethz.ch/extpar-request/{hash}'
 
-    PR_FAIL =f"Something went wrong. Please check the [logfiles]({url}) for more information."
-    PR_ABORT = f"Your request has been aborted. Please check the [logfiles]({url}) for more information."
-    PR_SUCCESS = f"Your data is ready for up to 7 days under this [link]({url})."
+    fail =f"Something went wrong. Please check the [logfiles]({url}) for more information."
+    abort = f"Your request has been aborted. Please check the [logfiles]({url}) for more information."
+    success = f"Your data is ready for up to 7 days under this [link]({url})."
 
     if args.failure:
-        repo.comment(issue_id=issue_id, text=PR_FAIL)
+        repo.comment(issue_id=issue_id, text=fail)
         add_label = 'failed'
     elif args.abort:
-        repo.comment(issue_id=issue_id, text=PR_ABORT)
+        repo.comment(issue_id=issue_id, text=abort)
         add_label = 'aborted'
     else:
-        repo.comment(issue_id=issue_id, text=PR_SUCCESS)
+        repo.comment(issue_id=issue_id, text=success)
         add_label = 'completed'
 
     repo.update_labels(issue_id=issue_id, remove_label='submitted', add_label=add_label)
-
