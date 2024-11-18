@@ -3,7 +3,7 @@ def https_public_root = '/net/co2/c2sm-data/jenkins/extpar-request'
 pipeline {
     agent {
         node {
-            label 'atmos'
+            label 'co2'
         }
     }
     stages {
