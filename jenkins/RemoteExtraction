@@ -38,9 +38,8 @@ pipeline {
         stage('Prepare workspace') {
             steps {
                 sh """
-                ls
-                cat config.json
                 mkdir -p ${WORKSPACE}/extpar
+                cp config.json ${WORKSPACE}/extpar/config.json
                 mkdir -p ${WORKSPACE}/icontools
                 cp namelist ${WORKSPACE}/icontools/namelist
                 """
@@ -72,7 +71,7 @@ pipeline {
                     --no-batch-job \
                     --host docker \
                     --input-grid /grid/icon_uzbekistan_DOM01.nc  \
-                    --extpar-config ${WORKSPACE}/config.json
+                    --extpar-config /work/config.json
                 """
             }
         }
