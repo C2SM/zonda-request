@@ -41,6 +41,7 @@ pipeline {
                 mkdir -p ${WORKSPACE}/extpar
                 cp config.json ${WORKSPACE}/extpar/config.json 
                 mkdir -p ${WORKSPACE}/icontools
+                python3 src/gridgen_namelist.py --config config.json
                 cp namelist ${WORKSPACE}/icontools/namelist
                 """
             }
@@ -49,7 +50,7 @@ pipeline {
             steps {
                 sh """ 
                 cd ${WORKSPACE}/icontools
-                podman run  -w /work -u 0 -v ${WORKSPACE}/icontools:/work -t icontools /home/dwd/icontools/icongridgen --nml /work/namelist
+                podman run  -w /work -u 0 -v ${WORKSPACE}/icontools:/work -t icontools /home/dwd/icontools/icongridgen --nml /work/nml_gridgen
 
 
                 """
