@@ -66,6 +66,7 @@ pipeline {
                     python3 -m extpar.WrapExtpar \
                     --run-dir /work \
                     --raw-data-path /data/linked_data \
+                    --account none \
                     --no-batch-job \
                     --host docker \
                     --input-grid /grid/icon_uzbekistan_DOM01.nc  \
