@@ -70,7 +70,7 @@ pipeline {
                     --account none \
                     --no-batch-job \
                     --host docker \
-                    --input-grid /grid/icon_uzbekistan_DOM01.nc \
+                    --input-grid /grid/global_grid_DOM01.nc \
                     --extpar-config /work/config.json
                 """
             }
