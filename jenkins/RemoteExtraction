@@ -38,11 +38,7 @@ pipeline {
         stage('Prepare workspace') {
             steps {
                 sh """
-                mkdir -p ${WORKSPACE}/extpar
-                cp config.json ${WORKSPACE}/extpar/config.json 
-                mkdir -p ${WORKSPACE}/icontools
-                python3 src/gridgen_namelist.py --config config.json
-                cp namelist ${WORKSPACE}/icontools/namelist
+                python3 src/gridgen_namelist.py --config config.json --workspace ${WORKSPACE}
                 """
             }
         }
@@ -58,6 +54,9 @@ pipeline {
         }
         stage('Generate external parameters') {
             steps {
+                script {
+                env.GRID_FILE = readFile('icontools/grid.txt').trim()
+                }
                 sh """ 
                 cd ${WORKSPACE}/extpar
                 podman run \
@@ -71,7 +70,7 @@ pipeline {
                     --account none \
                     --no-batch-job \
                     --host docker \
-                    --input-grid /grid/icon_uzbekistan_DOM01.nc \
+                    --input-grid /grid/${GRID_FILE} \
                     --extpar-config /work/config.json
                 """
             }
