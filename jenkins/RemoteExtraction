@@ -39,6 +39,7 @@ pipeline {
             steps {
                 sh """
                 mkdir -p ${WORKSPACE}/extpar
+                cp config.json ${WORKSPACE}/extpar/config.json 
                 mkdir -p ${WORKSPACE}/icontools
                 cp namelist ${WORKSPACE}/icontools/namelist
                 """
@@ -64,18 +65,13 @@ pipeline {
                     -v ${WORKSPACE}/extpar:/work \
                     extpar-image \
                     python3 -m extpar.WrapExtpar \
-                    --run_dir /work \
-                    --raw_data_path /data/linked_data \
-                    --no_batch_job \
-                    --host docker \
-                    --input_grid /grid/icon_uzbekistan_DOM01.nc  \
-                    --igrid_type 1 \
-                    --iaot_type 1 \
-                    --ilu_type 2 \
-                    --ialb_type 1 \
+                    --run-dir /work \
+                    --raw-data-path /data/linked_data \
                     --account none \
-                    --isoil_type 1 \
-                    --itopo_type 1
+                    --no-batch-job \
+                    --host docker \
+                    --input-grid /grid/icon_uzbekistan_DOM01.nc \
+                    --extpar-config /work/config.json
                 """
             }
         }
