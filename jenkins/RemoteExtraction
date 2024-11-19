@@ -38,6 +38,8 @@ pipeline {
         stage('Prepare workspace') {
             steps {
                 sh """
+                ls
+                cat config.json
                 mkdir -p ${WORKSPACE}/extpar
                 mkdir -p ${WORKSPACE}/icontools
                 cp namelist ${WORKSPACE}/icontools/namelist
