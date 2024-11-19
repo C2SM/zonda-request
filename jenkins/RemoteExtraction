@@ -39,7 +39,7 @@ pipeline {
             steps {
                 sh """
                 mkdir -p ${WORKSPACE}/extpar
-                cp config.json ${WORKSPACE}/extpar/config.json
+                cp config.json ${WORKSPACE}/extpar/config.json 
                 mkdir -p ${WORKSPACE}/icontools
                 cp namelist ${WORKSPACE}/icontools/namelist
                 """
