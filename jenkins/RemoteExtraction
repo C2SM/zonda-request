@@ -42,7 +42,6 @@ pipeline {
                 cp config.json ${WORKSPACE}/extpar/config.json 
                 mkdir -p ${WORKSPACE}/icontools
                 python3 src/gridgen_namelist.py --config config.json
-                cp namelist ${WORKSPACE}/icontools/namelist
                 """
             }
         }
