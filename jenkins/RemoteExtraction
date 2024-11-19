@@ -64,11 +64,11 @@ pipeline {
                     -v ${WORKSPACE}/extpar:/work \
                     extpar-image \
                     python3 -m extpar.WrapExtpar \
-                    --run_dir /work \
-                    --raw_data_path /data/linked_data \
-                    --no_batch_job \
+                    --run-dir /work \
+                    --raw-data_path /data/linked_data \
+                    --no-batch_job \
                     --host docker \
-                    --input_grid /grid/icon_uzbekistan_DOM01.nc  \
+                    --input-grid /grid/icon_uzbekistan_DOM01.nc  \
                     --extpar-config ${WORKSPACE}/config.json
                 """
             }
