@@ -69,7 +69,7 @@ pipeline {
                     --no_batch_job \
                     --host docker \
                     --input_grid /grid/icon_uzbekistan_DOM01.nc  \
-                    -- extpar-config ${WORKSPACE}/config.json
+                    --extpar-config ${WORKSPACE}/config.json
                 """
             }
         }
