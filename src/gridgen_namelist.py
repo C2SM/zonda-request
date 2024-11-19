@@ -8,6 +8,41 @@ def load_config(config_file):
         config = json.load(f)
     return config
 
+def write_local_namelist(config,wrk_dir):
+    # Set default values
+    parent_id = 0
+    lwrite_parent = True
+    initial_refinement = True
+    basegrid_grid_root = config.get('grid_root')
+    basegrid_grid_level = config.get('grid_level')
+    dom_outfile = config.get('outfile')
+    dom_region_type = config.get('region_type')
+
+    # Create the namelist content
+    namelist_content = f"""&gridgen_nml
+  parent_id           = {parent_id}            ! This list defines parent-nest relations
+  dom(1)%lwrite_parent = .{str(lwrite_parent).upper()}.
+  basegrid%grid_root   = {basegrid_grid_root}
+  basegrid%grid_level  = {basegrid_grid_level}
+  initial_refinement = .{str(initial_refinement).upper()}.
+  dom(1)%outfile = "{dom_outfile}"
+  dom(1)%region_type  = {dom_region_type}
+
+  dom(1)%center_lon   = {config.get('center_lon')}
+  dom(1)%center_lat   = {config.get('center_lat')}
+  dom(1)%hwidth_lon   = {config.get('hwidth_lon')}
+  dom(1)%hwidth_lat   = {config.get('hwidth_lat')}
+/
+"""
+
+    # Write the namelist content to a file
+    with open(os.path.join(wrk_dir,'nml_gridgen'), 'w') as f:
+        f.write(namelist_content)
+
+    # write filename to grid.txt for extpar
+    with open(os.path.join(wrk_dir,'grid.txt'), 'w') as f:
+        f.write(f'{dom_outfile}_DOM01.nc')
+
 def write_global_namelist(config,wrk_dir):
     # Set default values
     parent_id = 0
@@ -15,8 +50,8 @@ def write_global_namelist(config,wrk_dir):
     initial_refinement = True
     basegrid_grid_root = config.get('grid_root')
     basegrid_grid_level = config.get('grid_level')
-    dom_outfile = config.get('outfile', 'icon_global')
-    dom_region_type = config.get('region_type', 1)
+    dom_outfile = config.get('outfile')
+    dom_region_type = config.get('region_type')
 
     # Create the namelist content
     namelist_content = f"""&gridgen_nml
@@ -55,7 +90,7 @@ def main(workspace, config_path):
     if config["region_type"] == 1:
         write_global_namelist(config, icontools_dir)
     else:
-        print("Region type not supported")
+        write_local_namelist(config, icontools_dir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup workspace and generate namelist")
