@@ -70,6 +70,11 @@ def write_global_namelist(config,wrk_dir):
   initial_refinement = .{str(initial_refinement).upper()}.
   dom(1)%outfile = "{dom_outfile}"
   dom(1)%region_type  = {dom_region_type}
+
+  dom(1)%center_lon   = {config.get('center_lon')}
+  dom(1)%center_lat   = {config.get('center_lat')}
+  dom(1)%hwidth_lon   = {config.get('hwidth_lon')}
+  dom(1)%hwidth_lat   = {config.get('hwidth_lat')}
 /
 """
 
