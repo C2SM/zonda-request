@@ -8,38 +8,69 @@ def load_config(config_file):
         config = json.load(f)
     return config
 
-def write_local_namelist(config,wrk_dir):
+
+def write_gridgen_namelist(config,wrk_dir):
     # Set default values
     parent_id = 0
     lwrite_parent = True
     initial_refinement = True
-    basegrid_grid_root = config.get('grid_root')
-    basegrid_grid_level = config.get('grid_level')
-    dom_outfile = config.get('outfile')
-    dom_region_type = config.get('region_type')
     lrotate = config.get('lrotate', False)
+    lspring_dynamics = config.get('lspring_dynamics', False)
+
+    icopole_lon = config.get('icopole_lon', 0.0)
+    icopole_lat = config.get('icopole_lat', 90)
+    icorotation = config.get('icorotation', 0.0)
+
+    centre = config.get('centre', None)
+    subcentre = config.get('subcentre', None)
 
     # Create the namelist content
     namelist = []
     namelist.append("&gridgen_nml")
     namelist.append(f"  parent_id           = {parent_id}            ! This list defines parent-nest relations")
-    namelist.append(f"  dom(1)%lwrite_parent = .{str(lwrite_parent).upper()}.")
-    namelist.append(f"  basegrid%grid_root   = {basegrid_grid_root}")
-    namelist.append(f"  basegrid%grid_level  = {basegrid_grid_level}")
     namelist.append(f"  initial_refinement = .{str(initial_refinement).upper()}.")
-    namelist.append(f"  dom(1)%outfile = \"{dom_outfile}\"")
-    namelist.append(f"  dom(1)%region_type  = {dom_region_type}")
-    namelist.append("")
-    namelist.append(f"  dom(1)%center_lon   = {config.get('center_lon')}")
-    namelist.append(f"  dom(1)%center_lat   = {config.get('center_lat')}")
-    namelist.append(f"  dom(1)%hwidth_lon   = {config.get('hwidth_lon')}")
-    namelist.append(f"  dom(1)%hwidth_lat   = {config.get('hwidth_lat')}")
     namelist.append("")
 
-    if lrotate:
-        namelist.append(f"  dom(1)%lrotate      = .{str(lrotate).upper()}.")
-        namelist.append(f"  dom(1)%pole_lat = {config.get('pole_lat')}")
-        namelist.append(f"  dom(1)%pole_lon = {config.get('pole_lon')}")
+    # base grid
+    namelist.append(f"  basegrid%grid_root   = {config.get('grid_root')}")
+    namelist.append(f"  basegrid%grid_level  = {config.get('grid_level')}")
+    namelist.append(f"  basegrid%icopole_lon = {icopole_lon}")
+    namelist.append(f"  basegrid%icopole_lat = {icopole_lat}")
+    namelist.append(f"  basegrid%icorotation = {icorotation}")
+
+    # tuning parameters
+    if lspring_dynamics:
+        namelist.append(f"  lspring_dynamics = .{str(config.get('lspring_dynamics')).upper()}.")
+        namelist.append(f"  maxit = {config.get('maxit', 500)}")
+        namelist.append(f"  beta_spring = {config.get('beta_spring', 0.9)}")
+        namelist.append("")
+    
+    # centre and subcentre
+    if centre and subcentre:
+        namelist.append(f"  centre = {centre}")
+        namelist.append(f"  subcentre = {subcentre}")
+        namelist.append("")
+
+    # dom
+    namelist.append(f"  dom(1)%lwrite_parent = .{str(lwrite_parent).upper()}.")
+    namelist.append(f"  dom(1)%outfile = \"{config.get('outfile')}\"")
+    namelist.append(f"  dom(1)%region_type  = {config.get('region_type')}")
+    namelist.append(f"  dom(1)%number_of_grid_used    = {config.get('number_of_grid_used',0)}")
+    namelist.append("")
+
+    # local region
+    if config["region_type"] == 3:
+        namelist.append(f"  dom(1)%center_lon   = {config.get('center_lon')}")
+        namelist.append(f"  dom(1)%center_lat   = {config.get('center_lat')}")
+        namelist.append(f"  dom(1)%hwidth_lon   = {config.get('hwidth_lon')}")
+        namelist.append(f"  dom(1)%hwidth_lat   = {config.get('hwidth_lat')}")
+        namelist.append("")
+
+        if lrotate:
+            namelist.append(f"  dom(1)%lrotate      = .{str(lrotate).upper()}.")
+            namelist.append(f"  dom(1)%pole_lat = {config.get('pole_lat')}")
+            namelist.append(f"  dom(1)%pole_lon = {config.get('pole_lon')}")
+            namelist.append("")
         
     namelist.append("/")
     namelist.append("")
@@ -50,42 +81,7 @@ def write_local_namelist(config,wrk_dir):
 
     # write filename to grid.txt for extpar
     with open(os.path.join(wrk_dir,'grid.txt'), 'w') as f:
-        f.write(f'{dom_outfile}_DOM01.nc')
-
-def write_global_namelist(config,wrk_dir):
-    # Set default values
-    parent_id = 0
-    lwrite_parent = True
-    initial_refinement = True
-    basegrid_grid_root = config.get('grid_root')
-    basegrid_grid_level = config.get('grid_level')
-    dom_outfile = config.get('outfile')
-    dom_region_type = config.get('region_type')
-
-    # Create the namelist content
-    namelist_content = f"""&gridgen_nml
-  parent_id           = {parent_id}            ! This list defines parent-nest relations
-  dom(1)%lwrite_parent = .{str(lwrite_parent).upper()}.
-  basegrid%grid_root   = {basegrid_grid_root}
-  basegrid%grid_level  = {basegrid_grid_level}
-  initial_refinement = .{str(initial_refinement).upper()}.
-  dom(1)%outfile = "{dom_outfile}"
-  dom(1)%region_type  = {dom_region_type}
-
-  dom(1)%center_lon   = {config.get('center_lon')}
-  dom(1)%center_lat   = {config.get('center_lat')}
-  dom(1)%hwidth_lon   = {config.get('hwidth_lon')}
-  dom(1)%hwidth_lat   = {config.get('hwidth_lat')}
-/
-"""
-
-    # Write the namelist content to a file
-    with open(os.path.join(wrk_dir,'nml_gridgen'), 'w') as f:
-        f.write(namelist_content)
-
-    # write filename to grid.txt for extpar
-    with open(os.path.join(wrk_dir,'grid.txt'), 'w') as f:
-        f.write(f'{dom_outfile}_DOM01.nc')
+        f.write(f"{config.get('outfile')}_DOM01.nc")
 
 def main(workspace, config_path):
     # Create directories
@@ -101,10 +97,7 @@ def main(workspace, config_path):
     config = load_config(config_path)
     config = config['icontools']
 
-    if config["region_type"] == 1:
-        write_global_namelist(config, icontools_dir)
-    else:
-        write_local_namelist(config, icontools_dir)
+    write_gridgen_namelist(config, icontools_dir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup workspace and generate namelist")
