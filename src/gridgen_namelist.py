@@ -14,12 +14,6 @@ def write_gridgen_namelist(config,wrk_dir):
     parent_id = 0
     lwrite_parent = True
     initial_refinement = True
-    lrotate = config.get('lrotate', False)
-    lspring_dynamics = config.get('lspring_dynamics', False)
-
-    icopole_lon = config.get('icopole_lon', 0.0)
-    icopole_lat = config.get('icopole_lat', 90)
-    icorotation = config.get('icorotation', 0.0)
 
     centre = config.get('centre', None)
     subcentre = config.get('subcentre', None)
@@ -34,16 +28,15 @@ def write_gridgen_namelist(config,wrk_dir):
     # base grid
     namelist.append(f"  basegrid%grid_root   = {config.get('grid_root')}")
     namelist.append(f"  basegrid%grid_level  = {config.get('grid_level')}")
-    namelist.append(f"  basegrid%icopole_lon = {icopole_lon}")
-    namelist.append(f"  basegrid%icopole_lat = {icopole_lat}")
-    namelist.append(f"  basegrid%icorotation = {icorotation}")
+    namelist.append(f"  basegrid%icopole_lon = {config.get('icopole_lon', 0.0)}")
+    namelist.append(f"  basegrid%icopole_lat = {config.get('icopole_lat', 90)}")
+    namelist.append(f"  basegrid%icorotation = {config.get('icorotation', 0.0)}")
 
     # tuning parameters
-    if lspring_dynamics:
-        namelist.append(f"  lspring_dynamics = .{str(config.get('lspring_dynamics')).upper()}.")
-        namelist.append(f"  maxit = {config.get('maxit', 500)}")
-        namelist.append(f"  beta_spring = {config.get('beta_spring', 0.9)}")
-        namelist.append("")
+    namelist.append(f"  lspring_dynamics = .{str(config.get('lspring_dynamics',False)).upper()}.")
+    namelist.append(f"  maxit = {config.get('maxit', 500)}")
+    namelist.append(f"  beta_spring = {config.get('beta_spring', 0.9)}")
+    namelist.append("")
     
     # centre and subcentre
     if centre and subcentre:
@@ -60,17 +53,16 @@ def write_gridgen_namelist(config,wrk_dir):
 
     # local region
     if config["region_type"] == 3:
-        namelist.append(f"  dom(1)%center_lon   = {config.get('center_lon')}")
-        namelist.append(f"  dom(1)%center_lat   = {config.get('center_lat')}")
-        namelist.append(f"  dom(1)%hwidth_lon   = {config.get('hwidth_lon')}")
-        namelist.append(f"  dom(1)%hwidth_lat   = {config.get('hwidth_lat')}")
+        namelist.append(f"  dom(1)%center_lon   = {config.get('center_lon',0.0)}")
+        namelist.append(f"  dom(1)%center_lat   = {config.get('center_lat',0.0)}")
+        namelist.append(f"  dom(1)%hwidth_lon   = {config.get('hwidth_lon',0.0)}")
+        namelist.append(f"  dom(1)%hwidth_lat   = {config.get('hwidth_lat',0.0)}")
         namelist.append("")
 
-        if lrotate:
-            namelist.append(f"  dom(1)%lrotate      = .{str(lrotate).upper()}.")
-            namelist.append(f"  dom(1)%pole_lat = {config.get('pole_lat')}")
-            namelist.append(f"  dom(1)%pole_lon = {config.get('pole_lon')}")
-            namelist.append("")
+        namelist.append(f"  dom(1)%lrotate      = .{str(config.get('lrotate', True)).upper()}.")
+        namelist.append(f"  dom(1)%pole_lon = {config.get('pole_lon',-180.0)}")
+        namelist.append(f"  dom(1)%pole_lat = {config.get('pole_lat', 90.0)}")
+        namelist.append("")
         
     namelist.append("/")
     namelist.append("")
