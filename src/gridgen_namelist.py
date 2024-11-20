@@ -15,9 +15,6 @@ def write_gridgen_namelist(config,wrk_dir):
     lwrite_parent = True
     initial_refinement = True
 
-    centre = config.get('centre', None)
-    subcentre = config.get('subcentre', None)
-
     # Create the namelist content
     namelist = []
     namelist.append("&gridgen_nml")
@@ -39,10 +36,9 @@ def write_gridgen_namelist(config,wrk_dir):
     namelist.append("")
     
     # centre and subcentre
-    if centre and subcentre:
-        namelist.append(f"  centre = {centre}")
-        namelist.append(f"  subcentre = {subcentre}")
-        namelist.append("")
+    namelist.append(f"  centre = {config.get('centre',78)}")
+    namelist.append(f"  subcentre = {config.get('subcentre',255)}")
+    namelist.append("")
 
     # dom
     namelist.append(f"  dom(1)%lwrite_parent = .{str(lwrite_parent).upper()}.")
