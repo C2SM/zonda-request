@@ -8,7 +8,7 @@ for dir in ${WORKSPACE}/extpar_*; do
     echo "Processing directory: $dir"
     cd "$dir"
     grid_file=$(cat ../icontools/grid_$i.txt)  # Assuming grid.txt contains the grid file name
-    echo "podman run \
+    podman run \
         -v /c2sm-data/extpar-input-data:/data \
         -v ${WORKSPACE}/icontools:/grid \
         -v "$dir":/work \
@@ -20,7 +20,7 @@ for dir in ${WORKSPACE}/extpar_*; do
         --no-batch-job \
         --host docker \
         --input-grid /grid/${grid_file} \
-        --extpar-config /work/config.json "
+        --extpar-config /work/config.json
     cd ..
     ((i++))
 done
