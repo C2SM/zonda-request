@@ -41,7 +41,8 @@ def write_local_namelist(config,wrk_dir):
         namelist.append(f"  dom(1)%pole_lat = {config.get('pole_lat')}")
         namelist.append(f"  dom(1)%pole_lon = {config.get('pole_lon')}")
         
-    namelist.append("/ /n")
+    namelist.append("/")
+    namelist.append("")
 
     # Write the namelist content to a file
     with open(os.path.join(wrk_dir,'nml_gridgen'), 'w') as f:
