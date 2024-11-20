@@ -17,27 +17,35 @@ def write_local_namelist(config,wrk_dir):
     basegrid_grid_level = config.get('grid_level')
     dom_outfile = config.get('outfile')
     dom_region_type = config.get('region_type')
+    lrotate = config.get('lrotate', False)
 
     # Create the namelist content
-    namelist_content = f"""&gridgen_nml
-  parent_id           = {parent_id}            ! This list defines parent-nest relations
-  dom(1)%lwrite_parent = .{str(lwrite_parent).upper()}.
-  basegrid%grid_root   = {basegrid_grid_root}
-  basegrid%grid_level  = {basegrid_grid_level}
-  initial_refinement = .{str(initial_refinement).upper()}.
-  dom(1)%outfile = "{dom_outfile}"
-  dom(1)%region_type  = {dom_region_type}
+    namelist = []
+    namelist.append("&gridgen_nml")
+    namelist.append(f"  parent_id           = {parent_id}            ! This list defines parent-nest relations")
+    namelist.append(f"  dom(1)%lwrite_parent = .{str(lwrite_parent).upper()}.")
+    namelist.append(f"  basegrid%grid_root   = {basegrid_grid_root}")
+    namelist.append(f"  basegrid%grid_level  = {basegrid_grid_level}")
+    namelist.append(f"  initial_refinement = .{str(initial_refinement).upper()}.")
+    namelist.append(f"  dom(1)%outfile = \"{dom_outfile}\"")
+    namelist.append(f"  dom(1)%region_type  = {dom_region_type}")
+    namelist.append("")
+    namelist.append(f"  dom(1)%center_lon   = {config.get('center_lon')}")
+    namelist.append(f"  dom(1)%center_lat   = {config.get('center_lat')}")
+    namelist.append(f"  dom(1)%hwidth_lon   = {config.get('hwidth_lon')}")
+    namelist.append(f"  dom(1)%hwidth_lat   = {config.get('hwidth_lat')}")
+    namelist.append("")
 
-  dom(1)%center_lon   = {config.get('center_lon')}
-  dom(1)%center_lat   = {config.get('center_lat')}
-  dom(1)%hwidth_lon   = {config.get('hwidth_lon')}
-  dom(1)%hwidth_lat   = {config.get('hwidth_lat')}
-/
-"""
+    if lrotate:
+        namelist.append(f"  dom(1)%lrotate      = .{str(lrotate).upper()}.")
+        namelist.append(f"  dom(1)%pole_lat = {config.get('pole_lat')}")
+        namelist.append(f"  dom(1)%pole_lon = {config.get('pole_lon')}")
+        
+    namelist.append("/")
 
     # Write the namelist content to a file
     with open(os.path.join(wrk_dir,'nml_gridgen'), 'w') as f:
-        f.write(namelist_content)
+        f.write("\n".join(namelist))
 
     # write filename to grid.txt for extpar
     with open(os.path.join(wrk_dir,'grid.txt'), 'w') as f:
