@@ -54,24 +54,8 @@ pipeline {
         }
         stage('Generate external parameters') {
             steps {
-                script {
-                env.GRID_FILE = readFile('icontools/grid.txt').trim()
-                }
                 sh """ 
-                cd ${WORKSPACE}/extpar
-                podman run \
-                    -v /c2sm-data/extpar-input-data:/data \
-                    -v ${WORKSPACE}/icontools:/grid \
-                    -v ${WORKSPACE}/extpar:/work \
-                    extpar-image \
-                    python3 -m extpar.WrapExtpar \
-                    --run-dir /work \
-                    --raw-data-path /data/linked_data \
-                    --account none \
-                    --no-batch-job \
-                    --host docker \
-                    --input-grid /grid/${GRID_FILE} \
-                    --extpar-config /work/config.json
+                ./src/run_extpar.sh
                 """
             }
         }

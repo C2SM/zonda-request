@@ -11,8 +11,7 @@ def load_config(config_file):
 
 def write_gridgen_namelist(config,wrk_dir):
     # Set default values
-    parent_id = 0
-    lwrite_parent = True
+    parent_id = ",".join(map(str, range(len(config["domains"]))))
     initial_refinement = True
 
     # Create the namelist content
@@ -40,26 +39,31 @@ def write_gridgen_namelist(config,wrk_dir):
     namelist.append(f"  subcentre = {config.get('subcentre',255)}")
     namelist.append("")
 
-    # dom
-    namelist.append(f"  dom(1)%lwrite_parent = .{str(lwrite_parent).upper()}.")
-    namelist.append(f"  dom(1)%outfile = \"{config.get('outfile')}\"")
-    namelist.append(f"  dom(1)%region_type  = {config.get('region_type')}")
-    namelist.append(f"  dom(1)%number_of_grid_used    = {config.get('number_of_grid_used',0)}")
-    namelist.append("")
-
-    # local region
-    if config["region_type"] == 3:
-        namelist.append(f"  dom(1)%center_lon   = {config.get('center_lon',0.0)}")
-        namelist.append(f"  dom(1)%center_lat   = {config.get('center_lat',0.0)}")
-        namelist.append(f"  dom(1)%hwidth_lon   = {config.get('hwidth_lon',0.0)}")
-        namelist.append(f"  dom(1)%hwidth_lat   = {config.get('hwidth_lat',0.0)}")
+    for i, domain in enumerate(config["domains"]):
+        lwrite_parent = i == 0
+        namelist.append(f"  dom({i+1})%outfile  = \"{config.get('outfile')}\" ")
+        namelist.append(f"  dom({i+1})%lwrite_parent = .{str(lwrite_parent).upper()}.")
+        namelist.append(f"  dom({i+1})%region_type  = {domain['region_type']}")
+        namelist.append(f"  dom({i+1})%number_of_grid_used    = {domain.get('number_of_grid_used',0)}")
         namelist.append("")
 
-        namelist.append(f"  dom(1)%lrotate      = .{str(config.get('lrotate', True)).upper()}.")
-        namelist.append(f"  dom(1)%pole_lon = {config.get('pole_lon',-180.0)}")
-        namelist.append(f"  dom(1)%pole_lat = {config.get('pole_lat', 90.0)}")
-        namelist.append("")
+        # local domain
+        if domain["region_type"] == 3:
+            namelist.append(f"  dom({i+1})%center_lon   = {domain.get('center_lon',0.0)}")
+            namelist.append(f"  dom({i+1})%center_lat   = {domain.get('center_lat',0.0)}")
+            namelist.append(f"  dom({i+1})%hwidth_lon   = {domain.get('hwidth_lon',0.0)}")
+            namelist.append(f"  dom({i+1})%hwidth_lat   = {domain.get('hwidth_lat',0.0)}")
+            namelist.append("")
+
+            namelist.append(f"  dom({i+1})%lrotate      = .{str(domain.get('lrotate', True)).upper()}.")
+            namelist.append(f"  dom({i+1})%pole_lon = {domain.get('pole_lon',-180.0)}")
+            namelist.append(f"  dom({i+1})%pole_lat = {domain.get('pole_lat', 90.0)}")
+            namelist.append("")
         
+        # write filename to grid_i.txt for extpar
+        with open(os.path.join(wrk_dir,f'grid_{i+1}.txt'), 'w') as f:
+            f.write(f"{config.get('outfile')}_DOM{(i+1):02d}.nc")
+
     namelist.append("/")
     namelist.append("")
 
@@ -67,23 +71,24 @@ def write_gridgen_namelist(config,wrk_dir):
     with open(os.path.join(wrk_dir,'nml_gridgen'), 'w') as f:
         f.write("\n".join(namelist))
 
-    # write filename to grid.txt for extpar
-    with open(os.path.join(wrk_dir,'grid.txt'), 'w') as f:
-        f.write(f"{config.get('outfile')}_DOM01.nc")
 
 def main(workspace, config_path):
-    # Create directories
-    extpar_dir = os.path.join(workspace, 'extpar')
-    icontools_dir = os.path.join(workspace, 'icontools')
-    os.makedirs(extpar_dir, exist_ok=True)
-    os.makedirs(icontools_dir, exist_ok=True)
-
-    # Copy config.json to extpar directory
-    shutil.copy(config_path, os.path.join(extpar_dir, 'config.json'))
-
+    
     # Load config and write namelist
     config = load_config(config_path)
     config = config['icontools']
+
+    nr_domains = len(config['domains'])
+
+    # Create directories
+    for i in range(nr_domains):
+        extpar_dir = os.path.join(workspace, f"extpar_{i+1}")
+        os.makedirs(extpar_dir, exist_ok=True)
+        # Copy config.json to extpar directory
+        shutil.copy(config_path, os.path.join(extpar_dir, 'config.json'))
+
+    icontools_dir = os.path.join(workspace, 'icontools')
+    os.makedirs(icontools_dir, exist_ok=True)
 
     write_gridgen_namelist(config, icontools_dir)
 
