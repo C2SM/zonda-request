@@ -12,7 +12,7 @@ def copy_files(src_pattern, dest_dir, prefix=""):
 
 def copy_extpar(workspace, dest):
     i = 1
-    for domain in glob.glob(os.path.join(workspace, 'extpar_*')):
+    for domain in sorted(glob.glob(os.path.join(workspace, 'extpar_*'))):
         # Copy logfiles
         copy_files(os.path.join(domain, "*.log"), os.path.join(dest,'logs'), f"DOM_{i}_")
         # Copy external parameter file
