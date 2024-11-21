@@ -20,7 +20,7 @@ pipeline {
         stage('Create Hash from Build ID') {
             steps {
                 sh """
-                python3 src/hash.py --build-id ${BUILD_ID} --hash-file ${WORKSPACE}/hash.txt
+                python3 src/hash.py --hash-file ${WORKSPACE}/hash.txt
                 """
             }
         }
