@@ -4,37 +4,36 @@ import shutil
 import glob
 import zipfile
 
-def copy_files(src_pattern, dest_dir, prefix=""):
+def move_files(src_pattern, dest_dir, prefix=""):
     for file in glob.glob(src_pattern):
         dest_file = os.path.join(dest_dir, prefix + os.path.basename(file))
-        print(f"Copying {file} to {dest_file}")
-        shutil.copy(file, dest_file)
+        print(f"Moving {file} to {dest_file}")
+        shutil.move(file, dest_file)
 
-def copy_extpar(workspace, dest):
+def move_extpar(workspace, dest):
     i = 1
     for domain in sorted(glob.glob(os.path.join(workspace, 'extpar_*'))):
-        # Copy logfiles
-        copy_files(os.path.join(domain, "*.log"), os.path.join(dest,'logs'), f"DOM_{i}_")
-        # Copy external parameter file
-        copy_files(os.path.join(domain, "external_parameter*.nc"), dest, f"DOM_{i}_")
+        # Move logfiles
+        move_files(os.path.join(domain, "*.log"), os.path.join(dest, 'logs'), f"DOM_{i}_")
+        # Move external parameter file
+        move_files(os.path.join(domain, "external_parameter*.nc"), dest, f"DOM_{i}_")
         i += 1
 
-        
-def copy_icontools(workspace, dest):
-    # Copy .nc files
-    copy_files(os.path.join(workspace, 'icontools', '*.nc'), os.path.join(dest))
-     # Copy .html files
-    copy_files(os.path.join(workspace, 'icontools', '*.html'), dest)
+def move_icontools(workspace, dest):
+    # Move .nc files
+    move_files(os.path.join(workspace, 'icontools', '*.nc'), os.path.join(dest))
+    # Move .html files
+    move_files(os.path.join(workspace, 'icontools', '*.html'), dest)
 
-def copy_zip(destination, zip_file, hash):
+def move_zip(destination, zip_file, hash):
     folder = os.path.join(destination, hash)
     # Create the directory
     os.makedirs(folder, exist_ok=True)
     print(f"Created directory {folder}")
 
-    # Copy the zip file to the directory
-    shutil.copy(zip_file, folder)
-    print(f"Copied {zip_file} to {folder}")
+    # Move the zip file to the directory
+    shutil.move(zip_file, folder)
+    print(f"Moved {zip_file} to {folder}")
 
 def create_zip(zip_file_path, source_dir):
     with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -57,17 +56,25 @@ def main():
     args = parser.parse_args()
 
     with open(args.hash_file, 'r') as f:
-        hash = f.read()
+        hash = f.read().strip()
 
-    # Copy icontools and extpar files to the output directory
     output_dir = os.path.join(args.workspace, 'output')
-    copy_icontools(args.workspace, output_dir)
-    copy_extpar(args.workspace, output_dir)
+
+    # Ensure the output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Move extpar files
+    move_extpar(args.workspace, output_dir)
+
+    # Move icontools files
+    move_icontools(args.workspace, output_dir)
 
     # Create a zip file
-    zip_file = os.path.join(args.workspace, 'output.zip')
-    create_zip(zip_file, output_dir)
-    copy_zip(args.destination, zip_file, hash)
+    zip_file_path = os.path.join(args.workspace, 'output.zip')
+    create_zip(zip_file_path, output_dir)
 
-if __name__ == '__main__':
+    # Move the zip file to the destination
+    move_zip(args.destination, zip_file_path, hash)
+
+if __name__ == "__main__":
     main()
