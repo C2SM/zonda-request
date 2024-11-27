@@ -10,13 +10,14 @@ def move_files(src_pattern, dest_dir, prefix=""):
         print(f"Moving {file} to {dest_file}")
         shutil.move(file, dest_file)
 
-def move_extpar(workspace, dest):
+def move_extpar(workspace, dest, is_success):
     i = 1
     for domain in sorted(glob.glob(os.path.join(workspace, 'extpar_*'))):
         # Move logfiles
         move_files(os.path.join(domain, "*.log"), os.path.join(dest, 'logs'), f"DOM_{i}_")
         # Move external parameter file
-        move_files(os.path.join(domain, "external_parameter*.nc"), dest, f"DOM_{i}_")
+        if is_success:
+            move_files(os.path.join(domain, "external_parameter.nc"), dest, f"DOM_{i}_")
         i += 1
 
 def move_icontools(workspace, dest):
@@ -51,6 +52,8 @@ def main():
     parser.add_argument('--destination', type=str, required=True, help='The destination folder to store the zip file')
     parser.add_argument('--hash-file', type=str, required=True, help='Hash file')
     parser.add_argument('--workspace', type=str, required=True, help='The workspace folder')
+    parser.add_argument('--sucess', action='store_true', help='If the simulation was successful, archive nc and html files')
+
 
     # Parse the arguments
     args = parser.parse_args()
@@ -64,10 +67,11 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
 
     # Move extpar files
-    move_extpar(args.workspace, output_dir)
+    move_extpar(args.workspace, output_dir, args.sucess)
 
     # Move icontools files
-    move_icontools(args.workspace, output_dir)
+    if args.sucess:
+        move_icontools(args.workspace, output_dir)
 
     # Create a zip file
     zip_file_path = os.path.join(args.workspace, 'output.zip')
