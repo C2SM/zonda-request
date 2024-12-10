@@ -9,7 +9,6 @@ MAX_AGE=$((MAX_DAYS * 24 * 60 * 60))
 BRANCHES=$(git branch -r | grep "$PATTERN" | sed 's/origin\///')
 
 for BRANCH in $BRANCHES; do
-    echo "branch $BRANCH"
     # Get the last commit date of the branch
     LAST_COMMIT_DATE=$(git log -1 --format=%ct origin/$BRANCH)
     AGE=$((NOW - LAST_COMMIT_DATE))
