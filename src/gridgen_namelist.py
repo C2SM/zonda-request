@@ -29,7 +29,7 @@ def write_gridgen_namelist(config,wrk_dir):
     namelist.append(f"  basegrid%icorotation = {config.get('icorotation', 0.0)}")
 
     # tuning parameters
-    namelist.append(f"  lspring_dynamics = .{str(config.get('lspring_dynamics',False)).upper()}.")
+    namelist.append(f"  lspring_dynamics = .{str(config.get('lspring_dynamics',True)).upper()}.")
     namelist.append(f"  maxit = {config.get('maxit', 500)}")
     namelist.append(f"  beta_spring = {config.get('beta_spring', 0.9)}")
     namelist.append("")
