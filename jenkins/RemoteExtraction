@@ -17,13 +17,6 @@ pipeline {
                 """
             }
         }
-        stage('Create Hash from Build ID') {
-            steps {
-                sh """
-                python3 src/hash.py --hash-file ${WORKSPACE}/hash.txt
-                """
-            }
-        }
         stage('Validate User Input') {
             steps {
                 withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
@@ -35,27 +28,17 @@ pipeline {
                 }
             }
         }
-        stage('Prepare workspace') {
+        stage('Create Hash from Build ID') {
             steps {
                 sh """
-                python3 src/gridgen_namelist.py --config config.json --workspace ${WORKSPACE}
+                python3 src/hash.py --hash-file ${WORKSPACE}/hash.txt
                 """
             }
         }
-        stage('Generate ICON grid') {
+        stage('Run GridExtpar') {
             steps {
-                sh """ 
-                cd ${WORKSPACE}/icontools
-                podman run  -w /work -u 0 -v ${WORKSPACE}/icontools:/work -t icontools /home/dwd/icontools/icongridgen --nml /work/nml_gridgen
-
-
-                """
-            }
-        }
-        stage('Generate external parameters') {
-            steps {
-                sh """ 
-                ./src/run_extpar.sh
+                sh """
+                python3 src/GridExtpar.py --config config.json --workspace ${WORKSPACE} --logfile ${WORKSPACE}/output/logs/gridextpar.log
                 """
             }
         }

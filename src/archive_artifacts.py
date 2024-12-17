@@ -2,29 +2,6 @@ import os
 import argparse
 import shutil
 import glob
-import zipfile
-
-def move_files(src_pattern, dest_dir, prefix=""):
-    for file in glob.glob(src_pattern):
-        dest_file = os.path.join(dest_dir, prefix + os.path.basename(file))
-        print(f"Moving {file} to {dest_file}")
-        shutil.move(file, dest_file)
-
-def move_extpar(workspace, dest, is_success):
-    i = 1
-    for domain in sorted(glob.glob(os.path.join(workspace, 'extpar_*'))):
-        # Move logfiles
-        move_files(os.path.join(domain, "*.log"), os.path.join(dest, 'logs'), f"DOM_{i}_")
-        # Move external parameter file
-        if is_success:
-            move_files(os.path.join(domain, "external_parameter.nc"), dest, f"DOM_{i}_")
-        i += 1
-
-def move_icontools(workspace, dest):
-    # Move .nc files
-    move_files(os.path.join(workspace, 'icontools', '*.nc'), os.path.join(dest))
-    # Move .html files
-    move_files(os.path.join(workspace, 'icontools', '*.html'), dest)
 
 def move_zip(destination, zip_file, hash):
     folder = os.path.join(destination, hash)
@@ -36,13 +13,17 @@ def move_zip(destination, zip_file, hash):
     shutil.move(zip_file, folder)
     print(f"Moved {zip_file} to {folder}")
 
-def create_zip(zip_file_path, source_dir):
-    with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(source_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, source_dir)
-                zipf.write(file_path, arcname)
+def move_logs(source_dir, destination, hash):
+    folder = os.path.join(destination, hash)
+    # Create the directory
+    os.makedirs(folder, exist_ok=True)
+    print(f"Created directory {folder}")
+
+    # Move the logs
+    for file in glob.glob(os.path.join(source_dir, '**/*.log')):
+        dest_file = os.path.join(folder, os.path.basename(file))
+        shutil.move(file, dest_file)
+        print(f"Moved {file} to {dest_file}")
 
 def main():
     # Create the parser
@@ -52,8 +33,7 @@ def main():
     parser.add_argument('--destination', type=str, required=True, help='The destination folder to store the zip file')
     parser.add_argument('--hash-file', type=str, required=True, help='Hash file')
     parser.add_argument('--workspace', type=str, required=True, help='The workspace folder')
-    parser.add_argument('--sucess', action='store_true', help='If the simulation was successful, archive nc and html files')
-
+    parser.add_argument('--sucess', action='store_true', help='If the job was successful')
 
     # Parse the arguments
     args = parser.parse_args()
@@ -66,19 +46,11 @@ def main():
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
-    # Move extpar files
-    move_extpar(args.workspace, output_dir, args.sucess)
-
-    # Move icontools files
-    if args.sucess:
-        move_icontools(args.workspace, output_dir)
-
-    # Create a zip file
-    zip_file_path = os.path.join(args.workspace, 'output.zip')
-    create_zip(zip_file_path, output_dir)
-
     # Move the zip file to the destination
-    move_zip(args.destination, zip_file_path, hash)
+    if args.sucess:
+        move_zip(args.destination, os.path.join(args.workspace, 'output.zip'), hash)
+    else:
+        move_logs(output_dir, args.destination, hash)
 
 if __name__ == "__main__":
     main()
