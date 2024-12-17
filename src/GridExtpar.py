@@ -16,7 +16,7 @@ def move_files(src_pattern, dest_dir, prefix=""):
 def move_extpar(dest, grid_files, extpar_dirs):
     for i, exptar_dir in enumerate(extpar_dirs):
         # Move logfiles
-        move_files(os.path.join(exptar_dir, "*.log"), os.path.join(dest, 'logs'), f"DOM{(i+1):02d}_")
+        move_files(os.path.join(exptar_dir, "*.log"), os.path.join(dest, 'logs'), f"{dom_id_to_str(i)}_")
         # Move external parameter file
         grid_file_base = os.path.splitext(grid_files[i])[0]  # Drop the suffix ".nc"
         move_files(os.path.join(exptar_dir, "external_parameter.nc"), dest, f"{grid_file_base}_")
@@ -63,9 +63,9 @@ def move_output(workspace, grid_files, extpar_dirs):
 def run_extpar(workspace, config_path, grid_files):
     extpar_dirs = []
     for i, grid_file in enumerate(grid_files):
-        extpar_dir = os.path.join(workspace, f"extpar_DOM_{(i+1):02d}")
+        extpar_dir = os.path.join(workspace, f"extpar_{dom_id_to_str(i)}")
         os.makedirs(extpar_dir, exist_ok=True)
-        logging.info(f"Extpar domain {i + 1}: {extpar_dir}")
+        logging.info(f"Processing in {extpar_dir}")
         shutil.copy(config_path, os.path.join(extpar_dir, 'config.json'))
         os.chdir(extpar_dir)
         
@@ -205,7 +205,7 @@ def write_gridgen_namelist(config, wrk_dir):
             namelist.append(f"  dom({i+1})%pole_lat = {domain.get('pole_lat', 90.0)}")
             namelist.append("")
         
-        grid_files.append(f"{config.get('outfile')}_DOM{(i+1):02d}.nc")
+        grid_files.append(f"{config.get('outfile')}_{dom_id_to_str(i)}.nc")
 
     namelist.append("/")
     namelist.append("")
@@ -218,12 +218,10 @@ def write_gridgen_namelist(config, wrk_dir):
 
     return grid_files
 
-def main(workspace, config_path):
-    logging.info(f"Starting main process with workspace: {workspace} and config_path: {config_path}")
-    
-    # Load config and write namelist
-    config = load_config(config_path)
-    config = config['icontools']
+def dom_id_to_str(dom_id):
+    return f"DOM{dom_id+1:02d}"
+
+def run_icontools(workspace, config):
 
     logging.info(f"Number of domains: {len(config['domains'])}")
 
@@ -235,9 +233,21 @@ def main(workspace, config_path):
 
     run_gridgen(icontools_dir)
 
+    return grid_files
+
+def main(workspace, config_path):
+    logging.info(f"Starting main process with workspace: {workspace} and config_path: {config_path}")
+    
+    # Load config and write namelist
+    config = load_config(config_path)
+
+    grid_files = run_icontools(workspace, config['icontools'])
+
     extpar_dirs = run_extpar(workspace, config_path, grid_files)
     
     move_output(workspace, grid_files, extpar_dirs)
+
+    logging.info("Process completed")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup workspace and generate namelist")
