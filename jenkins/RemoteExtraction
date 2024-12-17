@@ -35,27 +35,10 @@ pipeline {
                 }
             }
         }
-        stage('Prepare workspace') {
+        stage('Run GridExtpar') {
             steps {
                 sh """
-                python3 src/gridgen_namelist.py --config config.json --workspace ${WORKSPACE}
-                """
-            }
-        }
-        stage('Generate ICON grid') {
-            steps {
-                sh """ 
-                cd ${WORKSPACE}/icontools
-                podman run  -w /work -u 0 -v ${WORKSPACE}/icontools:/work -t icontools /home/dwd/icontools/icongridgen --nml /work/nml_gridgen
-
-
-                """
-            }
-        }
-        stage('Generate external parameters') {
-            steps {
-                sh """ 
-                ./src/run_extpar.sh
+                python3 src/GridExtpar.py --config config.json --workspace ${WORKSPACE}
                 """
             }
         }
