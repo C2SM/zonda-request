@@ -243,12 +243,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup workspace and generate namelist")
     parser.add_argument('--workspace', type=str, required=True, help="Path to the workspace directory")
     parser.add_argument('--config', type=str, required=True, help="Path to the configuration file")
+    parser.add_argument('--logfile', type=str, help="Path to the log file")
 
     args = parser.parse_args()
 
     # setup logger
     format = "%(asctime)s - %(levelname)s - %(message)s"
-    logging.basicConfig(format=format, level=logging.INFO)
+    if args.logfile:
+        logging.basicConfig(filename=args.logfile, format=format, level=logging.INFO)
+    else:
+        logging.basicConfig(format=format, level=logging.INFO)
+
     workspace = os.path.abspath(args.workspace)
     config = os.path.abspath(args.config)
 
