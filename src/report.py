@@ -45,7 +45,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     repo = GitHubRepo(group='c2sm',
-                      repo='extpar-request',
+                      repo='zonda-request',
                       auth_token=args.auth_token)
 
     with open(args.hash_file, 'r') as f:
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     with open(args.issue_id_file, 'r') as f:
         issue_id = f.read()
 
-    url = f'https://data.iac.ethz.ch/extpar-request/{hash}'
+    url = f'https://data.iac.ethz.ch/zonda-request/{hash}'
 
     fail =f"Something went wrong. Please check the [logfiles]({url}) for more information."
     abort = f"Your request has been aborted. Please check the [logfiles]({url}) for more information."

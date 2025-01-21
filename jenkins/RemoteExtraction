@@ -1,4 +1,4 @@
-def https_public_root = '/net/co2/c2sm-services/extpar-request/'
+def https_public_root = '/net/co2/c2sm-services/zonda-request/'
 
 pipeline {
     agent {

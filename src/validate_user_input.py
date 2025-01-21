@@ -30,7 +30,7 @@ if __name__ == "__main__":
         issue_id = f.read()
 
     repo = GitHubRepo(group='c2sm',
-                      repo='extpar-request',
+                      repo='zonda-request',
                       auth_token=args.auth_token)
 
     comment = validate_user_input(repo.get_issue(issue_id)).replace('\\r\\n', ' ').replace('\\', '')
