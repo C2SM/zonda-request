@@ -54,7 +54,7 @@ if __name__ == "__main__":
     with open(args.issue_id_file, 'r') as f:
         issue_id = f.read()
 
-    url = f'https://data.iac.ethz.ch/zonda-request/{hash}'
+    url = f'https://data.iac.ethz.ch/zonda/{hash}'
 
     fail =f"Something went wrong. Please check the [logfiles]({url}) for more information."
     abort = f"Your request has been aborted. Please check the [logfiles]({url}) for more information."
