@@ -155,7 +155,7 @@ def load_config(config_file):
 def write_gridgen_namelist(config, wrk_dir):
     logging.info("Writing gridgen namelist")
     # Set default values
-    parent_id = ",".join(map(str, range(len(config["domains"]))))
+    parent_id = config["parent_id"] if "parent_id" in config else ",".join(map(str, range(len(config["domains"]))))
     initial_refinement = True
 
     # Create the namelist content
