@@ -1,0 +1,17 @@
+name: myenv
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+    - argparse
+    - requests
+    - shutil
+    - glob
+    - json
+    - logging
+    - subprocess
+    - zipfile
+    - time
+    - re
