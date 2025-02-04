@@ -7,7 +7,7 @@ pipeline {
         }
     }
     options {
-    timeout(time: 6, unit: 'HOURS')
+        timeout(time: 6, unit: 'HOURS')
     }
     stages {
         stage('Create archive') {
@@ -17,10 +17,22 @@ pipeline {
                 """
             }
         }
+        stage('Setup Miniconda Environment') {
+            steps {
+                sh """
+                wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+                bash miniconda.sh -b -p ${WORKSPACE}/miniconda
+                source ${WORKSPACE}/miniconda/bin/activate
+                conda env create -f environment.yml
+                echo "source ${WORKSPACE}/miniconda/bin/activate myenv" >> ${WORKSPACE}/activate_conda.sh
+                """
+            }
+        }
         stage('Create Hash from Build ID') {
             steps {
                 sh """
-                python3 src/hash.py --hash-file ${WORKSPACE}/hash.txt
+                source ${WORKSPACE}/activate_conda.sh
+                python src/hash.py --hash-file ${WORKSPACE}/hash.txt
                 """
             }
         }
@@ -28,7 +40,8 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
                     sh """
-                    python3 src/validate_user_input.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt ||
+                    source ${WORKSPACE}/activate_conda.sh
+                    python src/validate_user_input.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt ||
                     (echo "The request you submitted is not valid! \n Please check for typos or wrong format of JSON" > ${WORKSPACE}/output/logs/pipeline.log &&
                     exit 1)
                     """
@@ -38,30 +51,34 @@ pipeline {
         stage('Run GridExtpar') {
             steps {
                 sh """
-                python3 src/GridExtpar.py --config config.json --workspace ${WORKSPACE} --logfile ${WORKSPACE}/output/logs/gridextpar.log
+                source ${WORKSPACE}/activate_conda.sh
+                python src/GridExtpar.py --config config.json --workspace ${WORKSPACE} --logfile ${WORKSPACE}/output/logs/gridextpar.log
                 """
             }
         }
     }
     post {
         success {
-            sh "python3 src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt --sucess"
+            sh "source ${WORKSPACE}/activate_conda.sh"
+            sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt --sucess"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                sh "python3 src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt"
+                sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt"
             }
             deleteDir()
         }
         failure {
-            sh "python3 src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
+            sh "source ${WORKSPACE}/activate_conda.sh"
+            sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                sh "python3 src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --failure"
+                sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --failure"
             }
             deleteDir()
         }
         aborted {
-            sh "python3 src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
+            sh "source ${WORKSPACE}/activate_conda.sh"
+            sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                sh "python3 src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --abort"
+                sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --abort"
             }
             deleteDir()
         }
