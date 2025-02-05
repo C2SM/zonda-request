@@ -33,6 +33,6 @@ if __name__ == "__main__":
                       repo='zonda-request',
                       auth_token=args.auth_token)
 
-    comment = validate_user_input(repo.get_issue(issue_id)).replace('\\r\\n', ' ').replace('\\', '')
+    comment = args.comment_body.replace('\\n', '\n').replace('\\r', '\r').replace('\\"', '"').replace('\\\\', '\\').replace('submit request', '').strip()
 
     convert_to_json(comment)
