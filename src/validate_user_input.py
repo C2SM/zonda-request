@@ -8,12 +8,14 @@ def validate_user_input(comment_body):
     match = re.search(r'```json(.*?)```', comment_body, re.DOTALL)
     if match:
         json_content = match.group(1).strip()
+        print(json_content)
         return json_content
     raise ValueError('No JSON content found in the comment body')
 
 def convert_to_json(comment_body):
     # Convert the dictionary back to a JSON string
     json_str = json.dumps(json.loads(comment_body), indent=4)
+    print(json_str)
 
     # Write the JSON string to a file
     with open('config.json', 'w') as f:
