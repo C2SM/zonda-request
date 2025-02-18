@@ -235,8 +235,10 @@ def run_icontools(workspace, config):
 
     return grid_files
 
-def pull_extpar_image(tag):
+def pull_extpar_image(config):
+    tag = config['extpar_tag']
     shell_cmd("podman", "pull", f"docker.io/c2sm/extpar:{tag}")
+    return tag
 
 def main(workspace, config_path):
     logging.info(f"Starting main process with workspace: {workspace} and config_path: {config_path}")
@@ -246,9 +248,10 @@ def main(workspace, config_path):
 
     grid_files = run_icontools(workspace, config['icontools'])
 
-    pull_extpar_image(config['zonda']['extpar_tag'])
 
-    extpar_dirs = run_extpar(workspace, config_path, grid_files)
+    extpar_tag = pull_extpar_image(config['zonda'])
+
+    extpar_dirs = run_extpar(workspace, config_path, grid_files, extpar_tag)
     
     move_output(workspace, grid_files, extpar_dirs)
 
