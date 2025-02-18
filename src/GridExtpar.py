@@ -60,7 +60,7 @@ def move_output(workspace, grid_files, extpar_dirs):
     
     create_zip(zip_file_path, output_dir)
 
-def run_extpar(workspace, config_path, grid_files):
+def run_extpar(workspace, config_path, grid_files, extpar_tag):
     extpar_dirs = []
     for i, grid_file in enumerate(grid_files):
         extpar_dir = os.path.join(workspace, f"extpar_{dom_id_to_str(i)}")
@@ -75,7 +75,7 @@ def run_extpar(workspace, config_path, grid_files):
             "-v", "/c2sm-data/extpar-input-data:/data",
             "-v", f"{workspace}/icontools:/grid",
             "-v", f"{extpar_dir}:/work",
-            "extpar-image",
+            f"extpar:{extpar_tag}",
             "python3", "-m", "extpar.WrapExtpar",
             "--run-dir", "/work",
             "--raw-data-path", "/data/linked_data",
@@ -235,6 +235,9 @@ def run_icontools(workspace, config):
 
     return grid_files
 
+def pull_extpar_image(tag):
+    shell_cmd("podman", "pull", f"docker.io/c2sm/extpar:{tag}")
+
 def main(workspace, config_path):
     logging.info(f"Starting main process with workspace: {workspace} and config_path: {config_path}")
     
@@ -242,6 +245,8 @@ def main(workspace, config_path):
     config = load_config(config_path)
 
     grid_files = run_icontools(workspace, config['icontools'])
+
+    pull_extpar_image(config['zonda']['extpar_tag'])
 
     extpar_dirs = run_extpar(workspace, config_path, grid_files)
     
