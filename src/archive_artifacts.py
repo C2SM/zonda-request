@@ -33,7 +33,7 @@ def main():
     parser.add_argument('--destination', type=str, required=True, help='The destination folder to store the zip file')
     parser.add_argument('--hash-file', type=str, required=True, help='Hash file')
     parser.add_argument('--workspace', type=str, required=True, help='The workspace folder')
-    parser.add_argument('--sucess', action='store_true', help='If the job was successful')
+    parser.add_argument('--success', action='store_true', help='If the job was successful')
 
     # Parse the arguments
     args = parser.parse_args()
