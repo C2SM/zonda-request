@@ -7,28 +7,28 @@ pipeline {
         }
     }
     options {
-        timeout(time: 6, unit: 'HOURS')
+        timeout(time: 1, unit: 'HOURS')
     }
     stages {
         stage('Matrix') {
             matrix {
                 axes {
                     axis {
-                        name 'VARIANT'
-                        values '127', '128', '129' // Add more variants as needed
+                        name 'ISSUE_ID'
+                        values '127', '128', '129' 
                     }
                 }
                 agent {
                     node {
                         label 'co2'
-                        customWorkspace "${WORKSPACE}/${VARIANT}"
+                        customWorkspace "${WORKSPACE}/${ISSUE_ID}"
                     }
                 }
                 stages {
                     stage('Create issue.txt') {
                         steps {
                             sh """
-                            echo ${VARIANT} > ${WORKSPACE}/issue.txt
+                            echo ${ISSUE_ID} > ${WORKSPACE}/issue.txt
                             """
                         }
                     }
