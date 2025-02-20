@@ -1,0 +1,111 @@
+def https_public_root = '/net/co2/c2sm-services/zonda-request/'
+
+pipeline {
+    agent {
+        node {
+            label 'co2'
+        }
+    }
+    options {
+        timeout(time: 1, unit: 'HOURS')
+    }
+    stages {
+        stage('Matrix') {
+            matrix {
+                axes {
+                    axis {
+                        name 'ISSUE_ID'
+                        values '127', '128', '129' , '131'
+                    }
+                }
+                agent {
+                    node {
+                        label 'co2'
+                        customWorkspace "${WORKSPACE}/${ISSUE_ID}"
+                    }
+                }
+                stages {
+                    stage('Create issue.txt') {
+                        steps {
+                            sh """
+                            echo ${ISSUE_ID} > ${WORKSPACE}/issue.txt
+                            """
+                        }
+                    }
+                    stage('Create archive') {
+                        steps {
+                            sh """
+                            mkdir -p ${WORKSPACE}/output/logs
+                            """
+                        }
+                    }
+                    stage('Setup Conda Environment') {
+                        steps {
+                            sh """
+                            wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh
+                            bash miniforge.sh -b -p ${WORKSPACE}/miniforge
+                            source ${WORKSPACE}/miniforge/bin/activate
+                            conda env create -f environment.yml
+                            echo "source ${WORKSPACE}/miniforge/bin/activate myenv" >> ${WORKSPACE}/activate_conda.sh
+                            """
+                        }
+                    }
+                    stage('Create Hash from Build ID') {
+                        steps {
+                            sh """
+                            source ${WORKSPACE}/activate_conda.sh
+                            python src/hash.py --hash-file ${WORKSPACE}/hash.txt
+                            """
+                        }
+                    }
+                    stage('Validate User Input') {
+                        steps {
+                            withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
+                                sh """
+                                source ${WORKSPACE}/activate_conda.sh
+                                python src/validate_user_input.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt ||
+                                (echo "The request you submitted is not valid! \n Please check for typos or wrong format of JSON" > ${WORKSPACE}/output/logs/pipeline.log &&
+                                exit 1)
+                                """
+                            }
+                        }
+                    }
+                    stage('Run GridExtpar') {
+                        steps {
+                            sh """
+                            source ${WORKSPACE}/activate_conda.sh
+                            python src/GridExtpar.py --config config.json --workspace ${WORKSPACE} --logfile ${WORKSPACE}/output/logs/gridextpar.log
+                            """
+                        }
+                    }
+                }
+                post {
+                    success {
+                        sh "source ${WORKSPACE}/activate_conda.sh"
+                        sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt --success"
+                        withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
+                            sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt"
+                        }
+                        deleteDir()
+                    }
+                    failure {
+                        sh "source ${WORKSPACE}/activate_conda.sh"
+                        sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
+                        withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
+                            sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --failure"
+                        }
+                        deleteDir()
+                    }
+                    aborted {
+                        sh "source ${WORKSPACE}/activate_conda.sh"
+                        sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
+                        withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
+                            sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --abort"
+                        }
+                        deleteDir()
+                    }
+                }
+            }
+        }
+    }
+}
