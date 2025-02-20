@@ -92,7 +92,7 @@ def run_extpar(workspace, config_path, grid_files):
     return extpar_dirs
 
 def run_gridgen(wrk_dir):
-    shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{wrk_dir}:/work", "-t", "icontools", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
+    shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{wrk_dir}:/work", "-t", "registry.gitlab.dkrz.de/dwd-sw/dwd_icon_tools/execute:latest-master", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
     logging.info("Gridgen completed")
 
 
