@@ -238,6 +238,7 @@ def run_icontools(workspace, config):
 def pull_extpar_image(config):
     tag = config['extpar_tag']
     shell_cmd("podman", "pull", f"docker.io/c2sm/extpar:{tag}")
+    logging.info("Pull extpar image completed")
     return tag
 
 def main(workspace, config_path):
