@@ -19,7 +19,10 @@ pipeline {
                     }
                 }
                 agent {
-                    customWorkspace "${WORKSPACE}/${VARIANT}"
+                    node {
+                        label 'co2'
+                        customWorkspace "${WORKSPACE}/${VARIANT}"
+                    }
                 }
                 stages {
                     stage('Create issue.txt') {
