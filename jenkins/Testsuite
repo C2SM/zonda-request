@@ -18,6 +18,9 @@ pipeline {
                         values '127', '128', '129' // Add more variants as needed
                     }
                 }
+                agent {
+                    customWorkspace "${WORKSPACE}/${VARIANT}"
+                }
                 stages {
                     stage('Create issue.txt') {
                         steps {
