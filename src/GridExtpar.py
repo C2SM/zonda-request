@@ -13,6 +13,7 @@ def move_files(src_pattern, dest_dir, prefix=""):
         logging.info(f"Move {file} to {dest_file}")
         shutil.move(file, dest_file)
 
+
 def move_extpar(dest, grid_files, extpar_dirs):
     for i, exptar_dir in enumerate(extpar_dirs):
         # Move logfiles
