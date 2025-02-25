@@ -24,7 +24,7 @@ pipeline {
         stage('Delete all unused images') {
             steps {
                 sh '''
-                podman image prune -f -a
+                podman image prune -f
                 '''
             }
         }
