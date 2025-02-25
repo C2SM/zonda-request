@@ -17,14 +17,14 @@ pipeline {
         stage('Delete all non-running containers') {
             steps {
                 sh '''
-                podman container prune
+                podman container prune -f
                 '''
             }
         }
         stage('Delete all unused images') {
             steps {
                 sh '''
-                podman rmi $(podman images -q --filter "dangling=true")
+                podman rmi - f $(podman images -q --filter "dangling=true")
                 '''
             }
         }
