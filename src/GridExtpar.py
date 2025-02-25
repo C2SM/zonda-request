@@ -7,8 +7,11 @@ import subprocess
 import glob
 import zipfile
 
-def move_files(src_pattern, dest_dir, prefix=""):
+def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
     for file in glob.glob(src_pattern):
+        if os.path.basename(file) in blacklist:
+            logging.info(f"Skipping {file}")
+            continue
         dest_file = os.path.join(dest_dir, prefix + os.path.basename(file))
         logging.info(f"Move {file} to {dest_file}")
         shutil.move(file, dest_file)
@@ -23,10 +26,12 @@ def move_extpar(dest, grid_files, extpar_dirs):
         move_files(os.path.join(exptar_dir, "external_parameter.nc"), dest, f"{grid_file_base}_")
 
 def move_icontools(workspace, dest):
+    # too big for high-res grids
+    blacklist = {'base_grid.nc', 'base_grid.html'}
     # Move .nc files
-    move_files(os.path.join(workspace, 'icontools', '*.nc'), os.path.join(dest))
+    move_files(os.path.join(workspace, 'icontools', '*.nc'), os.path.join(dest), blacklist=blacklist)
     # Move .html files
-    move_files(os.path.join(workspace, 'icontools', '*.html'), dest)
+    move_files(os.path.join(workspace, 'icontools', '*.html'), dest, blacklist=blacklist)
 
 
 def create_zip(zip_file_path, source_dir):
