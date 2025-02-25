@@ -17,7 +17,7 @@ pipeline {
         stage('Delete all non-running containers') {
             steps {
                 sh '''
-                podman rm $(podman ps -a -q)
+                podman container prune
                 '''
             }
         }
