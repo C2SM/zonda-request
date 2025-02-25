@@ -14,8 +14,6 @@ pipeline {
                 """
             }
         }
-    }
-    stages {
         stage('Delete all non-running containers') {
             steps {
                 sh """
@@ -23,8 +21,6 @@ pipeline {
                 """
             }
         }
-    }
-    stages {
         stage('Delete all unused images') {
             steps {
                 sh """
