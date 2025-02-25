@@ -24,7 +24,7 @@ pipeline {
         stage('Delete all unused images') {
             steps {
                 sh '''
-                podman rmi -f $(podman images -q --filter "dangling=true")
+                podman image prune -f -a
                 '''
             }
         }
