@@ -15,6 +15,24 @@ pipeline {
             }
         }
     }
+    stages {
+        stage('Delete all non-running containers') {
+            steps {
+                sh """
+                podman rm $(podman ps -a -q) 
+                """
+            }
+        }
+    }
+    stages {
+        stage('Delete all unused images') {
+            steps {
+                sh """
+                podman rmi $(podman images -q --filter "dangling=true")
+                """
+            }
+        }
+    }
     post {
         always {
             deleteDir()
