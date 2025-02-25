@@ -16,16 +16,16 @@ pipeline {
         }
         stage('Delete all non-running containers') {
             steps {
-                sh """
-                podman rm $(podman ps -a -q) 
-                """
+                sh '''
+                podman rm $(podman ps -a -q)
+                '''
             }
         }
         stage('Delete all unused images') {
             steps {
-                sh """
+                sh '''
                 podman rmi $(podman images -q --filter "dangling=true")
-                """
+                '''
             }
         }
     }
