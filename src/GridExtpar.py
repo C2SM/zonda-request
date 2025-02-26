@@ -27,7 +27,7 @@ def move_extpar(dest, grid_files, extpar_dirs):
 
 def move_icontools(workspace, dest, keep_base_grid):
     # too big for high-res grids
-    blacklist = {'base_grid.nc', 'base_grid.html'} if keep_base_grid else {}
+    blacklist = {} if keep_base_grid else {'base_grid.nc', 'base_grid.html'}
     # Move .nc files
     move_files(os.path.join(workspace, 'icontools', '*.nc'), os.path.join(dest), blacklist=blacklist)
     # Move .html files
