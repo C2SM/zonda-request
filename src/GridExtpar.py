@@ -25,9 +25,9 @@ def move_extpar(dest, grid_files, extpar_dirs):
         grid_file_base = os.path.splitext(grid_files[i])[0]  # Drop the suffix ".nc"
         move_files(os.path.join(exptar_dir, "external_parameter.nc"), dest, f"{grid_file_base}_")
 
-def move_icontools(workspace, dest):
+def move_icontools(workspace, dest, keep_base_grid):
     # too big for high-res grids
-    blacklist = {'base_grid.nc', 'base_grid.html'}
+    blacklist = {'base_grid.nc', 'base_grid.html'} if keep_base_grid else {}
     # Move .nc files
     move_files(os.path.join(workspace, 'icontools', '*.nc'), os.path.join(dest), blacklist=blacklist)
     # Move .html files
@@ -43,7 +43,7 @@ def create_zip(zip_file_path, source_dir):
                 arcname = os.path.relpath(file_path, source_dir)
                 zipf.write(file_path, arcname)
 
-def move_output(workspace, grid_files, extpar_dirs):
+def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
 
     output_dir = os.path.join(workspace, 'output')
     log_dir = os.path.join(output_dir, 'logs')
@@ -58,7 +58,7 @@ def move_output(workspace, grid_files, extpar_dirs):
     move_extpar(output_dir, grid_files, extpar_dirs)
 
     # Move icontools files
-    move_icontools(workspace, output_dir)
+    move_icontools(workspace, output_dir, keep_base_grid)
 
     # Create a zip file
     zip_file_path = os.path.join(workspace, 'output.zip')
@@ -260,7 +260,8 @@ def main(workspace, config_path):
 
     extpar_dirs = run_extpar(workspace, config_path, grid_files, extpar_tag)
     
-    move_output(workspace, grid_files, extpar_dirs)
+    keep_base_grid = config['zonda']['keep_base_grid']
+    move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
 
     logging.info("Process completed")
 
