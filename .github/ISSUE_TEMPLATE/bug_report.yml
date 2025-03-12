@@ -1,0 +1,33 @@
+name: "Bug Report"
+description: "Report a bug in the Zonda web interface or data processing"
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: bug_type
+    attributes:
+      label: "Where does the bug occur?"
+      options:
+        - "Web Interface"
+        - "Data Processing"
+      default: 0
+  - type: textarea
+    id: reproduce_steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Provide a step-by-step guide on how to reproduce the issue."
+      placeholder: "1. Go to '...'\n2. Click on '...'\n3. See error..."
+  - type: textarea
+    id: expected_result
+    attributes:
+      label: "Expected Behavior"
+      description: "Describe what you expected to happen."
+  - type: textarea
+    id: actual_result
+    attributes:
+      label: "Actual Behavior"
+      description: "Describe what actually happened."
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: "Additional Context"
+      description: "Any other relevant information, screenshots, or logs."

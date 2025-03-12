@@ -1,0 +1,27 @@
+name: "Feature Request"
+description: "Suggest a new feature for the Zonda web interface or data processing"
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: feature_type
+    attributes:
+      label: "Where should this feature be added?"
+      options:
+        - "Web Interface"
+        - "Data Processing"
+      default: 0
+  - type: textarea
+    id: feature_description
+    attributes:
+      label: "Feature Description"
+      description: "Describe the feature and how it should work."
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "Why is this feature needed?"
+      description: "Explain why this feature would be beneficial."
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: "Additional Context"
+      description: "Any additional information, mockups, or examples."
