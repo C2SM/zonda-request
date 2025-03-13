@@ -36,7 +36,7 @@ def move_icontools(workspace, dest, keep_base_grid):
 
 def create_zip(zip_file_path, source_dir):
     logging.info(f"Creating zip file {zip_file_path}")
-    with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_STORED) as zipf:
         for root, dirs, files in os.walk(source_dir):
             for file in files:
                 file_path = os.path.join(root, file)
