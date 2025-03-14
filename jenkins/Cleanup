@@ -3,7 +3,7 @@ def https_public_root = '/net/co2/c2sm-services/zonda-request/'
 pipeline {
     agent {
         node {
-            label 'co2'
+            label 'iacdipl-7'
         }
     }
     stages {
