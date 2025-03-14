@@ -20,7 +20,7 @@ pipeline {
                 }
                 agent {
                     node {
-                        label 'co2'
+                        label 'iacdipl-7'
                         customWorkspace "${WORKSPACE}/${ISSUE_ID}"
                     }
                 }
