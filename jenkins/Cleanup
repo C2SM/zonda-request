@@ -28,6 +28,13 @@ pipeline {
                 '''
             }
         }
+        stage('Delete all unused layers') {
+            steps {
+                sh '''
+                podman system prune -f
+                '''
+            }
+        }
     }
     post {
         always {
