@@ -16,7 +16,7 @@ labels: data request
 PASTE_YOUR_REQUEST_HERE
 ```
 
-3. Click on the "Preview" tab to verify that the JSON format of your request is correctly formatted and displayed within a code block.
+3. Click on the "Preview" tab (top left) to verify that the JSON format of your request is correctly formatted and displayed within a code block.
 
 4. Click on "Create" below to submit the data request.
 
