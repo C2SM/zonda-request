@@ -9,7 +9,7 @@ labels: data request
 
 ## Instructions
 
-1. Give this issue a meaningful title (e.g. including domain name, grid specifications, project etc.).
+1. Give this issue a meaningful title (e.g. including domain name, grid specifications, project, etc.).
 
 2. Replace `PASTE_YOUR_REQUEST_HERE` with your request that you copied to clipboard:
 ```json
