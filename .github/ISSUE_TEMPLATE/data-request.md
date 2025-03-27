@@ -9,16 +9,18 @@ labels: data request
 
 ## Instructions
 
-1. Give this issue a meaningful title.
+1. Give this issue a meaningful title (e.g. including domain name, grid specifications, project, etc.).
+
 2. Replace `PASTE_YOUR_REQUEST_HERE` with your request that you copied to clipboard:
 ```json
 PASTE_YOUR_REQUEST_HERE
 ```
-3. Click on "Preview" to verify that the JSON format of your request is correctly formatted and displayed within a code block.
-4. Click on "Submit new issue".
 
-Extpar Data Request will now process your data based on the request you provided here. Once the processing is successful, it will post a link in this issue. 
-The processed data will be available under that link for up to **7 days**.
+3. Click on the "Preview" tab (top left) to verify that the JSON format of your request is correctly formatted and displayed within a code block.
+
+4. Click on "Create" below to submit the data request.
+
+Zonda Request will now process your data based on your request. Once the processing is successful, it will post a link in the issue you have just created. The processed data will be available under that link for up to **7 days**.
 
 If you encounter any problems, please add the label ![Static Badge](https://img.shields.io/badge/help_wanted-orange) to the issue. Make sure you post all relevant information from the logfiles in the issue directly.
 
