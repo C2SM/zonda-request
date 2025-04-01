@@ -9,6 +9,9 @@ pipeline {
     options {
         timeout(time: 1, unit: 'HOURS')
     }
+    parameters {
+        booleanParam(name: 'DEBUG_MODE', defaultValue: false, description: 'Toggle debug mode on to always retain the workspace at the end of the pipeline.')
+    }
     stages {
         stage('Matrix') {
             matrix {
@@ -86,7 +89,6 @@ pipeline {
                         withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
                             sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt"
                         }
-                        deleteDir()
                     }
                     failure {
                         sh "source ${WORKSPACE}/activate_conda.sh"
@@ -94,7 +96,6 @@ pipeline {
                         withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
                             sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --failure"
                         }
-                        deleteDir()
                     }
                     aborted {
                         sh "source ${WORKSPACE}/activate_conda.sh"
@@ -102,7 +103,13 @@ pipeline {
                         withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
                             sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --abort"
                         }
-                        deleteDir()
+                    }
+                    cleanup {
+                        script {
+                            if (!params.DEBUG_MODE) {
+                                deleteDir()
+                            }
+                        }
                     }
                 }
             }
