@@ -7,6 +7,7 @@ pipeline {
         }
     }
     options {
+        skipDefaultCheckout()
         timeout(time: 1, unit: 'HOURS')
     }
     parameters {
@@ -28,6 +29,12 @@ pipeline {
                     }
                 }
                 stages {
+                    stage('Clean workspace before checkout') {
+                        steps {
+                            deleteDir()
+                            checkout scm
+                        }
+                    }
                     stage('Create issue.txt') {
                         steps {
                             sh """
