@@ -232,7 +232,7 @@ def write_gridgen_namelist(config, wrk_dir):
             namelist.append(f"  dom({i+1})%radius       = {icontools.get('radius',0.0)}")
             namelist.append("")
         
-        grid_files.append(f"{config.get('outfile')}_{dom_id_to_str(i)}.nc")
+        grid_files.append(f"{basegrid['outfile']}_{dom_id_to_str(i)}.nc")
 
     namelist.append("/")
     namelist.append("")
