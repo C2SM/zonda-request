@@ -68,13 +68,22 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
 
 def run_extpar(workspace, config_path, grid_files, extpar_tag):
     extpar_dirs = []
-    for i, grid_file in enumerate(grid_files):
+    config = load_config(config_path)
+
+    for i, domain in enumerate(config["domains"]):
         extpar_dir = os.path.join(workspace, f"extpar_{dom_id_to_str(i)}")
         os.makedirs(extpar_dir, exist_ok=True)
         logging.info(f"Processing in {extpar_dir}")
-        shutil.copy(config_path, os.path.join(extpar_dir, 'config.json'))
-        os.chdir(extpar_dir)
-        
+
+        # Extract the EXTPAR part of the domain and save it as a domain-specific config.json
+        domain_extpar_config = domain["extpar"]
+        domain_config_path = os.path.join(extpar_dir, 'config.json')
+        with open(domain_config_path, 'w') as f:
+            json.dump(domain_extpar_config, f, indent=4)
+        logging.info(f"Domain-specific config.json written to {domain_config_path}")
+
+        os.chdir(extpar_dir)        
+
         shell_cmd(
             "podman", "run",
             "-e", "OMP_NUM_THREADS=16",
@@ -88,7 +97,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
             "--account", "none",
             "--no-batch-job",
             "--host", "docker",
-            "--input-grid", f"/grid/{grid_file}",
+            "--input-grid", f"/grid/{grid_files[i]}",
             "--extpar-config", "/work/config.json")
 
         extpar_dirs.append(extpar_dir)
@@ -160,8 +169,11 @@ def load_config(config_file):
 
 def write_gridgen_namelist(config, wrk_dir):
     logging.info("Writing gridgen namelist")
+    basegrid = config["basegrid"]
+    domains = config["domains"]
+    
     # Set default values
-    parent_id = config["parent_id"] if "parent_id" in config else ",".join(map(str, range(len(config["domains"]))))
+    parent_id = ",".join(str(domain["icontools"]["parent_id"]) for domain in domains)
     initial_refinement = True
 
     # Create the namelist content
@@ -172,11 +184,12 @@ def write_gridgen_namelist(config, wrk_dir):
     namelist.append("")
 
     # base grid
-    namelist.append(f"  basegrid%grid_root   = {config.get('grid_root')}")
-    namelist.append(f"  basegrid%grid_level  = {config.get('grid_level')}")
-    namelist.append(f"  basegrid%icopole_lon = {config.get('icopole_lon', 0.0)}")
-    namelist.append(f"  basegrid%icopole_lat = {config.get('icopole_lat', 90)}")
-    namelist.append(f"  basegrid%icorotation = {config.get('icorotation', 0.0)}")
+    namelist.append(f"  basegrid%grid_root   = {basegrid['grid_root']}")
+    namelist.append(f"  basegrid%grid_level  = {basegrid['grid_level']}")
+    namelist.append(f"  basegrid%icopole_lon = {basegrid['icopole_lon']}")
+    namelist.append(f"  basegrid%icopole_lat = {basegrid['icopole_lat']}")
+    namelist.append(f"  basegrid%icorotation = {basegrid['icorotation']}")
+    namelist.append("")
 
     # tuning parameters
     namelist.append(f"  lspring_dynamics = .{str(config.get('lspring_dynamics',True)).upper()}.")
@@ -190,25 +203,33 @@ def write_gridgen_namelist(config, wrk_dir):
     namelist.append("")
 
     grid_files = []
-    for i, domain in enumerate(config["domains"]):
+    for i, domain in enumerate(domains):
+        icontools = domain["icontools"]
         lwrite_parent = i == 0
-        namelist.append(f"  dom({i+1})%outfile  = \"{config.get('outfile')}\" ")
-        namelist.append(f"  dom({i+1})%lwrite_parent = .{str(lwrite_parent).upper()}.")
-        namelist.append(f"  dom({i+1})%region_type  = {domain['region_type']}")
-        namelist.append(f"  dom({i+1})%number_of_grid_used    = {domain.get('number_of_grid_used',0)}")
+        namelist.append(f"  dom({i+1})%outfile             = \"{basegrid('outfile')}\" ")
+        namelist.append(f"  dom({i+1})%lwrite_parent       = .{str(lwrite_parent).upper()}.")
+        namelist.append(f"  dom({i+1})%region_type         = {icontools['region_type']}")
+        namelist.append(f"  dom({i+1})%number_of_grid_used = {icontools.get('number_of_grid_used',0)}")
         namelist.append("")
 
         # local domain
         if domain["region_type"] == 3:
-            namelist.append(f"  dom({i+1})%center_lon   = {domain.get('center_lon',0.0)}")
-            namelist.append(f"  dom({i+1})%center_lat   = {domain.get('center_lat',0.0)}")
-            namelist.append(f"  dom({i+1})%hwidth_lon   = {domain.get('hwidth_lon',0.0)}")
-            namelist.append(f"  dom({i+1})%hwidth_lat   = {domain.get('hwidth_lat',0.0)}")
+            namelist.append(f"  dom({i+1})%center_lon   = {icontools.get('center_lon',0.0)}")
+            namelist.append(f"  dom({i+1})%center_lat   = {icontools.get('center_lat',0.0)}")
+            namelist.append(f"  dom({i+1})%hwidth_lon   = {icontools.get('hwidth_lon',0.0)}")
+            namelist.append(f"  dom({i+1})%hwidth_lat   = {icontools.get('hwidth_lat',0.0)}")
             namelist.append("")
 
-            namelist.append(f"  dom({i+1})%lrotate      = .{str(domain.get('lrotate', True)).upper()}.")
-            namelist.append(f"  dom({i+1})%pole_lon = {domain.get('pole_lon',-180.0)}")
-            namelist.append(f"  dom({i+1})%pole_lat = {domain.get('pole_lat', 90.0)}")
+            namelist.append(f"  dom({i+1})%lrotate      = .{str(icontools.get('lrotate', True)).upper()}.")
+            namelist.append(f"  dom({i+1})%pole_lon     = {icontools.get('pole_lon',-180.0)}")
+            namelist.append(f"  dom({i+1})%pole_lat     = {icontools.get('pole_lat', 90.0)}")
+            namelist.append("")
+
+        # circular domain
+        if domain["region_type"] == 2:
+            namelist.append(f"  dom({i+1})%center_lon   = {icontools.get('center_lon',0.0)}")
+            namelist.append(f"  dom({i+1})%center_lat   = {icontools.get('center_lat',0.0)}")
+            namelist.append(f"  dom({i+1})%radius       = {icontools.get('radius',0.0)}")
             namelist.append("")
         
         grid_files.append(f"{config.get('outfile')}_{dom_id_to_str(i)}.nc")
@@ -228,7 +249,6 @@ def dom_id_to_str(dom_id):
     return f"DOM{dom_id+1:02d}"
 
 def run_icontools(workspace, config):
-
     logging.info(f"Number of domains: {len(config['domains'])}")
 
     icontools_dir = os.path.join(workspace, 'icontools')
@@ -255,12 +275,11 @@ def main(workspace, config_path):
 
     grid_files = run_icontools(workspace, config['icontools'])
 
-
     extpar_tag = pull_extpar_image(config['zonda'])
 
     extpar_dirs = run_extpar(workspace, config_path, grid_files, extpar_tag)
     
-    keep_base_grid = config['zonda']['keep_base_grid']
+    keep_base_grid = config['basegrid']['keep_basegrid_files']
     move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
 
     logging.info("Process completed")
