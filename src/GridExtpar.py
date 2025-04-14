@@ -273,7 +273,7 @@ def main(workspace, config_path):
     # Load config and write namelist
     config = load_config(config_path)
 
-    grid_files = run_icontools(workspace, config['icontools'])
+    grid_files = run_icontools(workspace, config)
 
     extpar_tag = pull_extpar_image(config['zonda'])
 
