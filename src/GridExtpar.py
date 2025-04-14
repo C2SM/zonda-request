@@ -213,7 +213,7 @@ def write_gridgen_namelist(config, wrk_dir):
         namelist.append("")
 
         # local domain
-        if domain["region_type"] == 3:
+        if icontools["region_type"] == 3:
             namelist.append(f"  dom({i+1})%center_lon   = {icontools.get('center_lon',0.0)}")
             namelist.append(f"  dom({i+1})%center_lat   = {icontools.get('center_lat',0.0)}")
             namelist.append(f"  dom({i+1})%hwidth_lon   = {icontools.get('hwidth_lon',0.0)}")
@@ -226,7 +226,7 @@ def write_gridgen_namelist(config, wrk_dir):
             namelist.append("")
 
         # circular domain
-        if domain["region_type"] == 2:
+        if icontools["region_type"] == 2:
             namelist.append(f"  dom({i+1})%center_lon   = {icontools.get('center_lon',0.0)}")
             namelist.append(f"  dom({i+1})%center_lat   = {icontools.get('center_lat',0.0)}")
             namelist.append(f"  dom({i+1})%radius       = {icontools.get('radius',0.0)}")
