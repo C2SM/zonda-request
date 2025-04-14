@@ -76,7 +76,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
         logging.info(f"Processing in {extpar_dir}")
 
         # Extract the EXTPAR part of the domain and save it as a domain-specific config.json
-        domain_extpar_config = domain["extpar"]
+        domain_extpar_config = {"extpar": domain["extpar"]}
         domain_config_path = os.path.join(extpar_dir, 'config.json')
         with open(domain_config_path, 'w') as f:
             json.dump(domain_extpar_config, f, indent=4)
