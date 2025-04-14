@@ -206,7 +206,7 @@ def write_gridgen_namelist(config, wrk_dir):
     for i, domain in enumerate(domains):
         icontools = domain["icontools"]
         lwrite_parent = i == 0
-        namelist.append(f"  dom({i+1})%outfile             = \"{basegrid('outfile')}\" ")
+        namelist.append(f"  dom({i+1})%outfile             = \"{basegrid['outfile']}\" ")
         namelist.append(f"  dom({i+1})%lwrite_parent       = .{str(lwrite_parent).upper()}.")
         namelist.append(f"  dom({i+1})%region_type         = {icontools['region_type']}")
         namelist.append(f"  dom({i+1})%number_of_grid_used = {icontools.get('number_of_grid_used',0)}")
