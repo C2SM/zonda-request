@@ -172,6 +172,9 @@ def write_gridgen_namelist(config, wrk_dir):
     basegrid = config["basegrid"]
     domains = config["domains"]
     
+    # Ensure the first domain has parent_id = 0
+    domains[0]["icontools"]["parent_id"] = 0
+    
     # Set default values
     parent_id = ",".join(str(domain["icontools"]["parent_id"]) for domain in domains)
     initial_refinement = True
