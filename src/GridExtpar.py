@@ -67,8 +67,16 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
     create_zip(zip_file_path, output_dir)
 
 def run_extpar(workspace, config_path, grid_files, extpar_tag):
+    logging.info(f"Call run_extpar with the following arguments:\n"
+                 f"workspace: {workspace}\n"
+                 f"config_path: {config_path}\n"
+                 f"grid_files: {grid_files}\n"
+                 f"extpar_tag: {extpar_tag}")
+    # Create the EXTPAR directories
     extpar_dirs = []
     config = load_config(config_path)
+    logging.info("Configuration loaded")
+    logging.info(config)
 
     for i, domain in enumerate(config["domains"]):
         extpar_dir = os.path.join(workspace, f"extpar_{dom_id_to_str(i)}")
@@ -84,6 +92,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
 
         os.chdir(extpar_dir)        
 
+        logging.info(f"Running podman command for extpar in {extpar_dir}")
         shell_cmd(
             "podman", "run",
             "-e", "OMP_NUM_THREADS=32",
