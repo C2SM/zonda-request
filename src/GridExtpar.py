@@ -86,7 +86,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
 
         shell_cmd(
             "podman", "run",
-            "-e", "OMP_NUM_THREADS=16",
+            "-e", "OMP_NUM_THREADS=32",
             "-v", "/net/co2/c2sm-data/extpar-input-data:/data",
             "-v", f"{workspace}/icontools:/grid",
             "-v", f"{extpar_dir}:/work",
