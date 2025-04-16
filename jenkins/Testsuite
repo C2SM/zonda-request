@@ -8,7 +8,7 @@ pipeline {
     }
     options {
         skipDefaultCheckout()
-        timeout(time: 1, unit: 'HOURS')
+        timeout(time: 2, unit: 'HOURS')
     }
     parameters {
         booleanParam(name: 'DEBUG_MODE', defaultValue: false, description: 'Toggle debug mode on to always retain the workspace at the end of the pipeline.')

@@ -95,7 +95,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
         logging.info(f"Running podman command for extpar in {extpar_dir}")
         shell_cmd(
             "podman", "run",
-            "-e", "OMP_NUM_THREADS=32",
+            "-e", "OMP_NUM_THREADS=24",
             "-v", "/net/co2/c2sm-data/extpar-input-data:/data",
             "-v", f"{workspace}/icontools:/grid",
             "-v", f"{extpar_dir}:/work",
