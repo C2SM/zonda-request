@@ -8,7 +8,7 @@ pipeline {
     }
     options {
         skipDefaultCheckout()
-        timeout(time: 1, unit: 'HOURS')
+        timeout(time: 2, unit: 'HOURS')
     }
     parameters {
         booleanParam(name: 'DEBUG_MODE', defaultValue: false, description: 'Toggle debug mode on to always retain the workspace at the end of the pipeline.')
@@ -19,7 +19,7 @@ pipeline {
                 axes {
                     axis {
                         name 'ISSUE_ID'
-                        values '127', '128', '129' , '131'
+                        values '195', '196', '197'
                     }
                 }
                 agent {
