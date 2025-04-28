@@ -44,7 +44,8 @@ def create_zip(zip_file_path, source_dir):
                 zipf.write(file_path, arcname)
 
 def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
-
+    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, keep_base_grid: {keep_base_grid}")
+    
     output_dir = os.path.join(workspace, 'output')
     log_dir = os.path.join(output_dir, 'logs')
 
@@ -52,19 +53,24 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
 
-    logging.info(f"Output directory: {output_dir}")
-
     # Move extpar files
     move_extpar(output_dir, grid_files, extpar_dirs)
 
     # Move icontools files
     move_icontools(workspace, output_dir, keep_base_grid)
 
+    # Copy the namelist file to the output directory
+    namelist_file = os.path.join(workspace, 'icontools', 'nml_gridgen')
+    if os.path.exists(namelist_file):
+        shutil.copy(namelist_file, output_dir)
+        logging.info(f"Namelist file {namelist_file} copied to {output_dir}")
+    else:
+        logging.warning(f"Namelist file {namelist_file} not found")
+
     # Create a zip file
     zip_file_path = os.path.join(workspace, 'output.zip')
-
-    
     create_zip(zip_file_path, output_dir)
+    logging.info(f"Output zip file created at {zip_file_path}")
 
 def run_extpar(workspace, config_path, grid_files, extpar_tag):
     logging.info(f"Call run_extpar with the following arguments:\n"
