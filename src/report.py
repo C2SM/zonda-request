@@ -58,7 +58,14 @@ if __name__ == "__main__":
 
     fail =f"Something went wrong. Please check the [logfiles]({url}) for more information."
     abort = f"Your request has been aborted. Please check the [logfiles]({url}) for more information."
-    success = f"Your data is ready for up to 7 days under this [link]({url})."
+    success = (
+        f"Your data is ready for up to 7 days under this [link]({url}).\n\n"
+        f"You can download it using the following commands:\n"
+        f"```bash\n"
+        f"wget {url}/output.zip\n"
+        f"unzip output.zip -d zonda_output\n"
+        f"```"
+    )
 
     if args.failure:
         repo.comment(issue_id=issue_id, text=fail)
