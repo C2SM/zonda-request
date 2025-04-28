@@ -131,64 +131,64 @@ def run_gridgen(workspace, icontools_dir):
 
 def shell_cmd(bin, *args, log_file=None):
     '''
-    wrapper to launch an external programme on the system
+    Wrapper to launch an external program on the system.
 
-    bin is the executable to run
-    *args are the arguments for bin, need to be convertable to string
-    stdout/stderr of bin is written to logfile
-    log_file: optional path to a file where stdout/stderr will be written
+    bin is the executable to run.
+    *args are the arguments for bin, need to be convertible to string.
+    stdout/stderr of bin is written to logfile.
+    log_file: optional path to a file where stdout/stderr will be written.
     '''
 
     # Convert *args to string
-    arg_list = []
-    arg_list.insert(0, str(bin))
-    for arg in args:
-        if arg:  # Prevents empty strings from being written into list
-            arg_list.append(str(arg))
+    arg_list = [str(bin)] + [str(arg) for arg in args if arg]
 
     args_for_logger = ' '.join(arg_list)
-
     logging.info(f'shell command: {args_for_logger}')
     logging.info('')
 
     try:
+        # Open the log file for writing if provided
         with open(log_file, 'w') if log_file else subprocess.PIPE as log_output:
-            process = subprocess.run(arg_list,
-                                     stdout=log_output,
-                                     stderr=log_output,
-                                     check=True,
-                                     universal_newlines=True)
+            process = subprocess.run(
+                arg_list,
+                stdout=log_output,
+                stderr=log_output,
+                check=True,
+                universal_newlines=True
+            )
             if not log_file:
                 output = process.stdout + process.stderr
+                logging.info(output)
             else:
-                output = f"Output written to {log_file}"
+                logging.info(f"Output written to {log_file}")
     except subprocess.CalledProcessError as e:
-        # Capture the container ID if the command involves podman
-        if "podman" in arg_list and "run" in arg_list:
-            container_id = e.stderr.strip().split()[-1]  # Extract container ID from stderr
-            logging.warning(f"Podman container failed with ID: {container_id}")
-            if log_file:
-                with open(log_file, 'a') as log_output:
+        # Log the error and capture container logs if it's a podman command
+        logging.error(f"Command failed: {args_for_logger}")
+        if log_file:
+            with open(log_file, 'a') as log_output:
+                log_output.write("\n--- Command Failed ---\n")
+                log_output.write(e.stderr or "No stderr captured.\n")
+                if "podman" in arg_list and "run" in arg_list:
                     log_output.write("\n--- Podman Logs ---\n")
+                    container_id = e.stderr.strip().split()[-1]  # Extract container ID
                     subprocess.run(["podman", "logs", container_id], stdout=log_output, stderr=log_output)
-            else:
-                podman_logs = subprocess.run(["podman", "logs", container_id], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-                logging.warning(f"Podman logs:\n{podman_logs.stdout}\n{podman_logs.stderr}")
-
-        logging.error('Shell command failed', exc_info=True)
+        else:
+            logging.error(e.stderr or "No stderr captured.")
+            if "podman" in arg_list and "run" in arg_list:
+                container_id = e.stderr.strip().split()[-1]  # Extract container ID
+                podman_logs = subprocess.run(
+                    ["podman", "logs", container_id],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True
+                )
+                logging.error(f"Podman logs:\n{podman_logs.stdout}\n{podman_logs.stderr}")
         raise
-
     except FileNotFoundError:
-        logging.warning(f'Problems with shell command: {args_for_logger} \n'
-                        '-> it appears your shell does not know this command')
-
-        logging.error('Shell command failed', exc_info=True)
+        logging.error(f"Command not found: {args_for_logger}")
         raise
 
-    logging.info('Output:')
-    logging.info(f'{output}')
-
-    return output
+    logging.info('Command completed successfully.')
 
 def load_config(config_file):
     logging.info(f"Loading configuration from {config_file}")
