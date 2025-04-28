@@ -162,18 +162,25 @@ def shell_cmd(bin, *args, log_file=None):
                 output = process.stdout + process.stderr
             else:
                 output = f"Output written to {log_file}"
-    except FileNotFoundError:
-        logging.warning(f'Problems with shell command: {args_for_logger} \n'
-                        '-> it appears your shell does not know this command')
+    except subprocess.CalledProcessError as e:
+        # Capture the container ID if the command involves podman
+        if "podman" in arg_list and "run" in arg_list:
+            container_id = e.stderr.strip().split()[-1]  # Extract container ID from stderr
+            logging.warning(f"Podman container failed with ID: {container_id}")
+            if log_file:
+                with open(log_file, 'a') as log_output:
+                    log_output.write("\n--- Podman Logs ---\n")
+                    subprocess.run(["podman", "logs", container_id], stdout=log_output, stderr=log_output)
+            else:
+                podman_logs = subprocess.run(["podman", "logs", container_id], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                logging.warning(f"Podman logs:\n{podman_logs.stdout}\n{podman_logs.stderr}")
 
         logging.error('Shell command failed', exc_info=True)
         raise
 
-    except subprocess.CalledProcessError as e:
-        output = e.stderr
+    except FileNotFoundError:
         logging.warning(f'Problems with shell command: {args_for_logger} \n'
-                        '-> the output returned to the shell is:')
-        logging.warning(f'{output}')
+                        '-> it appears your shell does not know this command')
 
         logging.error('Shell command failed', exc_info=True)
         raise
