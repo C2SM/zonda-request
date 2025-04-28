@@ -90,7 +90,10 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
             json.dump(domain_extpar_config, f, indent=4)
         logging.info(f"Domain-specific config.json written to {domain_config_path}")
 
-        os.chdir(extpar_dir)        
+        os.chdir(extpar_dir)
+
+        # Define a log file for the container run
+        log_file_path = os.path.join(extpar_dir, 'extpar_run.log')
 
         logging.info(f"Running podman command for extpar in {extpar_dir}")
         shell_cmd(
@@ -107,7 +110,9 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
             "--no-batch-job",
             "--host", "docker",
             "--input-grid", f"/grid/{grid_files[i]}",
-            "--extpar-config", "/work/config.json")
+            "--extpar-config", "/work/config.json",
+            log_file=log_file_path  # Pass the log file to shell_cmd
+        )
 
         extpar_dirs.append(extpar_dir)
 
@@ -115,21 +120,26 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
     logging.info("Extpar completed")
     return extpar_dirs
 
-def run_gridgen(wrk_dir):
-    shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{wrk_dir}:/work", "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib", "-t", "execute:latest-master", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
+def run_gridgen(workspace, icontools_dir):
+    log_file_path = os.path.join(workspace, 'icontools', 'icontools_run.log')
+    shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{icontools_dir}:/work", 
+              "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib", "-t", "execute:latest-master", 
+              "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen", 
+              log_file=log_file_path)
     logging.info("Gridgen completed")
 
 
-def shell_cmd(bin, *args):
+def shell_cmd(bin, *args, log_file=None):
     '''
     wrapper to launch an external programme on the system
 
     bin is the executable to run
     *args are the arguments for bin, need to be convertable to string
     stdout/stderr of bin is written to logfile
+    log_file: optional path to a file where stdout/stderr will be written
     '''
 
-    #convert *args to string
+    # Convert *args to string
     arg_list = []
     arg_list.insert(0, str(bin))
     for arg in args:
@@ -142,12 +152,16 @@ def shell_cmd(bin, *args):
     logging.info('')
 
     try:
-        process = subprocess.run(arg_list,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 check=True,
-                                 universal_newlines=True)
-        output = process.stdout + process.stderr
+        with open(log_file, 'w') if log_file else subprocess.PIPE as log_output:
+            process = subprocess.run(arg_list,
+                                     stdout=log_output,
+                                     stderr=log_output,
+                                     check=True,
+                                     universal_newlines=True)
+            if not log_file:
+                output = process.stdout + process.stderr
+            else:
+                output = f"Output written to {log_file}"
     except FileNotFoundError:
         logging.warning(f'Problems with shell command: {args_for_logger} \n'
                         '-> it appears your shell does not know this command')
@@ -269,7 +283,7 @@ def run_icontools(workspace, config):
 
     grid_files = write_gridgen_namelist(config, icontools_dir)
 
-    run_gridgen(icontools_dir)
+    run_gridgen(workspace, icontools_dir)
 
     return grid_files
 
