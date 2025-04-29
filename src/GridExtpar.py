@@ -17,21 +17,30 @@ def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
         shutil.move(file, dest_file)
 
 
-def move_extpar(dest, grid_files, extpar_dirs):
+def move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs):
     for i, exptar_dir in enumerate(extpar_dirs):
         # Move logfiles
-        move_files(os.path.join(exptar_dir, "*.log"), os.path.join(dest, 'logs'), f"{dom_id_to_str(i)}_")
-        # Move external parameter file
+        move_files(os.path.join(exptar_dir, "*.log"), os.path.join(output_dir, 'logs'), f"{dom_id_to_str(i)}_")
+        # Move external parameter files
         grid_file_base = os.path.splitext(grid_files[i])[0]  # Drop the suffix ".nc"
-        move_files(os.path.join(exptar_dir, "external_parameter.nc"), dest, f"{grid_file_base}_")
+        move_files(os.path.join(exptar_dir, "external_parameter.nc"), output_dir, f"{grid_file_base}_")
+        # Create directories for each domain
+        domain_dir = os.path.join(namelist_dir, dom_id_to_str(i))
+        os.makedirs(os.path.join(domain_dir), exist_ok=True)
+        move_files(os.path.join(exptar_dir, "INPUT_*"), domain_dir)
+        move_files(os.path.join(exptar_dir, "namelist.py"), domain_dir)
+        move_files(os.path.join(exptar_dir, "config.json"), domain_dir)
 
-def move_icontools(workspace, dest, keep_base_grid):
+
+def move_icontools(workspace, output_dir, namelist_dir, keep_base_grid):
     # too big for high-res grids
     blacklist = {} if keep_base_grid else {'base_grid.nc', 'base_grid.html'}
     # Move .nc files
-    move_files(os.path.join(workspace, 'icontools', '*.nc'), os.path.join(dest), blacklist=blacklist)
+    move_files(os.path.join(workspace, 'icontools', '*.nc'), os.path.join(output_dir), blacklist=blacklist)
     # Move .html files
-    move_files(os.path.join(workspace, 'icontools', '*.html'), dest, blacklist=blacklist)
+    move_files(os.path.join(workspace, 'icontools', '*.html'), output_dir, blacklist=blacklist)
+    # Move namelist file
+    move_files(os.path.join(workspace, 'icontools', 'nml_gridgen'), namelist_dir)
 
 
 def create_zip(zip_file_path, source_dir):
@@ -43,28 +52,30 @@ def create_zip(zip_file_path, source_dir):
                 arcname = os.path.relpath(file_path, source_dir)
                 zipf.write(file_path, arcname)
 
-def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
 
+def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
+    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, keep_base_grid: {keep_base_grid}")
+    
     output_dir = os.path.join(workspace, 'output')
     log_dir = os.path.join(output_dir, 'logs')
+    namelist_dir = os.path.join(output_dir, 'namelists')
 
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
-
-    logging.info(f"Output directory: {output_dir}")
+    os.makedirs(namelist_dir, exist_ok=True)
 
     # Move extpar files
-    move_extpar(output_dir, grid_files, extpar_dirs)
+    move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs)
 
     # Move icontools files
-    move_icontools(workspace, output_dir, keep_base_grid)
+    move_icontools(workspace, output_dir, namelist_dir, keep_base_grid)
 
     # Create a zip file
     zip_file_path = os.path.join(workspace, 'output.zip')
-
-    
     create_zip(zip_file_path, output_dir)
+    logging.info(f"Output zip file created at {zip_file_path}")
+
 
 def run_extpar(workspace, config_path, grid_files, extpar_tag):
     logging.info(f"Call run_extpar with the following arguments:\n"
@@ -114,6 +125,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
     os.chdir(workspace)
     logging.info("Extpar completed")
     return extpar_dirs
+
 
 def run_gridgen(wrk_dir):
     shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{wrk_dir}:/work", "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib", "-t", "execute:latest-master", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
@@ -169,12 +181,14 @@ def shell_cmd(bin, *args):
 
     return output
 
+
 def load_config(config_file):
     logging.info(f"Loading configuration from {config_file}")
     with open(config_file, 'r') as f:
         config = json.load(f)
     logging.info("Configuration loaded successfully")
     return config
+
 
 def write_gridgen_namelist(config, wrk_dir):
     logging.info("Writing gridgen namelist")
@@ -257,8 +271,10 @@ def write_gridgen_namelist(config, wrk_dir):
 
     return grid_files
 
+
 def dom_id_to_str(dom_id):
     return f"DOM{dom_id+1:02d}"
+
 
 def run_icontools(workspace, config):
     logging.info(f"Number of domains: {len(config['domains'])}")
@@ -273,11 +289,13 @@ def run_icontools(workspace, config):
 
     return grid_files
 
+
 def pull_extpar_image(config):
     tag = config['extpar_tag']
     shell_cmd("podman", "pull", f"docker.io/c2sm/extpar:{tag}")
     logging.info("Pull extpar image completed")
     return tag
+
 
 def main(workspace, config_path):
     logging.info(f"Starting main process with workspace: {workspace} and config_path: {config_path}")
@@ -295,6 +313,7 @@ def main(workspace, config_path):
     move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
 
     logging.info("Process completed")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup workspace and generate namelist")
