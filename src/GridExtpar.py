@@ -168,7 +168,7 @@ def shell_cmd(bin, *args):
         raise
 
     except subprocess.CalledProcessError as e:
-        output = e.stderr
+        output = e.stdout + e.stderr
         logging.warning(f'Problems with shell command: {args_for_logger} \n'
                         '-> the output returned to the shell is:')
         logging.warning(f'{output}')
