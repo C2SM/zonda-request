@@ -326,7 +326,7 @@ if __name__ == "__main__":
     # setup logger
     format = "%(asctime)s - %(levelname)s - %(message)s"
     if args.logfile:
-        logging.basicConfig(filename=args.logfile, format=format, level=logging.INFO)
+        logging.basicConfig(filename=args.logfile, filemode='w', format=format, level=logging.INFO)
     else:
         logging.basicConfig(format=format, level=logging.INFO)
 
