@@ -246,7 +246,7 @@ def write_gridgen_namelist(config, wrk_dir):
             namelist.append(f"  dom({i+1})%hwidth_lat   = {icontools.get('hwidth_lat',0.0)}")
             namelist.append("")
 
-            namelist.append(f"  dom({i+1})%lrotate      = .{str(icontools.get('lrotate', True)).upper()}.")
+            namelist.append(f"  dom({i+1})%lrotate      = .{str(icontools.get('lrotate', False)).upper()}.")
             namelist.append(f"  dom({i+1})%pole_lon     = {icontools.get('pole_lon',-180.0)}")
             namelist.append(f"  dom({i+1})%pole_lat     = {icontools.get('pole_lat', 90.0)}")
             namelist.append("")
