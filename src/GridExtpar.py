@@ -218,14 +218,14 @@ def write_gridgen_namelist(config, wrk_dir):
     namelist.append("")
 
     # tuning parameters
-    namelist.append(f"  lspring_dynamics = .{str(config.get('lspring_dynamics',True)).upper()}.")
-    namelist.append(f"  maxit = {config.get('maxit', 2000)}")
-    namelist.append(f"  beta_spring = {config.get('beta_spring', 0.9)}")
+    namelist.append(f"  lspring_dynamics = .TRUE.")
+    namelist.append(f"  maxit = 2000")
+    namelist.append(f"  beta_spring = 0.9")
     namelist.append("")
     
     # centre and subcentre
-    namelist.append(f"  centre = {config.get('centre',78)}")
-    namelist.append(f"  subcentre = {config.get('subcentre',255)}")
+    namelist.append(f"  centre = {basegrid.get('centre',78)}")
+    namelist.append(f"  subcentre = {basegrid.get('subcentre',255)}")
     namelist.append("")
 
     grid_files = []
