@@ -127,8 +127,8 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
     return extpar_dirs
 
 
-def run_gridgen(wrk_dir):
-    shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{wrk_dir}:/work", "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib", "-t", "execute:latest-master", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
+def run_gridgen(wrk_dir, icontools_tag):
+    shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{wrk_dir}:/work", "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib", "-t", f"execute:latest-{icontools_tag}", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
     logging.info("Gridgen completed")
 
 
@@ -276,7 +276,7 @@ def dom_id_to_str(dom_id):
     return f"DOM{dom_id+1:02d}"
 
 
-def run_icontools(workspace, config):
+def run_icontools(workspace, config, icontools_tag):
     logging.info(f"Number of domains: {len(config['domains'])}")
 
     icontools_dir = os.path.join(workspace, 'icontools')
@@ -285,7 +285,7 @@ def run_icontools(workspace, config):
 
     grid_files = write_gridgen_namelist(config, icontools_dir)
 
-    run_gridgen(icontools_dir)
+    run_gridgen(icontools_dir, icontools_tag)
 
     return grid_files
 
@@ -302,10 +302,13 @@ def main(workspace, config_path):
     
     # Load config and write namelist
     config = load_config(config_path)
+    zonda = config['zonda']
 
-    grid_files = run_icontools(workspace, config)
+    icontools_tag = zonda.get('icontools_tag', 'master')
 
-    extpar_tag = pull_extpar_image(config['zonda'])
+    grid_files = run_icontools(workspace, config, icontools_tag)
+
+    extpar_tag = pull_extpar_image(zonda)
 
     extpar_dirs = run_extpar(workspace, config_path, grid_files, extpar_tag)
     
