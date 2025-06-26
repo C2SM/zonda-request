@@ -90,7 +90,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
     logging.info("Configuration loaded")
     logging.info(config)
 
-    try
+    try:
         num_threads = os.environ["OMP_NUM_THREADS"]
     except KeyError:
         num_threads = 1
