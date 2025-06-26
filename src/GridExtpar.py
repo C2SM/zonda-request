@@ -77,10 +77,11 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
     logging.info(f"Output zip file created at {zip_file_path}")
 
 
-def run_extpar(workspace, config_path, grid_files, extpar_tag):
+def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag):
     logging.info(f"Call run_extpar with the following arguments:\n"
                  f"workspace: {workspace}\n"
                  f"config_path: {config_path}\n"
+                 f"extpar_rawdata_path: {extpar_rawdata_path}\n"
                  f"grid_files: {grid_files}\n"
                  f"extpar_tag: {extpar_tag}")
     # Create the EXTPAR directories
@@ -109,7 +110,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
             container_cmd_args = [
                 "apptainer", "exec",
                 "--env", f"OMP_NUM_THREADS={os.environ["OMP_NUM_THREADS"]}",
-                "--bind", "/hpc/uwork/sbrand/rawdata_zonda:/data",
+                "--bind", f"{extpar_rawdata_path}:/data",
                 "--bind", f"{workspace}/icontools:/grid",
                 "--bind", f"{extpar_dir}:/work",
                 "../extpar.sif"
@@ -118,7 +119,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
             container_cmd_args = [
                 "podman", "run",
                 "-e", "OMP_NUM_THREADS=24",
-                "-v", "/net/co2/c2sm-data/extpar-input-data:/data",
+                "-v", f"{extpar_rawdata_path}:/data",
                 "-v", f"{workspace}/icontools:/grid",
                 "-v", f"{extpar_dir}:/work",
                 f"extpar:{extpar_tag}"
@@ -315,8 +316,12 @@ def pull_extpar_image(config):
     return tag
 
 
-def main(workspace, config_path, use_apptainer):
-    logging.info(f"Starting main process with workspace: {workspace} and config_path: {config_path}")
+def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
+    logging.info(f"Starting main process with\n"
+                 f"  workspace: {workspace}\n"
+                 f"  config_path: {config_path}\n"
+                 f"  extpar_rawdata_path: {extpar_rawdata_path}\n"
+                 f"  use_apptainer: {use_apptainer}")
     
     # Load config and write namelist
     config = load_config(config_path)
@@ -328,7 +333,7 @@ def main(workspace, config_path, use_apptainer):
 
     extpar_tag = zonda['extpar_tag'] if use_apptainer else pull_extpar_image(zonda)
 
-    extpar_dirs = run_extpar(workspace, config_path, grid_files, extpar_tag, use_apptainer)
+    extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer)
     
     keep_base_grid = config['basegrid']['keep_basegrid_files']
     move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
@@ -340,6 +345,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup workspace and generate namelist")
     parser.add_argument('--workspace', type=str, required=True, help="Path to the workspace directory")
     parser.add_argument('--config', type=str, required=True, help="Path to the configuration file")
+    parser.add_argument('--extpar-rawdata', type=str, required=True, help="Path to the EXTPAR raw input data")
     parser.add_argument('--logfile', type=str, help="Path to the log file")
     parser.add_argument('--apptainer', action=argparse.BooleanOptionalAction, help="Use apptainer instead of podman to run containers")
 
@@ -354,7 +360,8 @@ if __name__ == "__main__":
 
     workspace = os.path.abspath(args.workspace)
     config = os.path.abspath(args.config)
+    extpar_rawdata_path = os.path.abspath(args.extpar_rawdata)
 
     use_apptainer = args.apptainer
 
-    main(workspace, config, use_apptainer)
+    main(workspace, config, extpar_rawdata_path, use_apptainer)
