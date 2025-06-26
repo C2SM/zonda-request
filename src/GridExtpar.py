@@ -89,6 +89,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
     logging.info("Configuration loaded")
     logging.info(config)
 
+    num_threads=str(os.environ['OMP_NUM_THREADS'])
     for i, domain in enumerate(config["domains"]):
         extpar_dir = os.path.join(workspace, f"extpar_{dom_id_to_str(i)}")
         os.makedirs(extpar_dir, exist_ok=True)
@@ -103,14 +104,14 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
 
         os.chdir(extpar_dir)        
 
-        logging.info(f"Running podman command for extpar in {extpar_dir}")
+        logging.info(f"Running apptainer command for extpar in {extpar_dir}")
         shell_cmd(
-            "podman", "run",
-            "-e", "OMP_NUM_THREADS=24",
-            "-v", "/net/co2/c2sm-data/extpar-input-data:/data",
-            "-v", f"{workspace}/icontools:/grid",
-            "-v", f"{extpar_dir}:/work",
-            f"extpar:{extpar_tag}",
+            "apptainer", "exec",
+            "--env", f"OMP_NUM_THREADS={num_threads}",
+            "--bind", "/hpc/uwork/sbrand/rawdata_zonda:/data",
+            "--bind", f"{workspace}/icontools:/grid",
+            "--bind", f"{extpar_dir}:/work",
+            "../extpar.sif",
             "python3", "-m", "extpar.WrapExtpar",
             "--run-dir", "/work",
             "--raw-data-path", "/data/linked_data",
@@ -128,7 +129,7 @@ def run_extpar(workspace, config_path, grid_files, extpar_tag):
 
 
 def run_gridgen(wrk_dir, icontools_tag):
-    shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{wrk_dir}:/work", "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib", "-t", f"execute:latest-{icontools_tag}", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
+    shell_cmd("apptainer", "exec", "--pwd", "/work", "--bind", f"{wrk_dir}:/work", "--env", "LD_LIBRARY_PATH=/home/dwd/software/lib", "icon_tools.sif", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
     logging.info("Gridgen completed")
 
 
@@ -308,7 +309,8 @@ def main(workspace, config_path):
 
     grid_files = run_icontools(workspace, config, icontools_tag)
 
-    extpar_tag = pull_extpar_image(zonda)
+    # extpar_tag = pull_extpar_image(zonda) # Not needed if we use apptainer.
+    extpar_tag = zonda['extpar_tag']
 
     extpar_dirs = run_extpar(workspace, config_path, grid_files, extpar_tag)
     
