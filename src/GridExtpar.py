@@ -337,6 +337,9 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     config = load_config(config_path)
     zonda = config['zonda']
 
+    if use_apptainer:
+        logging.warning("You are using apptainer, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
+
     icontools_tag = zonda.get('icontools_tag', 'master')
 
     grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
