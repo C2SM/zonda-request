@@ -84,6 +84,7 @@ pipeline {
                         steps {
                             sh """
                             source ${WORKSPACE}/activate_conda.sh
+                            export OMP_NUM_THREADS=24
                             python src/GridExtpar.py --config config.json --workspace ${WORKSPACE} --extpar-rawdata /net/co2/c2sm-data/extpar-input-data --logfile ${WORKSPACE}/output/logs/gridextpar.log
                             """
                         }

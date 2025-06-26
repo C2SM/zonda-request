@@ -90,6 +90,15 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
     logging.info("Configuration loaded")
     logging.info(config)
 
+    try
+        num_threads = os.environ["OMP_NUM_THREADS"]
+    except KeyError:
+        num_threads = 1
+        logging.warning('OMP_NUM_THREADS not set -> '
+                        f'use OMP_NUM_THREADS = {num_threads} instead')
+
+    logging.info(f"Using {num_threads} OpenMP threads")
+
     for i, domain in enumerate(config["domains"]):
         extpar_dir = os.path.join(workspace, f"extpar_{dom_id_to_str(i)}")
         os.makedirs(extpar_dir, exist_ok=True)
@@ -107,18 +116,18 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
         logging.info(f"Running {'apptainer' if use_apptainer else 'podman'} command for extpar in {extpar_dir}")
 
         if use_apptainer:
-            container_cmd_args = [
+            container_cmd = [
                 "apptainer", "exec",
-                "--env", f"OMP_NUM_THREADS={os.environ["OMP_NUM_THREADS"]}",
+                "--env", f"OMP_NUM_THREADS={num_threads}",
                 "--bind", f"{extpar_rawdata_path}:/data",
                 "--bind", f"{workspace}/icontools:/grid",
                 "--bind", f"{extpar_dir}:/work",
                 "../extpar.sif"
             ]
         else:
-            container_cmd_args = [
+            container_cmd = [
                 "podman", "run",
-                "-e", "OMP_NUM_THREADS=24",
+                "-e", f"OMP_NUM_THREADS={num_threads}",
                 "-v", f"{extpar_rawdata_path}:/data",
                 "-v", f"{workspace}/icontools:/grid",
                 "-v", f"{extpar_dir}:/work",
@@ -126,7 +135,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
             ]
 
         shell_cmd(
-            *container_cmd_args,
+            *container_cmd,
             "python3", "-m", "extpar.WrapExtpar",
             "--run-dir", "/work",
             "--raw-data-path", "/data/linked_data",
