@@ -83,7 +83,8 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
                  f"config_path: {config_path}\n"
                  f"extpar_rawdata_path: {extpar_rawdata_path}\n"
                  f"grid_files: {grid_files}\n"
-                 f"extpar_tag: {extpar_tag}")
+                 f"extpar_tag: {extpar_tag}\n"
+                 f"use_apptainer: {use_apptainer}")
     # Create the EXTPAR directories
     extpar_dirs = []
     config = load_config(config_path)
