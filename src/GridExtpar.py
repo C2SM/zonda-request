@@ -123,7 +123,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
                 "--bind", f"{extpar_rawdata_path}:/data",
                 "--bind", f"{workspace}/icontools:/grid",
                 "--bind", f"{extpar_dir}:/work",
-                "../extpar.sif"
+                f"{workspace}/extpar.sif"
             ]
         else:
             container_cmd = [
@@ -153,11 +153,11 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
     return extpar_dirs
 
 
-def run_gridgen(wrk_dir, icontools_tag, use_apptainer):
+def run_gridgen(workspace, icontools_dir, icontools_tag, use_apptainer):
     if use_apptainer:
-        shell_cmd("apptainer", "exec", "--pwd", "/work", "--bind", f"{wrk_dir}:/work", "--env", "LD_LIBRARY_PATH=/home/dwd/software/lib", "icon_tools.sif", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
+        shell_cmd("apptainer", "exec", "--pwd", "/work", "--bind", f"{icontools_dir}:/work", "--env", "LD_LIBRARY_PATH=/home/dwd/software/lib", f"{workspace}/icon_tools.sif", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
     else:
-        shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{wrk_dir}:/work", "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib", "-t", f"execute:latest-{icontools_tag}", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
+        shell_cmd("podman", "run", "-w", "/work", "-u", "0", "-v", f"{icontools_dir}:/work", "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib", "-t", f"execute:latest-{icontools_tag}", "/home/dwd/icontools/icongridgen", "--nml", "/work/nml_gridgen")
     logging.info("Gridgen completed")
 
 
@@ -314,7 +314,7 @@ def run_icontools(workspace, config, icontools_tag, use_apptainer):
 
     grid_files = write_gridgen_namelist(config, icontools_dir)
 
-    run_gridgen(icontools_dir, icontools_tag, use_apptainer)
+    run_gridgen(workspace, icontools_dir, icontools_tag, use_apptainer)
 
     return grid_files
 
