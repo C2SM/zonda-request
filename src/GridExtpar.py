@@ -77,7 +77,7 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
     logging.info(f"Output zip file created at {zip_file_path}")
 
 
-def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag):
+def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer):
     logging.info(f"Call run_extpar with the following arguments:\n"
                  f"workspace: {workspace}\n"
                  f"config_path: {config_path}\n"
