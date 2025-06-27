@@ -165,7 +165,7 @@ def visualize_topography(data_file, grid_file, output_file):
     # Add the Zonda logo to the plot
     logging.info(f"Adding Zonda logo to {filename}")
 
-    zonda_logo = Image.open('zonda.png')
+    zonda_logo = Image.open('img/zonda_logo.png')
     plot_image = Image.open(filename)
 
     plot_image_width, plot_image_height = plot_image.size
