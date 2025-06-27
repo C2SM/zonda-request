@@ -6,6 +6,7 @@ import logging
 import subprocess
 import glob
 import zipfile
+import visualize_topography
 
 def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
     for file in glob.glob(src_pattern):
@@ -24,6 +25,7 @@ def move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs):
         # Move external parameter files
         grid_file_base = os.path.splitext(grid_files[i])[0]  # Drop the suffix ".nc"
         move_files(os.path.join(exptar_dir, "external_parameter.nc"), output_dir, f"{grid_file_base}_")
+        move_files(os.path.join(exptar_dir, "topography.png"), output_dir, f"{grid_file_base}_")
         # Create directories for each domain
         domain_dir = os.path.join(namelist_dir, dom_id_to_str(i))
         os.makedirs(os.path.join(domain_dir), exist_ok=True)
@@ -303,6 +305,7 @@ def main(workspace, config_path):
     # Load config and write namelist
     config = load_config(config_path)
     zonda = config['zonda']
+    basegrid = config['basegrid']
 
     icontools_tag = zonda.get('icontools_tag', 'master')
 
@@ -311,8 +314,14 @@ def main(workspace, config_path):
     extpar_tag = pull_extpar_image(zonda)
 
     extpar_dirs = run_extpar(workspace, config_path, grid_files, extpar_tag)
-    
-    keep_base_grid = config['basegrid']['keep_basegrid_files']
+
+    for i, grid_file in enumerate(grid_files):
+        grid_filepath = os.path.join(workspace, grid_file)
+        extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
+
+        visualize_topography(workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
+
+    keep_base_grid = basegrid['keep_basegrid_files']
     move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
 
     logging.info("Process completed")

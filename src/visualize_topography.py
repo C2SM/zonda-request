@@ -8,6 +8,7 @@ import matplotlib.cm as cm
 import xarray as xr
 import numpy as np
 
+from os import path
 from PIL import Image
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
@@ -26,7 +27,7 @@ code_font       = {'family': 'Courier New'             }
 ### Main function ###
 #####################
 
-def visualize_topography(data_file, grid_file, output_file):
+def visualize_topography(workspace, data_file, grid_file, output_dir):
 
     logging.info(f"Starting the visualization of topography data")
 
@@ -155,18 +156,18 @@ def visualize_topography(data_file, grid_file, output_file):
     plt.setp(colorbar.ax.yaxis.get_ticklabels(), **font)
 
     # Save and close the figure
-    filename = output_file + ".png"
-    logging.info(f"Saving plot to {filename}")
+    output_filepath = path.join(output_dir, "topography.png")
+    logging.info(f"Saving plot to {output_filepath}")
 
-    fig.savefig(filename, bbox_inches='tight', dpi=dpi)
+    fig.savefig(output_filepath, bbox_inches='tight', dpi=dpi)
 
     plt.close(fig)
 
     # Add the Zonda logo to the plot
-    logging.info(f"Adding Zonda logo to {filename}")
+    logging.info(f"Adding Zonda logo to {output_filepath}")
 
-    zonda_logo = Image.open('img/zonda_logo.png')
-    plot_image = Image.open(filename)
+    zonda_logo = Image.open(f"{workspace}/img/zonda_logo.png")
+    plot_image = Image.open(output_filepath)
 
     plot_image_width, plot_image_height = plot_image.size
     zonda_logo_width, zonda_logo_height = zonda_logo.size
@@ -191,4 +192,6 @@ def visualize_topography(data_file, grid_file, output_file):
                       zonda_logo
     )
 
-    plot_image.save(filename)
+    plot_image.save(output_filepath)
+
+    logging.info(f"Topography plot completed")
