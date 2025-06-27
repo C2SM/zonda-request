@@ -119,6 +119,7 @@ def visualize_topography(workspace, data_file, grid_file, output_dir):
 
     terrain_cmap = cm.terrain
     cmap = col.LinearSegmentedColormap.from_list('modified_terrain', terrain_cmap(np.arange(60,256)))
+    cmap.set_bad(color='lightblue')
 
     plotting_options = {
         'antialiaseds' : False,
