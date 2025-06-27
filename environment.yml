@@ -7,3 +7,6 @@ dependencies:
   - pip:
     - argparse
     - requests
+    - cartopy
+    - netcdf4
+    - xarray
