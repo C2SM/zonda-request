@@ -6,7 +6,7 @@ import logging
 import subprocess
 import glob
 import zipfile
-import visualize_topography
+from visualize_data import visualize_topography
 
 def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
     for file in glob.glob(src_pattern):
