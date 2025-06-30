@@ -351,11 +351,14 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
 
     extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer)
 
-    for i, grid_file in enumerate(grid_files):
-        grid_filepath = os.path.join(workspace, grid_file)
-        extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
+    try:
+        for i, grid_file in enumerate(grid_files):
+            grid_filepath = os.path.join(workspace, grid_file)
+            extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
 
-        visualize_topography(workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
+            visualize_topography(workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
+    except:
+        logging.warning("An error occurred during the visualization of topography data. Skipping this part!")
 
     keep_base_grid = basegrid['keep_basegrid_files']
     move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
