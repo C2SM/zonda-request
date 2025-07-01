@@ -357,8 +357,10 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
             extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
 
             visualize_topography(workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
-    except:
-        logging.warning("An error occurred during the visualization of topography data. Skipping this part!")
+    except Exception as e:
+        logging.warning("An error occurred during the visualization of topography data.\n"
+                        repr(e)
+                        "Skipping the visualization!")
 
     keep_base_grid = basegrid['keep_basegrid_files']
     move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
