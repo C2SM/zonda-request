@@ -7,10 +7,14 @@ import matplotlib.ticker as tck
 import matplotlib.cm as cm
 import xarray as xr
 import numpy as np
+import warnings
 
 from os import path
 from PIL import Image
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+from cartopy.io import DownloadWarning
+
+warnings.filterwarnings("ignore", category=DownloadWarning)
 
 
 #####################
