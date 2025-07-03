@@ -353,7 +353,7 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
 
     try:
         for i, grid_file in enumerate(grid_files):
-            grid_filepath = os.path.join(workspace, grid_file)
+            grid_filepath = os.path.join(workspace, 'icontools', grid_file)
             extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
 
             visualize_topography(workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
