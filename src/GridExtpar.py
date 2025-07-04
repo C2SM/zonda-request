@@ -6,6 +6,7 @@ import logging
 import subprocess
 import glob
 import zipfile
+from visualize_data import visualize_topography
 
 def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
     for file in glob.glob(src_pattern):
@@ -24,6 +25,7 @@ def move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs):
         # Move external parameter files
         grid_file_base = os.path.splitext(grid_files[i])[0]  # Drop the suffix ".nc"
         move_files(os.path.join(exptar_dir, "external_parameter.nc"), output_dir, f"{grid_file_base}_")
+        move_files(os.path.join(exptar_dir, "topography.png"), output_dir, f"{grid_file_base}_")
         # Create directories for each domain
         domain_dir = os.path.join(namelist_dir, dom_id_to_str(i))
         os.makedirs(os.path.join(domain_dir), exist_ok=True)
@@ -336,6 +338,7 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     # Load config and write namelist
     config = load_config(config_path)
     zonda = config['zonda']
+    basegrid = config['basegrid']
 
     if use_apptainer:
         logging.warning("You are using apptainer, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
@@ -347,8 +350,19 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     extpar_tag = zonda['extpar_tag'] if use_apptainer else pull_extpar_image(zonda)
 
     extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer)
-    
-    keep_base_grid = config['basegrid']['keep_basegrid_files']
+
+    try:
+        for i, grid_file in enumerate(grid_files):
+            grid_filepath = os.path.join(workspace, 'icontools', grid_file)
+            extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
+
+            visualize_topography(workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
+    except Exception as e:
+        logging.warning("An error occurred during the visualization of topography data.\n"
+                        f"{repr(e)}\n"
+                        "Skipping the visualization!")
+
+    keep_base_grid = basegrid['keep_basegrid_files']
     move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
 
     logging.info("Process completed")
