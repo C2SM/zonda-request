@@ -267,7 +267,7 @@ def write_gridgen_namelist(config, wrk_dir):
         namelist.append(f"  dom({i+1})%lwrite_parent       = .{str(lwrite_parent).upper()}.")
         namelist.append(f"  dom({i+1})%region_type         = {icontools['region_type']}")
         namelist.append(f"  dom({i+1})%number_of_grid_used = {icontools.get('number_of_grid_used',0)}")
-        namelist.append(f"  dom({i+1})%lsmoothed           = .{str(icontools.get('lsmoothed', False)).upper()}.")
+        namelist.append(f"  dom({i+1})%lsmoothed           = .{str(icontools.get('lsmoothed', True)).upper()}.")
         namelist.append("")
 
         # local domain
