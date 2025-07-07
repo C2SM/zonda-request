@@ -223,6 +223,7 @@ def load_config(config_file):
 
 def write_gridgen_namelist(config, wrk_dir):
     logging.info("Writing gridgen namelist")
+    icontools_tag = config["zonda"]["icontools_tag"]
     basegrid = config["basegrid"]
     domains = config["domains"]
     
@@ -267,7 +268,10 @@ def write_gridgen_namelist(config, wrk_dir):
         namelist.append(f"  dom({i+1})%lwrite_parent       = .{str(lwrite_parent).upper()}.")
         namelist.append(f"  dom({i+1})%region_type         = {icontools['region_type']}")
         namelist.append(f"  dom({i+1})%number_of_grid_used = {icontools.get('number_of_grid_used',0)}")
-        namelist.append(f"  dom({i+1})%lsmoothed           = .{str(icontools.get('lsmoothed', True)).upper()}.")
+
+        if icontools_tag == "master":
+            namelist.append(f"  dom({i+1})%lsmoothed           = .{str(icontools.get('lsmoothed', True)).upper()}.")
+
         namelist.append("")
 
         # local domain
