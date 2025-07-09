@@ -31,6 +31,7 @@ pipeline {
                 stages {
                     stage('Clean workspace before checkout') {
                         steps {
+                            githubNotify context: 'zonda-main', status: 'PENDING', description: 'Daily build started'
                             deleteDir()
                             checkout scm
                         }
@@ -108,6 +109,7 @@ pipeline {
                         }
                     }
                     aborted {
+                        githubNotify context: 'zonda-main', status: 'FAILURE', description: 'Build aborted! (TEST)'
                         sh "source ${WORKSPACE}/activate_conda.sh"
                         sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
                         withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
