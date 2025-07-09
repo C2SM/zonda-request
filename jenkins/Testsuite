@@ -31,6 +31,12 @@ pipeline {
                 stages {
                     stage('Clean workspace before checkout') {
                         steps {
+                            deleteDir()
+                            checkout scm
+                        }
+                    }
+                    stage('Create issue.txt') {
+                        steps {
                             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
                                 sh """
                                 curl -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
@@ -38,12 +44,6 @@ pipeline {
                                   https://api.github.com/repos/C2SM/zonda-request/statuses/${env.GIT_COMMIT}
                                 """
                             }
-                            deleteDir()
-                            checkout scm
-                        }
-                    }
-                    stage('Create issue.txt') {
-                        steps {
                             sh """
                             echo ${ISSUE_ID} > ${WORKSPACE}/issue.txt
                             """
