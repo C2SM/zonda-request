@@ -1,11 +1,7 @@
 def https_public_root = '/net/co2/c2sm-services/zonda-request/'
 
 pipeline {
-    agent {
-        node {
-            label 'iacdipl-7'
-        }
-    }
+    agent none
     options {
         skipDefaultCheckout()
         timeout(time: 3, unit: 'HOURS')
