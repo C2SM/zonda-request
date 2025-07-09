@@ -41,7 +41,7 @@ pipeline {
                                 sh """
                                 curl -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
                                   -d '{"state": "pending", "context": "Jenkins", "description": "Build started", "target_url": "${env.BUILD_URL}"}' \
-                                  https://api.github.com/repos/C2SM/zonda-request/statuses/${env.GIT_COMMIT}
+                                  https://api.github.com/repos/C2SM/zonda-request/statuses/${env.ghprbActualCommit}
                                 """
                             }
                             sh """
@@ -114,7 +114,7 @@ pipeline {
                             sh """
                             curl -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
                               -d '{"state": "failure", "context": "Jenkins", "description": "Build failed", "target_url": "${env.BUILD_URL}"}' \
-                              https://api.github.com/repos/C2SM/zonda-request/statuses/${env.GIT_COMMIT}
+                              https://api.github.com/repos/C2SM/zonda-request/statuses/${env.ghprbActualCommit}
                             """
                         }
                     }
@@ -126,7 +126,7 @@ pipeline {
                             sh """
                             curl -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
                               -d '{"state": "failure", "context": "Jenkins", "description": "Build failed", "target_url": "${env.BUILD_URL}"}' \
-                              https://api.github.com/repos/C2SM/zonda-request/statuses/${env.GIT_COMMIT}
+                              https://api.github.com/repos/C2SM/zonda-request/statuses/${env.ghprbActualCommit}
                             """
                         }
                     }
