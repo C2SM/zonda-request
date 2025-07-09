@@ -32,8 +32,10 @@ pipeline {
                     stage('Clean workspace before checkout') {
                         steps {
                             deleteDir()
-                            def scm_vars = checkout scm
-                            env.GIT_COMMIT = scm_vars.GIT_COMMIT
+                            script {
+                                def scm_vars = checkout scm
+                                env.GIT_COMMIT = scm_vars.GIT_COMMIT
+                            }
                         }
                     }
                     stage('Create issue.txt') {
