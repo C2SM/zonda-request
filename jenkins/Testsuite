@@ -21,7 +21,7 @@ pipeline {
                 agent {
                     node {
                         label 'iacdipl-7'
-                        customWorkspace "workspace/${env.JOB_NAME}/${env.BUILD_NUMBER}/${ISSUE_ID}"
+                        customWorkspace "workspace/${env.JOB_NAME}/${ISSUE_ID}"
                     }
                 }
                 stages {
