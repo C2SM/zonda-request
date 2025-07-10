@@ -40,13 +40,6 @@ pipeline {
                     }
                     stage('Create issue.txt') {
                         steps {
-                            withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                                sh """
-                                curl -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
-                                  -d '{"state": "pending", "context": "Jenkins", "description": "Build started", "target_url": "${env.BUILD_URL}"}' \
-                                  https://api.github.com/repos/C2SM/zonda-request/statuses/${env.GIT_COMMIT}
-                                """
-                            }
                             sh """
                             echo ${ISSUE_ID} > ${WORKSPACE}/issue.txt
                             """
@@ -106,18 +99,28 @@ pipeline {
                         sh "source ${WORKSPACE}/activate_conda.sh"
                         sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt --success"
                         withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                            sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt"
+                            sh """
+                            python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} \
+                                                 --commit_sha ${env.GIT_COMMIT} \
+                                                 --build_url ${env.BUILD_URL} \
+                                                 --jenkins_job_name ${env.JOB_NAME} \
+                                                 --issue_id_file ${WORKSPACE}/issue.txt \
+                                                 --hash-file ${WORKSPACE}/hash.txt
+                            """
                         }
                     }
                     failure {
                         sh "source ${WORKSPACE}/activate_conda.sh"
                         sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
                         withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                            sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --failure"
                             sh """
-                            curl -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
-                              -d '{"state": "failure", "context": "Jenkins", "description": "Build failed", "target_url": "${env.BUILD_URL}"}' \
-                              https://api.github.com/repos/C2SM/zonda-request/statuses/${env.GIT_COMMIT}
+                            python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} \
+                                                 --commit_sha ${env.GIT_COMMIT} \
+                                                 --build_url ${env.BUILD_URL} \
+                                                 --jenkins_job_name ${env.JOB_NAME} \
+                                                 --issue_id_file ${WORKSPACE}/issue.txt \
+                                                 --hash-file ${WORKSPACE}/hash.txt \
+                                                 --failure
                             """
                         }
                     }
@@ -125,11 +128,14 @@ pipeline {
                         sh "source ${WORKSPACE}/activate_conda.sh"
                         sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
                         withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                            sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --abort"
                             sh """
-                            curl -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
-                              -d '{"state": "failure", "context": "Jenkins", "description": "Build failed", "target_url": "${env.BUILD_URL}"}' \
-                              https://api.github.com/repos/C2SM/zonda-request/statuses/${env.GIT_COMMIT}
+                            python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} \
+                                                 --commit_sha ${env.GIT_COMMIT} \
+                                                 --build_url ${env.BUILD_URL} \
+                                                 --jenkins_job_name ${env.JOB_NAME} \
+                                                 --issue_id_file ${WORKSPACE}/issue.txt \
+                                                 --hash-file ${WORKSPACE}/hash.txt \
+                                                 --abort
                             """
                         }
                     }
