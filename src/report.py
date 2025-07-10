@@ -3,11 +3,9 @@ import argparse
 
 class GitHubRepo:
 
-    def __init__(self, group: str, repo: str, commit_sha: str = None, build_url: str = None, auth_token: str = None) -> None:
+    def __init__(self, group: str, repo: str, auth_token: str = None) -> None:
         self.group: str = group
         self.repo: str = repo
-        self.commit_sha: str = commit_sha
-        self.build_url: str = build_url
         self.auth_token: str = auth_token
         self.headers = {'Content-Type': 'application/json'}
         self.headers['Authorization'] = 'token ' + self.auth_token
@@ -17,10 +15,10 @@ class GitHubRepo:
 
         requests.post(url, headers=self.headers, json={'body': text})
 
-    def commit_status(self, status: str, context: str, message: str) -> None:
-        url = f'https://api.github.com/repos/{self.group}/{self.repo}/statuses/{self.commit_sha}'
+    def commit_status(self, commit_sha: str, status: str, context: str, message: str, build_url: str) -> None:
+        url = f'https://api.github.com/repos/{self.group}/{self.repo}/statuses/{commit_sha}'
 
-        requests.post(url, headers=self.headers, json={'state': status, 'context': context, 'description': message, 'target_url': self.build_url})
+        requests.post(url, headers=self.headers, json={'state': status, 'context': context, 'description': message, 'target_url': build_url})
 
     def update_labels(self, issue_id, remove_label, add_label):
 
@@ -60,8 +58,6 @@ if __name__ == "__main__":
 
     repo = GitHubRepo(group='c2sm',
                       repo='zonda-request',
-                      commit_sha=args.commit_sha,
-                      build_url=args.build_url,
                       auth_token=args.auth_token)
 
     with open(args.hash_file, 'r') as f:
@@ -94,24 +90,30 @@ if __name__ == "__main__":
         add_label = 'failed'
 
         if is_daily_testsuite:
-            repo.commit_status( status  = 'failure',
-                                context = daily_testsuite_context,
-                                message = fail_status_msg )
+            repo.commit_status( commit_sha = args.commit_sha,
+                                status     = 'failure',
+                                context    = daily_testsuite_context,
+                                message    = fail_status_msg,
+                                build_url  = args.build_url )
     elif args.abort:
         repo.comment(issue_id=issue_id, text=abort_comment)
         add_label = 'aborted'
 
         if is_daily_testsuite:
-            repo.commit_status( status  = 'failure',
-                                context = daily_testsuite_context,
-                                message = abort_status_msg )
+            repo.commit_status( commit_sha = args.commit_sha,
+                                status     = 'failure',
+                                context    = daily_testsuite_context,
+                                message    = abort_status_msg,
+                                build_url  = args.build_url )
     else:
         repo.comment(issue_id=issue_id, text=success_comment)
         add_label = 'completed'
 
         if is_daily_testsuite:
-            repo.commit_status( status  = 'success',
-                                context = daily_testsuite_context,
-                                message = success_status_msg )
+            repo.commit_status( commit_sha = args.commit_sha,
+                                status     = 'success',
+                                context    = daily_testsuite_context,
+                                message    = success_status_msg,
+                                build_url  = args.build_url )
 
     repo.update_labels(issue_id=issue_id, remove_label='submitted', add_label=add_label)
