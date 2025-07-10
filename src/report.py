@@ -3,7 +3,7 @@ import argparse
 
 class GitHubRepo:
 
-    def __init__(self, group: str, repo: str, commit_sha: str, build_url: str, auth_token: str = None) -> None:
+    def __init__(self, group: str, repo: str, commit_sha: str = None, build_url: str = None, auth_token: str = None) -> None:
         self.group: str = group
         self.repo: str = repo
         self.commit_sha: str = commit_sha
