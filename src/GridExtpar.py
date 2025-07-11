@@ -95,12 +95,18 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
 
     try:
         num_threads = os.environ["OMP_NUM_THREADS"]
+        logging.info(f"Using {num_threads} OpenMP threads")
     except KeyError:
         num_threads = 1
         logging.warning('OMP_NUM_THREADS not set -> '
-                        f'use OMP_NUM_THREADS = {num_threads} instead')
+                        f'using OMP_NUM_THREADS = {num_threads} instead')
 
-    logging.info(f"Using {num_threads} OpenMP threads")
+    try:
+        netcdf_filetype = os.environ["NETCDF_OUTPUT_FILETYPE"]
+        logging.info(f'Using {netcdf_filetype} file format')
+    except:
+        netcdf_filetype = "NETCDF4"
+        logging.warning('NETCDF_OUTPUT_FILETYPE not set -> falling back to NetCDF 4')
 
     for i, domain in enumerate(config["domains"]):
         extpar_dir = os.path.join(workspace, f"extpar_{dom_id_to_str(i)}")
@@ -122,6 +128,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
             container_cmd = [
                 "apptainer", "exec",
                 "--env", f"OMP_NUM_THREADS={num_threads}",
+                f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
                 "--bind", f"{extpar_rawdata_path}:/data",
                 "--bind", f"{workspace}/icontools:/grid",
                 "--bind", f"{extpar_dir}:/work",
@@ -131,6 +138,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
             container_cmd = [
                 "podman", "run",
                 "-e", f"OMP_NUM_THREADS={num_threads}",
+                "-e", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
                 "-v", f"{extpar_rawdata_path}:/data",
                 "-v", f"{workspace}/icontools:/grid",
                 "-v", f"{extpar_dir}:/work",
