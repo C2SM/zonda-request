@@ -74,21 +74,21 @@ pipeline {
             sh "source ${WORKSPACE}/activate_conda.sh"
             sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt --success"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt"
+                sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --jenkins_job_name ${env.JOB_NAME} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt"
             }
         }
         failure {
             sh "source ${WORKSPACE}/activate_conda.sh"
             sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --failure"
+                sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --jenkins_job_name ${env.JOB_NAME} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --failure"
             }
         }
         aborted {
             sh "source ${WORKSPACE}/activate_conda.sh"
             sh "python src/archive_artifacts.py --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --abort"
+                sh "python src/report.py --auth_token ${GITHUB_AUTH_TOKEN} --jenkins_job_name ${env.JOB_NAME} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --abort"
             }
         }
         cleanup {
