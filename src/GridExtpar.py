@@ -6,6 +6,8 @@ import logging
 import subprocess
 import glob
 import zipfile
+from math import sqrt, pow, pi
+from zonda_rotgrid.core import create_rotated_grid
 from visualize_data import visualize_topography
 
 def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
@@ -341,6 +343,51 @@ def pull_extpar_image(config):
     return tag
 
 
+def run_rotgrid(workspace, config, grid_files):
+    logging.info("Creating rotated lat-lon grid")
+    basegrid = config['basegrid']
+    domains = config['domains']
+
+    # Ensure the output directory exists
+    output_dir = os.path.join(workspace, 'output')
+    os.makedirs(output_dir, exist_ok=True)
+
+    for i, domain in enumerate(domains):
+        icontools = domain['icontools']
+
+        if str(icontools.get('lrotate', False)).lower() == 'true':
+            center_lat = icontools['center_lat']
+            center_lon = icontools['center_lon']
+            hwidth_lat = icontools['hwidth_lat']
+            hwidth_lon = icontools['hwidth_lon']
+            pole_lat = icontools['pole_lat']
+            pole_lon = icontools['pole_lon']
+
+            ncells_boundary = 16
+
+            n = basegrid['grid_root']
+            k = basegrid['grid_level'] + 1 + i
+            grid_spacing = compute_resolution_from_rnbk(n, k)
+
+            grid_file_base = grid_files[i].removesuffix('.nc')
+            output_path = os.path.join(output_dir, grid_file_base, '_latlon_rotated.nc')
+
+            create_rotated_grid( grid_spacing,
+                                 center_lat,
+                                 center_lon,
+                                 hwidth_lat,
+                                 hwidth_lon,
+                                 pole_lat,
+                                 pole_lon,
+                                 ncells_boundary,
+                                 output_path )
+
+
+def compute_resolution_from_rnbk(n, k):
+    earth_radius = 6371.0
+    return earth_radius * sqrt(pi / 5) / (n * pow(2, k))
+
+
 def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     logging.info(f"Starting main process with\n"
                  f"  workspace: {workspace}\n"
@@ -363,6 +410,8 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     extpar_tag = zonda['extpar_tag'] if use_apptainer else pull_extpar_image(zonda)
 
     extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer)
+
+    run_rotgrid(workspace, config, grid_files)
 
     try:
         for i, grid_file in enumerate(grid_files):
