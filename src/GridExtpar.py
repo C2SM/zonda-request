@@ -370,7 +370,7 @@ def run_rotgrid(workspace, config, grid_files):
             grid_spacing = compute_resolution_from_rnbk(n, k)
 
             grid_file_base = grid_files[i].removesuffix('.nc')
-            output_path = os.path.join(output_dir, grid_file_base, '_latlon_rotated.nc')
+            output_path = os.path.join(output_dir, f'{grid_file_base}_latlon_rotated.nc')
 
             create_rotated_grid( grid_spacing,
                                  center_lat,
