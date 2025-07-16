@@ -10,3 +10,4 @@ dependencies:
     - cartopy
     - netcdf4
     - xarray
+    - zonda-rotgrid
