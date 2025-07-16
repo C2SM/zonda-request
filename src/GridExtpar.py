@@ -382,6 +382,10 @@ def run_rotgrid(workspace, config, grid_files):
                                  ncells_boundary,
                                  output_path )
 
+            logging.info(f"Rotated lat-lon grid for {dom_id_to_str(i)} stored in {output_path}")
+        else:
+            logging.info(f"lrotate==false for {dom_id_to_str(i)} -> Skipping generation of lat-lon grid!")
+
 
 def compute_resolution_from_rnbk(n, k):
     earth_radius = 6371.0
