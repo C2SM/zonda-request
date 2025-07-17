@@ -370,7 +370,20 @@ def run_rotgrid(workspace, config, grid_files):
             grid_spacing = compute_resolution_from_rnbk(n, k)
 
             grid_file_base = grid_files[i].removesuffix('.nc')
-            output_path = os.path.join(output_dir, f'{grid_file_base}_latlon_rotated.nc')
+            output_path_full = os.path.join(output_dir, f'{grid_file_base}_latlon_rotated.nc')
+            output_path_reduced = os.path.join(output_dir, f'{grid_file_base}_latlon_rotated_reduced.nc')
+
+            create_rotated_grid( grid_spacing,
+                                 center_lat,
+                                 center_lon,
+                                 hwidth_lat,
+                                 hwidth_lon,
+                                 pole_lat,
+                                 pole_lon,
+                                 0,
+                                 output_path_full )
+
+            logging.info(f'Rotated lat-lon grid for {dom_id_to_str(i)} stored in {output_path_full}')
 
             create_rotated_grid( grid_spacing,
                                  center_lat,
@@ -380,11 +393,12 @@ def run_rotgrid(workspace, config, grid_files):
                                  pole_lat,
                                  pole_lon,
                                  ncells_boundary,
-                                 output_path )
+                                 output_path_reduced )
 
-            logging.info(f"Rotated lat-lon grid for {dom_id_to_str(i)} stored in {output_path}")
+            logging.info(f'Reduced (-{ncells_boundary} cells at each boundary) rotated'
+                         f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
         else:
-            logging.info(f"lrotate==false for {dom_id_to_str(i)} -> Skipping generation of lat-lon grid!")
+            logging.info(f'lrotate==false for {dom_id_to_str(i)} -> Skipping generation of lat-lon grid!')
 
 
 def compute_resolution_from_rnbk(n, k):
