@@ -42,6 +42,7 @@ jobs:
                 })
               } catch (error) {
                 const status = error.status || error.response?.status
+                console.log(`Error status '${status}'`)
                 if (status === 404) {
                   console.log(`Label '${label}' not found, skipping.`)
                 } else {
