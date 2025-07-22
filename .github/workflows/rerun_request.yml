@@ -1,0 +1,57 @@
+name: Commit on "rerun request" comment
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  commitOnRerunRequest:
+    if: github.event.comment.body == 'rerun request' && !github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          # Check out the branch related to the issue number
+          ref: issue-${{ github.event.issue.number }}/request
+
+      - name: Extract JSON from issue description and commit to re-trigger request
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          FILENAME="issue_body_$(date +%FT%H-%M-%S).txt"
+          echo "$ISSUE_BODY" > "$FILENAME"
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add "$FILENAME"
+          git commit -m "Rerun request commit for issue #${{ github.event.issue.number }}"
+          git push origin issue-${{ github.event.issue.number }}/request
+
+      - name: Re-add 'submitted' label to issue
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const labelsToRemove = ['completed', 'failed']
+            for (const label of labelsToRemove) {
+              try {
+                await github.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  name: label
+                })
+              } catch (error) {
+                if (error.status === 404) {
+                  console.log(`Label '${label}' not found, skipping.`)
+                } else {
+                  throw error
+                }
+              }
+            }
+
+            github.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['submitted']
+            })
