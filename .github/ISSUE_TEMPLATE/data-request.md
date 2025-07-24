@@ -22,7 +22,9 @@ PASTE_YOUR_REQUEST_HERE
 
 Zonda Request will now process your data based on your request. Once the processing is successful, it will post a link in the issue you have just created. The processed data will be available under that link for up to **7 days**.
 
-If you encounter any problems, please add the label ![Static Badge](https://img.shields.io/badge/help_wanted-orange) to the issue. Make sure you post all relevant information from the logfiles in the issue directly.
+If you want to re-submit the data request, you can write a comment containing (only) the string *"rerun request"*. Note that this new submission uses the JSON snippet in the current description, thus editing it will also change the behavior of your data request. Also note that resubmission only works if the issue is not closed and the request is not already running.
+
+If you encounter any problems, please ping a maintainer (e.g., `@stelliom` or `@mjaehn`) on the issue. Make sure you post all relevant information from the logfiles in the issue directly.
 
 ## Status Labels
 
