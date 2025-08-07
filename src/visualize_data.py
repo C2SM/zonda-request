@@ -75,7 +75,10 @@ def visualize_topography(workspace, data_file, grid_file, output_dir):
     topography_data[np.logical_and(fr_land_data == 0., topography_data == 0.)] = None
 
     # Add vertices at boundaries to allow for correct wrapping of triangular mesh around (periodic) boundaries
-    vertices_at_boundary_mask = (vertex_longitudes == -180.0) | (vertex_longitudes == 180.0)
+    boundary_degrees = 180.0
+    delta_degrees = 0.1
+    vertex_longitudes_abs = np.abs(vertex_longitudes)
+    vertices_at_boundary_mask = (vertex_longitudes_abs >= boundary_degrees - delta_degrees) & (vertex_longitudes_abs <= boundary_degrees)
     if any(vertices_at_boundary_mask):
 
         logging.info("Create new vertices at the boundaries to account for periodicity")
