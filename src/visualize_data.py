@@ -31,7 +31,7 @@ code_font       = {'family': 'Courier New'             }
 ### Main function ###
 #####################
 
-def visualize_topography(workspace, data_file, grid_file, output_dir):
+def visualize_topography(icontools_config, workspace, data_file, grid_file, output_dir):
 
     logging.info(f"Starting the visualization of topography data")
 
@@ -59,6 +59,38 @@ def visualize_topography(workspace, data_file, grid_file, output_dir):
     cells_of_vertices = grid_data_vars["cells_of_vertex"].T.values - 1
 
     n_vertices = len(cells_of_vertices)
+
+    region_type = icontools_config['region_type']
+    data_crossing_dateline = False
+    if (region_type == 2):
+        center_lon = icontools_config.get('center_lon', 0.0)
+        radius = icontools_config.get('radius', 0.0)
+
+        if (abs(center_lon) + radius > 180.0):
+            data_crossing_dateline = True
+
+            offset_percentage = 0.1
+            x_offset = 2.0 * radius * offset_percentage
+            y_offset = x_offset
+    elif (region_type == 3):
+        center_lon = icontools_config.get('center_lon', 0.0)
+        hwidth_lon = icontools_config.get('hwidth_lon', 0.0)
+        hwidth_lat = icontools_config.get('hwidth_lat', 0.0)
+
+        if (abs(center_lon) + hwidth_lon > 180.0):
+            data_crossing_dateline = True
+
+            offset_percentage = 0.1
+            x_offset = 2.0 * hwidth_lon * offset_percentage
+            y_offset = 2.0 * hwidth_lat * offset_percentage
+
+    if (data_crossing_dateline):
+        vertex_longitudes_360 = np.where(vertex_longitudes < 0.0, vertex_longitudes + 360.0, vertex_longitudes)
+        vertex_longitudes_360_min = np.min(vertex_longitudes_360)
+        vertex_longitudes_360_max = np.max(vertex_longitudes_360)
+
+        vertex_latitudes_min = np.min(vertex_latitudes)
+        vertex_latitudes_max = np.max(vertex_latitudes)
 
     topography_variable_name = "topography_c"
     topography_variable      = icon_output_dataset[topography_variable_name]
@@ -115,7 +147,17 @@ def visualize_topography(workspace, data_file, grid_file, output_dir):
 
     # Create figure and axis
     fig = plt.figure(figsize=(16, 9), dpi=dpi)
-    ax = plt.axes(projection=ccrs.PlateCarree())
+
+    if (data_crossing_dateline):
+        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+
+        x_min = max(vertex_longitudes_360_min - x_offset, 0.0)
+        x_max = min(vertex_longitudes_360_max + x_offset, 360.0)
+        y_min = max(vertex_latitudes_min - y_offset, -90.0)
+        y_max = min(vertex_latitudes_max + y_offset, 90.0)
+        ax.set_extent([x_min, x_max, y_min, y_max], crs=ccrs.PlateCarree())
+    else:
+        ax = plt.axes(projection=ccrs.PlateCarree())
 
     figure_title = f"{topography_long_name} ({topography_variable_name})"
 
