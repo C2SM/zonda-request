@@ -436,7 +436,9 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
             grid_filepath = os.path.join(workspace, 'icontools', grid_file)
             extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
 
-            visualize_topography(workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
+            icontools_config = config['domains'][i]['icontools']
+
+            visualize_topography(icontools_config, workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
     except Exception as e:
         logging.warning("An error occurred during the visualization of topography data.\n"
                         f"{repr(e)}\n"
