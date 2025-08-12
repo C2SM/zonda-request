@@ -32,13 +32,14 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const max_age = process.env.DAYS * 24 * 60 * 60 * 1000;
+            const max_age = Number(process.env.DAYS) * 24 * 60 * 60 * 1000;
             const now = new Date();
             const issues = await github.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               labels: 'data request',
-              state: 'open'
+              state: 'open',
+              per_page: 100
             });
             for (const issue of issues.data) {
               const createdAt = new Date(issue.created_at);
