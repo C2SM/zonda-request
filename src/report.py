@@ -68,8 +68,16 @@ if __name__ == "__main__":
 
     url = f'https://data.iac.ethz.ch/zonda/{hash}'
 
-    fail_comment = f"Something went wrong. Please check the [logfiles]({url}) for more information."
-    abort_comment = f"Your request has been aborted. Please check the [logfiles]({url}) for more information."
+    fail_comment = (
+        f"Something went wrong. Please check the [logfiles]({url}) for more information.\n\n"
+        f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**.\n"
+        f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
+    )
+    abort_comment = (
+        f"Your request has been aborted. Please check the [logfiles]({url}) for more information.\n\n"
+        f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**.\n"
+        f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
+    )
     success_comment = (
         f"Your data is ready for up to 7 days under this [link]({url}).\n\n"
         f"You can also download it using the following commands:\n"
