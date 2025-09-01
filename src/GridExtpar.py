@@ -130,7 +130,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
             container_cmd = [
                 "apptainer", "exec",
                 "--env", f"OMP_NUM_THREADS={num_threads}",
-                f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
+                "--env", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
                 "--bind", f"{extpar_rawdata_path}:/data",
                 "--bind", f"{workspace}/icontools:/grid",
                 "--bind", f"{extpar_dir}:/work",
