@@ -429,7 +429,12 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
 
     extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer)
 
-    run_rotgrid(workspace, config, grid_files)
+    try:
+        run_rotgrid(workspace, config, grid_files)
+    except Exception as e:
+        logging.warning("An error occurred during the generation of the rotated lat-lon grid.\n"
+                        f"{repr(e)}\n"
+                        "Skipping generation of rotated lat-lon grid!")
 
     try:
         for i, grid_file in enumerate(grid_files):
