@@ -406,11 +406,12 @@ def compute_resolution_from_rnbk(n, k):
     return earth_radius * sqrt(pi / 5) / (n * pow(2, k))
 
 
-def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
+def main(workspace, config_path, extpar_rawdata_path, input_grid_path, use_apptainer):
     logging.info(f"Starting main process with\n"
                  f"  workspace: {workspace}\n"
                  f"  config_path: {config_path}\n"
                  f"  extpar_rawdata_path: {extpar_rawdata_path}\n"
+                 f"  input_grid_path: {input_grid_path}\n"
                  f"  use_apptainer: {use_apptainer}")
     
     # Load config and write namelist
@@ -421,9 +422,12 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     if use_apptainer:
         logging.warning("You are using apptainer, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
 
-    icontools_tag = zonda.get('icontools_tag', 'master')
+    if input_grid_path is None:
+        icontools_tag = zonda.get('icontools_tag', 'master')
 
-    grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
+        grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
+    else:
+        grid_files = [input_grid_path]
 
     extpar_tag = zonda['extpar_tag'] if use_apptainer else pull_extpar_image(zonda)
 
@@ -460,6 +464,7 @@ if __name__ == "__main__":
     parser.add_argument('--workspace', type=str, required=True, help="Path to the workspace directory")
     parser.add_argument('--config', type=str, required=True, help="Path to the configuration file")
     parser.add_argument('--extpar-rawdata', type=str, required=True, help="Path to the EXTPAR raw input data")
+    parser.add_argument('--input-grid', type=str, help="Path to a pre-existing ICON grid (this disables the usual grid generation)")
     parser.add_argument('--logfile', type=str, help="Path to the log file")
     parser.add_argument('--apptainer', action=argparse.BooleanOptionalAction, default=False, help="Use apptainer instead of podman to run containers")
 
@@ -475,7 +480,8 @@ if __name__ == "__main__":
     workspace = os.path.abspath(args.workspace)
     config = os.path.abspath(args.config)
     extpar_rawdata_path = os.path.abspath(args.extpar_rawdata)
+    input_grid_path = args.input_grid if args.input_grid is None else os.path.abspath(args.input_grid)
 
     use_apptainer = args.apptainer
 
-    main(workspace, config, extpar_rawdata_path, use_apptainer)
+    main(workspace, config, extpar_rawdata_path, input_grid_path, use_apptainer)
