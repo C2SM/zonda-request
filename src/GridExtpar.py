@@ -57,7 +57,7 @@ def create_zip(zip_file_path, source_dir):
                 zipf.write(file_path, arcname)
 
 
-def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
+def move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_active):
     logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, keep_base_grid: {keep_base_grid}")
     
     output_dir = os.path.join(workspace, 'output')
@@ -73,7 +73,11 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
     move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs)
 
     # Move icontools files
-    move_icontools(workspace, output_dir, namelist_dir, keep_base_grid)
+    if icontools_active:
+        move_icontools(workspace, output_dir, namelist_dir, keep_base_grid)
+    else:
+        # TODO: add copy_input_grid
+        pass
 
     # Create a zip file
     zip_file_path = os.path.join(workspace, 'output.zip')
@@ -407,22 +411,22 @@ def compute_resolution_from_rnbk(n, k):
     return earth_radius * sqrt(pi / 5) / (n * pow(2, k))
 
 
-def main(workspace, config_path, extpar_rawdata_path, input_grid_path, use_apptainer):
+def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     logging.info(f"Starting main process with\n"
                  f"  workspace: {workspace}\n"
                  f"  config_path: {config_path}\n"
                  f"  extpar_rawdata_path: {extpar_rawdata_path}\n"
-                 f"  input_grid_path: {input_grid_path}\n"
                  f"  use_apptainer: {use_apptainer}")
     
     # Load config and write namelist
     config = load_config(config_path)
     zonda = config['zonda']
-    basegrid = config['basegrid']
-    icontools_active = input_grid_path is None
 
     if use_apptainer:
         logging.warning("You are using apptainer, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
+
+    input_grid_path = zonda.get("input_grid_path")
+    icontools_active = input_grid_path is None
 
     if icontools_active:
         icontools_tag = zonda.get('icontools_tag', 'master')
@@ -430,8 +434,17 @@ def main(workspace, config_path, extpar_rawdata_path, input_grid_path, use_appta
         grid_dir = os.path.join(workspace, 'icontools')
         grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
     else:
-        grid_dir = os.path.dirname(input_grid_path)
-        grid_files = [os.path.dirname(input_grid_path)]
+        input_grid_path = os.path.abspath(input_grid_path)
+
+        if os.path.isfile(input_grid_path):
+            grid_dir = os.path.dirname(input_grid_path)
+            grid_files = [os.path.basename(input_grid_path)]
+
+            logging.warning(f'You provided an input grid at "{input_grid_path}", thus the grid generation step is skipped!\n'
+                            'Note that the "basegrid", "icontools", and "icontools_tag" entries in the JSON config are ignored.')
+        else:
+            logging.error(f'The provided input grid is not a file: "{input_grid_path}". Please provide the path to NetCDF file.')
+            raise FileNotFoundError(f'"{input_grid_path}" is not a file')
 
     extpar_tag = zonda['extpar_tag'] if use_apptainer else pull_extpar_image(zonda)
 
@@ -458,10 +471,10 @@ def main(workspace, config_path, extpar_rawdata_path, input_grid_path, use_appta
                             f"{repr(e)}\n"
                             "Skipping the visualization!")
     else:
-        logging.warning("A custom grid is being used. Skipping generation of rotated lat-lon grid and visualization of topography!")
+        logging.warning("An input grid was provided. Skipping generation of rotated lat-lon grid and visualization of topography!")
 
     if icontools_active:
-        keep_base_grid = basegrid['keep_basegrid_files']
+        keep_base_grid = config['basegrid']['keep_basegrid_files']
     else:
         keep_base_grid = False  # Likely no basegrid files if the grid is provided by the user
 
@@ -475,7 +488,6 @@ if __name__ == "__main__":
     parser.add_argument('--workspace', type=str, required=True, help="Path to the workspace directory")
     parser.add_argument('--config', type=str, required=True, help="Path to the configuration file")
     parser.add_argument('--extpar-rawdata', type=str, required=True, help="Path to the EXTPAR raw input data")
-    parser.add_argument('--input-grid', type=str, help="Path to a pre-existing ICON grid (this disables the usual grid generation)")
     parser.add_argument('--logfile', type=str, help="Path to the log file")
     parser.add_argument('--apptainer', action=argparse.BooleanOptionalAction, default=False, help="Use apptainer instead of podman to run containers")
 
@@ -491,8 +503,7 @@ if __name__ == "__main__":
     workspace = os.path.abspath(args.workspace)
     config = os.path.abspath(args.config)
     extpar_rawdata_path = os.path.abspath(args.extpar_rawdata)
-    input_grid_path = args.input_grid if args.input_grid is None else os.path.abspath(args.input_grid)
 
     use_apptainer = args.apptainer
 
-    main(workspace, config, extpar_rawdata_path, input_grid_path, use_apptainer)
+    main(workspace, config, extpar_rawdata_path, use_apptainer)
