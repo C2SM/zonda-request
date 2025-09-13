@@ -81,12 +81,13 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
     logging.info(f"Output zip file created at {zip_file_path}")
 
 
-def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer):
+def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, grid_dir, extpar_tag, use_apptainer):
     logging.info(f"Call run_extpar with the following arguments:\n"
                  f"workspace: {workspace}\n"
                  f"config_path: {config_path}\n"
                  f"extpar_rawdata_path: {extpar_rawdata_path}\n"
                  f"grid_files: {grid_files}\n"
+                 f"grid_dir: {grid_dir}\n"
                  f"extpar_tag: {extpar_tag}\n"
                  f"use_apptainer: {use_apptainer}")
     # Create the EXTPAR directories
@@ -132,7 +133,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
                 "--env", f"OMP_NUM_THREADS={num_threads}",
                 "--env", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
                 "--bind", f"{extpar_rawdata_path}:/data",
-                "--bind", f"{workspace}/icontools:/grid",
+                "--bind", f"{grid_dir}:/grid",
                 "--bind", f"{extpar_dir}:/work",
                 f"{workspace}/extpar.sif"
             ]
@@ -142,7 +143,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
                 "-e", f"OMP_NUM_THREADS={num_threads}",
                 "-e", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
                 "-v", f"{extpar_rawdata_path}:/data",
-                "-v", f"{workspace}/icontools:/grid",
+                "-v", f"{grid_dir}:/grid",
                 "-v", f"{extpar_dir}:/work",
                 f"extpar:{extpar_tag}"
             ]
@@ -425,13 +426,15 @@ def main(workspace, config_path, extpar_rawdata_path, input_grid_path, use_appta
     if input_grid_path is None:
         icontools_tag = zonda.get('icontools_tag', 'master')
 
+        grid_dir = os.path.join(workspace, 'icontools')
         grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
     else:
-        grid_files = [input_grid_path]
+        grid_dir = os.path.dirname(input_grid_path)
+        grid_files = [os.path.dirname(input_grid_path)]
 
     extpar_tag = zonda['extpar_tag'] if use_apptainer else pull_extpar_image(zonda)
 
-    extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer)
+    extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, grid_dir, extpar_tag, use_apptainer)
 
     try:
         run_rotgrid(workspace, config, grid_files)
