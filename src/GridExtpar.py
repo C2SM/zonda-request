@@ -460,7 +460,11 @@ def main(workspace, config_path, extpar_rawdata_path, input_grid_path, use_appta
     else:
         logging.warning("A custom grid is being used. Skipping generation of rotated lat-lon grid and visualization of topography!")
 
-    keep_base_grid = basegrid['keep_basegrid_files']
+    if icontools_active:
+        keep_base_grid = basegrid['keep_basegrid_files']
+    else:
+        keep_base_grid = False  # Likely no basegrid files if the grid is provided by the user
+
     move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
 
     logging.info("Process completed")
