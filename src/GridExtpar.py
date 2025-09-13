@@ -419,11 +419,12 @@ def main(workspace, config_path, extpar_rawdata_path, input_grid_path, use_appta
     config = load_config(config_path)
     zonda = config['zonda']
     basegrid = config['basegrid']
+    icontools_active = input_grid_path is None
 
     if use_apptainer:
         logging.warning("You are using apptainer, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
 
-    if input_grid_path is None:
+    if icontools_active:
         icontools_tag = zonda.get('icontools_tag', 'master')
 
         grid_dir = os.path.join(workspace, 'icontools')
@@ -436,25 +437,28 @@ def main(workspace, config_path, extpar_rawdata_path, input_grid_path, use_appta
 
     extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, grid_dir, extpar_tag, use_apptainer)
 
-    try:
-        run_rotgrid(workspace, config, grid_files)
-    except Exception as e:
-        logging.warning("An error occurred during the generation of the rotated lat-lon grid.\n"
-                        f"{repr(e)}\n"
-                        "Skipping generation of rotated lat-lon grid!")
+    if icontools_active:
+        try:
+            run_rotgrid(workspace, config, grid_files)
+        except Exception as e:
+            logging.warning("An error occurred during the generation of the rotated lat-lon grid.\n"
+                            f"{repr(e)}\n"
+                            "Skipping generation of rotated lat-lon grid!")
 
-    try:
-        for i, grid_file in enumerate(grid_files):
-            grid_filepath = os.path.join(workspace, 'icontools', grid_file)
-            extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
+        try:
+            for i, grid_file in enumerate(grid_files):
+                grid_filepath = os.path.join(grid_dir, grid_file)
+                extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
 
-            icontools_config = config['domains'][i]['icontools']
+                icontools_config = config['domains'][i]['icontools']
 
-            visualize_topography(icontools_config, workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
-    except Exception as e:
-        logging.warning("An error occurred during the visualization of topography data.\n"
-                        f"{repr(e)}\n"
-                        "Skipping the visualization!")
+                visualize_topography(icontools_config, workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
+        except Exception as e:
+            logging.warning("An error occurred during the visualization of topography data.\n"
+                            f"{repr(e)}\n"
+                            "Skipping the visualization!")
+    else:
+        logging.warning("A custom grid is being used. Skipping generation of rotated lat-lon grid and visualization of topography!")
 
     keep_base_grid = basegrid['keep_basegrid_files']
     move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
