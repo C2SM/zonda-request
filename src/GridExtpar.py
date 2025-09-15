@@ -58,7 +58,7 @@ def create_zip(zip_file_path, source_dir):
 
 
 def move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_active):
-    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, keep_base_grid: {keep_base_grid}")
+    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, keep_base_grid: {keep_base_grid}, icontools_active: {icontools_active}")
     
     output_dir = os.path.join(workspace, 'output')
     log_dir = os.path.join(output_dir, 'logs')
@@ -75,9 +75,6 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_ac
     # Move icontools files
     if icontools_active:
         move_icontools(workspace, output_dir, namelist_dir, keep_base_grid)
-    else:
-        # TODO: add copy_input_grid
-        pass
 
     # Create a zip file
     zip_file_path = os.path.join(workspace, 'output.zip')
@@ -478,7 +475,7 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     else:
         keep_base_grid = False  # Likely no basegrid files if the grid is provided by the user
 
-    move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
+    move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_active)
 
     logging.info("Process completed")
 
