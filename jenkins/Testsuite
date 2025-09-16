@@ -15,7 +15,7 @@ pipeline {
                 axes {
                     axis {
                         name 'ISSUE_ID'
-                        values '195', '196', '197', '564', '565'
+                        values '881'
                     }
                 }
                 agent {
