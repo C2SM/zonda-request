@@ -57,8 +57,8 @@ def create_zip(zip_file_path, source_dir):
                 zipf.write(file_path, arcname)
 
 
-def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
-    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, keep_base_grid: {keep_base_grid}")
+def move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_active):
+    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, keep_base_grid: {keep_base_grid}, icontools_active: {icontools_active}")
     
     output_dir = os.path.join(workspace, 'output')
     log_dir = os.path.join(output_dir, 'logs')
@@ -73,7 +73,8 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
     move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs)
 
     # Move icontools files
-    move_icontools(workspace, output_dir, namelist_dir, keep_base_grid)
+    if icontools_active:
+        move_icontools(workspace, output_dir, namelist_dir, keep_base_grid)
 
     # Create a zip file
     zip_file_path = os.path.join(workspace, 'output.zip')
@@ -81,12 +82,13 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid):
     logging.info(f"Output zip file created at {zip_file_path}")
 
 
-def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer):
+def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, grid_dir, extpar_tag, use_apptainer):
     logging.info(f"Call run_extpar with the following arguments:\n"
                  f"workspace: {workspace}\n"
                  f"config_path: {config_path}\n"
                  f"extpar_rawdata_path: {extpar_rawdata_path}\n"
                  f"grid_files: {grid_files}\n"
+                 f"grid_dir: {grid_dir}\n"
                  f"extpar_tag: {extpar_tag}\n"
                  f"use_apptainer: {use_apptainer}")
     # Create the EXTPAR directories
@@ -132,7 +134,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
                 "--env", f"OMP_NUM_THREADS={num_threads}",
                 "--env", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
                 "--bind", f"{extpar_rawdata_path}:/data",
-                "--bind", f"{workspace}/icontools:/grid",
+                "--bind", f"{grid_dir}:/grid",
                 "--bind", f"{extpar_dir}:/work",
                 f"{workspace}/extpar.sif"
             ]
@@ -142,7 +144,7 @@ def run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_t
                 "-e", f"OMP_NUM_THREADS={num_threads}",
                 "-e", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
                 "-v", f"{extpar_rawdata_path}:/data",
-                "-v", f"{workspace}/icontools:/grid",
+                "-v", f"{grid_dir}:/grid",
                 "-v", f"{extpar_dir}:/work",
                 f"extpar:{extpar_tag}"
             ]
@@ -416,41 +418,64 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     # Load config and write namelist
     config = load_config(config_path)
     zonda = config['zonda']
-    basegrid = config['basegrid']
 
     if use_apptainer:
         logging.warning("You are using apptainer, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
 
-    icontools_tag = zonda.get('icontools_tag', 'master')
+    input_grid_path = zonda.get("input_grid_path")
+    icontools_active = input_grid_path is None
 
-    grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
+    if icontools_active:
+        icontools_tag = zonda.get('icontools_tag', 'master')
+
+        grid_dir = os.path.join(workspace, 'icontools')
+        grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
+    else:
+        input_grid_path = os.path.abspath(input_grid_path)
+
+        if os.path.isfile(input_grid_path):
+            grid_dir = os.path.dirname(input_grid_path)
+            grid_files = [os.path.basename(input_grid_path)]
+
+            logging.warning(f'You provided an input grid at "{input_grid_path}", thus the grid generation step is skipped!\n'
+                            'Note that the "basegrid", "icontools", and "icontools_tag" entries in the JSON config are ignored.')
+        else:
+            logging.error(f'The provided input grid is not a file: "{input_grid_path}". Please provide the path to NetCDF file.')
+            raise FileNotFoundError(f'"{input_grid_path}" is not a file')
 
     extpar_tag = zonda['extpar_tag'] if use_apptainer else pull_extpar_image(zonda)
 
-    extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, extpar_tag, use_apptainer)
+    extpar_dirs = run_extpar(workspace, config_path, extpar_rawdata_path, grid_files, grid_dir, extpar_tag, use_apptainer)
 
-    try:
-        run_rotgrid(workspace, config, grid_files)
-    except Exception as e:
-        logging.warning("An error occurred during the generation of the rotated lat-lon grid.\n"
-                        f"{repr(e)}\n"
-                        "Skipping generation of rotated lat-lon grid!")
+    if icontools_active:
+        try:
+            run_rotgrid(workspace, config, grid_files)
+        except Exception as e:
+            logging.warning("An error occurred during the generation of the rotated lat-lon grid.\n"
+                            f"{repr(e)}\n"
+                            "Skipping generation of rotated lat-lon grid!")
 
-    try:
-        for i, grid_file in enumerate(grid_files):
-            grid_filepath = os.path.join(workspace, 'icontools', grid_file)
-            extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
+        try:
+            for i, grid_file in enumerate(grid_files):
+                grid_filepath = os.path.join(grid_dir, grid_file)
+                extpar_filepath = os.path.join(extpar_dirs[i], "external_parameter.nc")
 
-            icontools_config = config['domains'][i]['icontools']
+                icontools_config = config['domains'][i]['icontools']
 
-            visualize_topography(icontools_config, workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
-    except Exception as e:
-        logging.warning("An error occurred during the visualization of topography data.\n"
-                        f"{repr(e)}\n"
-                        "Skipping the visualization!")
+                visualize_topography(icontools_config, workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
+        except Exception as e:
+            logging.warning("An error occurred during the visualization of topography data.\n"
+                            f"{repr(e)}\n"
+                            "Skipping the visualization!")
+    else:
+        logging.warning("An input grid was provided. Skipping generation of rotated lat-lon grid and visualization of topography!")
 
-    keep_base_grid = basegrid['keep_basegrid_files']
-    move_output(workspace, grid_files, extpar_dirs, keep_base_grid)
+    if icontools_active:
+        keep_base_grid = config['basegrid']['keep_basegrid_files']
+    else:
+        keep_base_grid = False  # Likely no basegrid files if the grid is provided by the user
+
+    move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_active)
 
     logging.info("Process completed")
 
