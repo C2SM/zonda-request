@@ -265,6 +265,7 @@ def write_gridgen_namelist(config, wrk_dir):
     namelist.append(f"  lspring_dynamics = .TRUE.")
     namelist.append(f"  maxit = 2000")
     namelist.append(f"  beta_spring = 0.9")
+    namelist.append(f"  bdy_indexing_depth = {basegrid.get('bdy_indexing_depth',14)}")
     namelist.append("")
     
     # centre and subcentre
