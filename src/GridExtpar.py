@@ -347,7 +347,7 @@ def pull_extpar_image(config):
 
 
 def run_rotgrid(workspace, config, grid_files):
-    logging.info("Creating rotated lat-lon grid")
+    logging.info("Creating lat-lon grid")
     basegrid = config['basegrid']
     domains = config['domains']
 
@@ -358,7 +358,7 @@ def run_rotgrid(workspace, config, grid_files):
     for i, domain in enumerate(domains):
         icontools = domain['icontools']
 
-        # Only rectangular domain are supported
+        # Only rectangular domains are supported
         if icontools.get('region_type') == 3:
 
             lrotate = icontools.get('lrotate', False)
@@ -384,29 +384,29 @@ def run_rotgrid(workspace, config, grid_files):
                 pole_lon = icontools['pole_lon']
 
                 create_rotated_grid( grid_spacing,
-                                    center_lat,
-                                    center_lon,
-                                    hwidth_lat,
-                                    hwidth_lon,
-                                    pole_lat,
-                                    pole_lon,
-                                    0,
-                                    output_path_full )
+                                     center_lat,
+                                     center_lon,
+                                     hwidth_lat,
+                                     hwidth_lon,
+                                     pole_lat,
+                                     pole_lon,
+                                     0,
+                                     output_path_full )
 
                 logging.info(f'Rotated lat-lon grid for {dom_id_to_str(i)} stored in {output_path_full}')
 
                 create_rotated_grid( grid_spacing,
-                                    center_lat,
-                                    center_lon,
-                                    hwidth_lat,
-                                    hwidth_lon,
-                                    pole_lat,
-                                    pole_lon,
-                                    ncells_boundary,
-                                    output_path_reduced )
+                                     center_lat,
+                                     center_lon,
+                                     hwidth_lat,
+                                     hwidth_lon,
+                                     pole_lat,
+                                     pole_lon,
+                                     ncells_boundary,
+                                     output_path_reduced )
 
                 logging.info(f'Reduced (-{ncells_boundary} cells at each boundary) rotated '
-                            f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
+                             f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
             else:
                 create_latlon_grid( grid_spacing,
                                     center_lat,
@@ -427,9 +427,9 @@ def run_rotgrid(workspace, config, grid_files):
                                     output_path_reduced )
 
                 logging.info(f'Reduced (-{ncells_boundary} cells at each boundary) '
-                            f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
+                             f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
         else:
-            logging.info(f'{dom_id_to_str(i)} is not rectangular (region_type = 3) -> Skipping generation of lat-lon grid!')
+            logging.info(f'{dom_id_to_str(i)} is not rectangular (i.e., region_type = 3) -> Skipping generation of lat-lon grid!')
 
 
 def compute_resolution_from_rnbk(n, k):
