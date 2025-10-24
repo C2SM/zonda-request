@@ -7,7 +7,7 @@ import subprocess
 import glob
 import zipfile
 from math import sqrt, pow, pi
-from zonda_rotgrid.core import create_rotated_grid
+from zonda_rotgrid.core import create_rotated_grid, create_latlon_grid
 from visualize_data import visualize_topography
 
 def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
@@ -347,7 +347,7 @@ def pull_extpar_image(config):
 
 
 def run_rotgrid(workspace, config, grid_files):
-    logging.info("Creating rotated lat-lon grid")
+    logging.info("Creating lat-lon grid")
     basegrid = config['basegrid']
     domains = config['domains']
 
@@ -358,13 +358,15 @@ def run_rotgrid(workspace, config, grid_files):
     for i, domain in enumerate(domains):
         icontools = domain['icontools']
 
-        if str(icontools.get('lrotate', False)).lower() == 'true':
+        # Only rectangular domains are supported
+        if icontools.get('region_type') == 3:
+
+            lrotate = icontools.get('lrotate', False)
+
             center_lat = icontools['center_lat']
             center_lon = icontools['center_lon']
             hwidth_lat = icontools['hwidth_lat']
             hwidth_lon = icontools['hwidth_lon']
-            pole_lat = icontools['pole_lat']
-            pole_lon = icontools['pole_lon']
 
             ncells_boundary = 16
 
@@ -373,35 +375,61 @@ def run_rotgrid(workspace, config, grid_files):
             grid_spacing = compute_resolution_from_rnbk(n, k)
 
             grid_file_base = grid_files[i].removesuffix('.nc')
-            output_path_full = os.path.join(output_dir, f'{grid_file_base}_latlon_rotated.nc')
-            output_path_reduced = os.path.join(output_dir, f'{grid_file_base}_latlon_rotated_reduced.nc')
+            output_filename_suffix = "_rotated" if lrotate else ""
+            output_path_full = os.path.join(output_dir, f'{grid_file_base}_latlon{output_filename_suffix}.nc')
+            output_path_reduced = os.path.join(output_dir, f'{grid_file_base}_latlon{output_filename_suffix}_reduced.nc')
 
-            create_rotated_grid( grid_spacing,
-                                 center_lat,
-                                 center_lon,
-                                 hwidth_lat,
-                                 hwidth_lon,
-                                 pole_lat,
-                                 pole_lon,
-                                 0,
-                                 output_path_full )
+            if lrotate:
+                pole_lat = icontools['pole_lat']
+                pole_lon = icontools['pole_lon']
 
-            logging.info(f'Rotated lat-lon grid for {dom_id_to_str(i)} stored in {output_path_full}')
+                create_rotated_grid( grid_spacing,
+                                     center_lat,
+                                     center_lon,
+                                     hwidth_lat,
+                                     hwidth_lon,
+                                     pole_lat,
+                                     pole_lon,
+                                     0,
+                                     output_path_full )
 
-            create_rotated_grid( grid_spacing,
-                                 center_lat,
-                                 center_lon,
-                                 hwidth_lat,
-                                 hwidth_lon,
-                                 pole_lat,
-                                 pole_lon,
-                                 ncells_boundary,
-                                 output_path_reduced )
+                logging.info(f'Rotated lat-lon grid for {dom_id_to_str(i)} stored in {output_path_full}')
 
-            logging.info(f'Reduced (-{ncells_boundary} cells at each boundary) rotated'
-                         f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
+                create_rotated_grid( grid_spacing,
+                                     center_lat,
+                                     center_lon,
+                                     hwidth_lat,
+                                     hwidth_lon,
+                                     pole_lat,
+                                     pole_lon,
+                                     ncells_boundary,
+                                     output_path_reduced )
+
+                logging.info(f'Reduced (-{ncells_boundary} cells at each boundary) rotated '
+                             f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
+            else:
+                create_latlon_grid( grid_spacing,
+                                    center_lat,
+                                    center_lon,
+                                    hwidth_lat,
+                                    hwidth_lon,
+                                    0,
+                                    output_path_full )
+
+                logging.info(f'Lat-lon grid for {dom_id_to_str(i)} stored in {output_path_full}')
+
+                create_latlon_grid( grid_spacing,
+                                    center_lat,
+                                    center_lon,
+                                    hwidth_lat,
+                                    hwidth_lon,
+                                    ncells_boundary,
+                                    output_path_reduced )
+
+                logging.info(f'Reduced (-{ncells_boundary} cells at each boundary) '
+                             f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
         else:
-            logging.info(f'lrotate==false for {dom_id_to_str(i)} -> Skipping generation of lat-lon grid!')
+            logging.info(f'{dom_id_to_str(i)} is not rectangular (i.e., region_type = 3) -> Skipping generation of lat-lon grid!')
 
 
 def compute_resolution_from_rnbk(n, k):
