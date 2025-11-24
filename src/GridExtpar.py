@@ -451,8 +451,10 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     if use_apptainer:
         logging.warning("You are using apptainer, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
 
-    input_grid_path = zonda.get("input_grid_path")
-    icontools_active = input_grid_path is None
+    input_grid_dir = zonda.get("input_grid_dir")
+    input_grid_files_in = str(zonda.get("input_grid_files")).split(",")
+    input_grid_files = [s.strip() for s in input_grid_files_in]
+    icontools_active = input_grid_dir is None
 
     if icontools_active:
         icontools_tag = zonda.get('icontools_tag', 'master')
@@ -460,17 +462,26 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
         grid_dir = os.path.join(workspace, 'icontools')
         grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
     else:
-        input_grid_path = os.path.abspath(input_grid_path)
+        input_grid_dir = os.path.abspath(input_grid_dir)
 
-        if os.path.isfile(input_grid_path):
-            grid_dir = os.path.dirname(input_grid_path)
-            grid_files = [os.path.basename(input_grid_path)]
+        if os.path.exists(input_grid_dir) and not os.path.isfile(input_grid_dir):
+            grid_dir = input_grid_dir
+            grid_files = []
 
-            logging.warning(f'You provided an input grid at "{input_grid_path}", thus the grid generation step is skipped!\n'
+            for grid_file in input_grid_files:
+
+                if os.path.isfile(os.path.join(grid_dir,grid_file)):
+                    grid_files.append(f"{grid_file}")
+                else:
+                    logging.error(f'The provided input grid file is not a file at "{grid_dir}": "{grid_file}". Please provide an existing NetCDF file.')
+                    raise FileNotFoundError(f'"{grid_file}" is not a file at "{grid_dir}"')
+
+            logging.warning(f'You provided input grids at "{grid_dir}", thus the grid generation step is skipped!\n'
                             'Note that the "basegrid", "icontools", and "icontools_tag" entries in the JSON config are ignored.')
+
         else:
-            logging.error(f'The provided input grid is not a file: "{input_grid_path}". Please provide the path to NetCDF file.')
-            raise FileNotFoundError(f'"{input_grid_path}" is not a file')
+            logging.error(f'The provided input grid dir does not exist or is not a directory: "{input_grid_dir}". Please provide an existing directory.')
+            raise FileNotFoundError(f'"{input_grid_dir}" does not exist or is not a directory')
 
     extpar_tag = zonda['extpar_tag'] if use_apptainer else pull_extpar_image(zonda)
 
