@@ -341,8 +341,11 @@ def run_icontools(workspace, config, icontools_tag, use_apptainer):
 
 def pull_extpar_image(config):
     tag = config['extpar_tag']
-    shell_cmd("podman", "pull", f"docker.io/c2sm/extpar:{tag}")
-    logging.info("Pull extpar image completed")
+    if tag != "latest":
+        shell_cmd("podman", "pull", f"docker.io/c2sm/extpar:{tag}")
+        logging.info("Pull extpar image completed")
+    else
+        logging.info("Using latest extpar tag (it must already be present on the system)")
     return tag
 
 
