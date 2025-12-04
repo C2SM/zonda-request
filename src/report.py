@@ -78,28 +78,27 @@ if __name__ == "__main__":
     url = f'https://data.iac.ethz.ch/zonda/{hash}'
 
     config_str = json.dumps(config, indent=2)
+    config_collapsible = (
+        f"\n\n"
+        f"<details>\n\n"
+        f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
+        f"```json\n"
+        f"{config_str}\n"
+        f"```\n\n"
+        f"</details>"
+    )
 
     fail_comment = (
         f"Something went wrong. Please check the [logfiles]({url}) for more information.\n\n"
         f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**. "
-        f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors.\n\n"
-        f"<details>\n\n"
-        f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
-        f"```json\n"
-        f"{config_str}"
-        f"```\n\n"
-        f"</details>"
+        f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
+        f"{config_collapsible}"
     )
     abort_comment = (
         f"Your request has been aborted. Please check the [logfiles]({url}) for more information.\n\n"
         f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**. "
-        f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors.\n\n"
-        f"<details>\n\n"
-        f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
-        f"```json\n"
-        f"{config_str}"
-        f"```\n\n"
-        f"</details>"
+        f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
+        f"{config_collapsible}"
     )
     success_comment = (
         f"Your data is ready for up to 7 days under this [link]({url}).\n\n"
@@ -107,13 +106,8 @@ if __name__ == "__main__":
         f"```bash\n"
         f"wget {url}/zonda_output_{outfile}.zip\n"
         f"unzip zonda_output_{outfile}.zip -d zonda_output_{outfile}\n"
-        f"```\n\n"
-        f"<details>\n\n"
-        f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
-        f"```json\n"
-        f"{config_str}"
-        f"```\n\n"
-        f"</details>"
+        f"```"
+        f"{config_collapsible}"
     )
 
     fail_status_msg = "Testsuite failed!"
