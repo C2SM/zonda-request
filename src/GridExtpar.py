@@ -514,8 +514,8 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup workspace and generate namelist")
-    parser.add_argument('--workspace', type=str, required=True, help="Path to the workspace directory")
     parser.add_argument('--config', type=str, required=True, help="Path to the configuration file")
+    parser.add_argument('--workspace', type=str, required=True, help="Path to the workspace directory")
     parser.add_argument('--extpar-rawdata', type=str, required=True, help="Path to the EXTPAR raw input data")
     parser.add_argument('--logfile', type=str, help="Path to the log file")
     parser.add_argument('--apptainer', action=argparse.BooleanOptionalAction, default=False, help="Use apptainer instead of podman to run containers")
