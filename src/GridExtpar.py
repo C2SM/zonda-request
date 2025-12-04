@@ -20,6 +20,16 @@ def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
         shutil.move(file, dest_file)
 
 
+def copy_files(src_pattern, dest_dir, prefix="",blacklist={}):
+    for file in glob.glob(src_pattern):
+        if os.path.basename(file) in blacklist:
+            logging.info(f"Skipping {file}")
+            continue
+        dest_file = os.path.join(dest_dir, prefix + os.path.basename(file))
+        logging.info(f"Copy {file} to {dest_file}")
+        shutil.copy(file, dest_file)
+
+
 def move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs):
     for i, exptar_dir in enumerate(extpar_dirs):
         # Move logfiles
@@ -33,7 +43,7 @@ def move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs):
         os.makedirs(os.path.join(domain_dir), exist_ok=True)
         move_files(os.path.join(exptar_dir, "INPUT_*"), domain_dir)
         move_files(os.path.join(exptar_dir, "namelist.py"), domain_dir)
-        move_files(os.path.join(exptar_dir, "config.json"), domain_dir)
+        copy_files(os.path.join(exptar_dir, "config.json"), domain_dir)
 
 
 def move_icontools(workspace, output_dir, namelist_dir, keep_base_grid):
