@@ -43,7 +43,7 @@ def move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs):
         os.makedirs(os.path.join(domain_dir), exist_ok=True)
         move_files(os.path.join(exptar_dir, "INPUT_*"), domain_dir)
         move_files(os.path.join(exptar_dir, "namelist.py"), domain_dir)
-        copy_files(os.path.join(exptar_dir, "config.json"), domain_dir)
+        move_files(os.path.join(exptar_dir, "config.json"), domain_dir)
 
 
 def move_icontools(workspace, output_dir, namelist_dir, keep_base_grid):
@@ -67,8 +67,8 @@ def create_zip(zip_file_path, source_dir):
                 zipf.write(file_path, arcname)
 
 
-def move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_active):
-    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, keep_base_grid: {keep_base_grid}, icontools_active: {icontools_active}")
+def move_output(workspace, grid_files, extpar_dirs, outfile, keep_base_grid, icontools_active):
+    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, outfile: {outfile}, keep_base_grid: {keep_base_grid}, icontools_active: {icontools_active}")
     
     output_dir = os.path.join(workspace, 'output')
     log_dir = os.path.join(output_dir, 'logs')
@@ -87,7 +87,7 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_ac
         move_icontools(workspace, output_dir, namelist_dir, keep_base_grid)
 
     # Create a zip file
-    zip_file_path = os.path.join(workspace, 'output.zip')
+    zip_file_path = os.path.join(workspace, f"zonda_output_{outfile}.zip")
     create_zip(zip_file_path, output_dir)
     logging.info(f"Output zip file created at {zip_file_path}")
 
@@ -381,8 +381,6 @@ def run_rotgrid(workspace, config, grid_files):
             hwidth_lat = icontools['hwidth_lat']
             hwidth_lon = icontools['hwidth_lon']
 
-            ncells_boundary = 16
-
             n = basegrid['grid_root']
             k = basegrid['grid_level'] + 1 + i
             grid_spacing = compute_resolution_from_rnbk(n, k)
@@ -390,7 +388,6 @@ def run_rotgrid(workspace, config, grid_files):
             grid_file_base = grid_files[i].removesuffix('.nc')
             output_filename_suffix = "_rotated" if lrotate else ""
             output_path_full = os.path.join(output_dir, f'{grid_file_base}_latlon{output_filename_suffix}.nc')
-            output_path_reduced = os.path.join(output_dir, f'{grid_file_base}_latlon{output_filename_suffix}_reduced.nc')
 
             if lrotate:
                 pole_lat = icontools['pole_lat']
@@ -407,19 +404,6 @@ def run_rotgrid(workspace, config, grid_files):
                                      output_path_full )
 
                 logging.info(f'Rotated lat-lon grid for {dom_id_to_str(i)} stored in {output_path_full}')
-
-                create_rotated_grid( grid_spacing,
-                                     center_lat,
-                                     center_lon,
-                                     hwidth_lat,
-                                     hwidth_lon,
-                                     pole_lat,
-                                     pole_lon,
-                                     ncells_boundary,
-                                     output_path_reduced )
-
-                logging.info(f'Reduced (-{ncells_boundary} cells at each boundary) rotated '
-                             f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
             else:
                 create_latlon_grid( grid_spacing,
                                     center_lat,
@@ -430,17 +414,6 @@ def run_rotgrid(workspace, config, grid_files):
                                     output_path_full )
 
                 logging.info(f'Lat-lon grid for {dom_id_to_str(i)} stored in {output_path_full}')
-
-                create_latlon_grid( grid_spacing,
-                                    center_lat,
-                                    center_lon,
-                                    hwidth_lat,
-                                    hwidth_lon,
-                                    ncells_boundary,
-                                    output_path_reduced )
-
-                logging.info(f'Reduced (-{ncells_boundary} cells at each boundary) '
-                             f'lat-lon grid for {dom_id_to_str(i)} stored in {output_path_reduced}')
         else:
             logging.info(f'{dom_id_to_str(i)} is not rectangular (i.e., region_type = 3) -> Skipping generation of lat-lon grid!')
 
@@ -472,12 +445,16 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
 
         grid_dir = os.path.join(workspace, 'icontools')
         grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
+
+        outfile = config['basegrid']['outfile']
     else:
         input_grid_path = os.path.abspath(input_grid_path)
 
         if os.path.isfile(input_grid_path):
             grid_dir = os.path.dirname(input_grid_path)
             grid_files = [os.path.basename(input_grid_path)]
+
+            outfile = os.path.splitext(grid_files[0])[0]
 
             logging.warning(f'You provided an input grid at "{input_grid_path}", thus the grid generation step is skipped!\n'
                             'Note that the "basegrid", "icontools", and "icontools_tag" entries in the JSON config are ignored.')
@@ -517,7 +494,7 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     else:
         keep_base_grid = False  # Likely no basegrid files if the grid is provided by the user
 
-    move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_active)
+    move_output(workspace, grid_files, extpar_dirs, outfile, keep_base_grid, icontools_active)
 
     logging.info("Process completed")
 

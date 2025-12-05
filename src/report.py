@@ -104,8 +104,8 @@ if __name__ == "__main__":
         f"Your data is ready for up to 7 days under this [link]({url}).\n\n"
         f"You can also download it using the following commands:\n"
         f"```bash\n"
-        f"wget {url}/output.zip\n"
-        f"unzip output.zip -d output_{outfile}\n"
+        f"wget {url}/zonda_output_{outfile}.zip\n"
+        f"unzip zonda_output_{outfile}.zip -d zonda_output_{outfile}\n"
         f"```"
         f"{config_collapsible}"
     )
