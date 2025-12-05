@@ -41,7 +41,6 @@ def main():
     args = parser.parse_args()
 
     config_path = os.path.abspath(args.config)
-    print("CONFIG PATH: ", config_path)
     with open(config_path, 'r') as f:
         config = json.load(f)
 
