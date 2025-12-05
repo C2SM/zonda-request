@@ -43,7 +43,7 @@ def move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs):
         os.makedirs(os.path.join(domain_dir), exist_ok=True)
         move_files(os.path.join(exptar_dir, "INPUT_*"), domain_dir)
         move_files(os.path.join(exptar_dir, "namelist.py"), domain_dir)
-        copy_files(os.path.join(exptar_dir, "config.json"), domain_dir)
+        move_files(os.path.join(exptar_dir, "config.json"), domain_dir)
 
 
 def move_icontools(workspace, output_dir, namelist_dir, keep_base_grid):
