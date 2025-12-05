@@ -67,8 +67,8 @@ def create_zip(zip_file_path, source_dir):
                 zipf.write(file_path, arcname)
 
 
-def move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_active):
-    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, keep_base_grid: {keep_base_grid}, icontools_active: {icontools_active}")
+def move_output(workspace, grid_files, extpar_dirs, outfile, keep_base_grid, icontools_active):
+    logging.info(f"move_output called with workspace: {workspace}, grid_files: {grid_files}, extpar_dirs: {extpar_dirs}, outfile: {outfile}, keep_base_grid: {keep_base_grid}, icontools_active: {icontools_active}")
     
     output_dir = os.path.join(workspace, 'output')
     log_dir = os.path.join(output_dir, 'logs')
@@ -87,7 +87,7 @@ def move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_ac
         move_icontools(workspace, output_dir, namelist_dir, keep_base_grid)
 
     # Create a zip file
-    zip_file_path = os.path.join(workspace, 'output.zip')
+    zip_file_path = os.path.join(workspace, f"zonda_output_{outfile}.zip")
     create_zip(zip_file_path, output_dir)
     logging.info(f"Output zip file created at {zip_file_path}")
 
@@ -445,12 +445,16 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
 
         grid_dir = os.path.join(workspace, 'icontools')
         grid_files = run_icontools(workspace, config, icontools_tag, use_apptainer)
+
+        outfile = config['basegrid']['outfile']
     else:
         input_grid_path = os.path.abspath(input_grid_path)
 
         if os.path.isfile(input_grid_path):
             grid_dir = os.path.dirname(input_grid_path)
             grid_files = [os.path.basename(input_grid_path)]
+
+            outfile = os.path.splitext(grid_files[0])[0]
 
             logging.warning(f'You provided an input grid at "{input_grid_path}", thus the grid generation step is skipped!\n'
                             'Note that the "basegrid", "icontools", and "icontools_tag" entries in the JSON config are ignored.')
@@ -490,7 +494,7 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
     else:
         keep_base_grid = False  # Likely no basegrid files if the grid is provided by the user
 
-    move_output(workspace, grid_files, extpar_dirs, keep_base_grid, icontools_active)
+    move_output(workspace, grid_files, extpar_dirs, outfile, keep_base_grid, icontools_active)
 
     logging.info("Process completed")
 
