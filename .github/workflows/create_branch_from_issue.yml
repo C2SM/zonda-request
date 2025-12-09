@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Extract backend_tag
-        id: get_tag
         run: |
           backend_tag=$(echo "${{ github.event.issue.body }}" \
             | sed -n '/^```json$/,${p;/^```$/q}' \
