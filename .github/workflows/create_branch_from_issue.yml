@@ -27,7 +27,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          ref: ${{ env.backend_tag }}
+          ref: ${{ env.BACKEND_TAG }}
 
       - name: Create new branch and commit
         run: |
