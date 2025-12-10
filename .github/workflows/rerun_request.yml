@@ -1,4 +1,4 @@
-name: Commit on "rerun request" comment
+name: Rerun request
 on:
   issue_comment:
     types: [created]
@@ -15,7 +15,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          # Check out the branch related to the issue number
           ref: issue-${{ github.event.issue.number }}/request
 
       - name: Extract JSON from issue description and commit to re-trigger request
