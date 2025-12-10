@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as col
 import matplotlib.ticker as tck
 import matplotlib.cm as cm
+import matplotlib as mpl
 import xarray as xr
 import numpy as np
 import warnings
@@ -34,6 +35,8 @@ code_font       = {'family': 'Courier New'             }
 def visualize_topography(icontools_config, workspace, data_file, grid_file, output_dir):
 
     logging.info(f"Starting the visualization of topography data")
+    tekst = mpl.get_backend()
+    logging.info(f"Backend = {tekst}")
 
     ##################################
     ### Get and transform the data ###

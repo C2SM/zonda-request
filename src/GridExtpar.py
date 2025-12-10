@@ -437,12 +437,13 @@ def compute_resolution_from_rnbk(n, k):
     return earth_radius * sqrt(pi / 5) / (n * pow(2, k))
 
 
-def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
+def main(workspace, config_path, extpar_rawdata_path, use_apptainer, skip_topo_vis):
     logging.info(f"Starting main process with\n"
                  f"  workspace: {workspace}\n"
                  f"  config_path: {config_path}\n"
                  f"  extpar_rawdata_path: {extpar_rawdata_path}\n"
-                 f"  use_apptainer: {use_apptainer}")
+                 f"  use_apptainer: {use_apptainer}\n"
+                 f"  skip_topo_vis: {skip_topo_vis}")
     
     # Load config and write namelist
     config = load_config(config_path)
@@ -450,6 +451,9 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
 
     if use_apptainer:
         logging.warning("You are using apptainer, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
+
+    if skip_topo_vis:
+        logging.warning("You explicitly switched off the visualization of topography! ( Skip this option, if plots are intended. )")
 
     input_grid_dir = zonda.get("input_grid_dir")
     input_grid_files_in = str(zonda.get("input_grid_files")).split(",")
@@ -502,7 +506,8 @@ def main(workspace, config_path, extpar_rawdata_path, use_apptainer):
 
                 icontools_config = config['domains'][i]['icontools']
 
-                visualize_topography(icontools_config, workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
+                if not skip_topo_vis:
+                    visualize_topography(icontools_config, workspace, extpar_filepath, grid_filepath, extpar_dirs[i])
         except Exception as e:
             logging.warning("An error occurred during the visualization of topography data.\n"
                             f"{repr(e)}\n"
@@ -527,6 +532,7 @@ if __name__ == "__main__":
     parser.add_argument('--extpar-rawdata', type=str, required=True, help="Path to the EXTPAR raw input data")
     parser.add_argument('--logfile', type=str, help="Path to the log file")
     parser.add_argument('--apptainer', action=argparse.BooleanOptionalAction, default=False, help="Use apptainer instead of podman to run containers")
+    parser.add_argument('--no-topo-vis', action='store_true', help="Skip visualization of topography")
 
     args = parser.parse_args()
 
@@ -542,5 +548,6 @@ if __name__ == "__main__":
     extpar_rawdata_path = os.path.abspath(args.extpar_rawdata)
 
     use_apptainer = args.apptainer
+    skip_topo_vis = args.no_topo_vis
 
-    main(workspace, config, extpar_rawdata_path, use_apptainer)
+    main(workspace, config, extpar_rawdata_path, use_apptainer, skip_topo_vis)
