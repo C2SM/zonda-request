@@ -8,8 +8,26 @@ jobs:
     if: github.event.label.name == 'data request'
     runs-on: ubuntu-latest
     steps:
+      - name: Extract backend_tag
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          backend_tag=$(echo "$ISSUE_BODY" \
+            | sed -n '/^```json$/,${p;/^```$/q}' \
+            | sed '1d;$d' \
+            | jq -r '.zonda.backend_tag // empty')
+
+          if [ -z "$backend_tag" ]; then
+            backend_tag="main"
+            echo "::warning title=Backend tag missing::backend_tag not found in JSON code-block, falling back to 'main'."
+          fi
+
+          echo "BACKEND_TAG=$backend_tag" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          ref: ${{ env.BACKEND_TAG }}
 
       - name: Create new branch and commit
         run: |
@@ -20,6 +38,7 @@ jobs:
           git add issue.txt
           git commit -m "Add file for issue #${{ github.event.issue.number }}"
           git push origin issue-${{ github.event.issue.number }}/request
+
       - name: Add 'submitted' label to issue
         uses: actions/github-script@v3
         with:
