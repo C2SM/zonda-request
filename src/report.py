@@ -1,5 +1,7 @@
+import os
 import requests
 import argparse
+import json
 
 class GitHubRepo:
 
@@ -38,6 +40,7 @@ class GitHubRepo:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, required=True, help="Path to the configuration file")
     parser.add_argument('--auth_token', type=str, required=False)
     parser.add_argument('--commit_sha', type=str, required=False)
     parser.add_argument('--build_url', type=str, required=False)
@@ -51,6 +54,12 @@ if __name__ == "__main__":
     group.add_argument('--abort', action='store_true')
 
     args = parser.parse_args()
+
+    config_path = os.path.abspath(args.config)
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+
+    outfile = config['basegrid']['outfile']
 
     is_daily_testsuite = ('zonda-main' in args.jenkins_job_name)
     if is_daily_testsuite and (args.commit_sha is None or args.build_url is None):
@@ -68,23 +77,37 @@ if __name__ == "__main__":
 
     url = f'https://data.iac.ethz.ch/zonda/{hash}'
 
+    config_str = json.dumps(config, indent=2)
+    config_collapsible = (
+        f"\n\n"
+        f"<details>\n\n"
+        f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
+        f"```json\n"
+        f"{config_str}\n"
+        f"```\n\n"
+        f"</details>"
+    )
+
     fail_comment = (
         f"Something went wrong. Please check the [logfiles]({url}) for more information.\n\n"
-        f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**.\n"
+        f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**. "
         f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
+        f"{config_collapsible}"
     )
     abort_comment = (
         f"Your request has been aborted. Please check the [logfiles]({url}) for more information.\n\n"
-        f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**.\n"
+        f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**. "
         f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
+        f"{config_collapsible}"
     )
     success_comment = (
         f"Your data is ready for up to 7 days under this [link]({url}).\n\n"
         f"You can also download it using the following commands:\n"
         f"```bash\n"
-        f"wget {url}/output.zip\n"
-        f"unzip output.zip -d zonda_output\n"
+        f"wget {url}/zonda_output_{outfile}.zip\n"
+        f"unzip zonda_output_{outfile}.zip -d zonda_output_{outfile}\n"
         f"```"
+        f"{config_collapsible}"
     )
 
     fail_status_msg = "Testsuite failed!"
