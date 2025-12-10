@@ -20,16 +20,6 @@ def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
         shutil.move(file, dest_file)
 
 
-def copy_files(src_pattern, dest_dir, prefix="",blacklist={}):
-    for file in glob.glob(src_pattern):
-        if os.path.basename(file) in blacklist:
-            logging.info(f"Skipping {file}")
-            continue
-        dest_file = os.path.join(dest_dir, prefix + os.path.basename(file))
-        logging.info(f"Copy {file} to {dest_file}")
-        shutil.copy(file, dest_file)
-
-
 def move_extpar(output_dir, namelist_dir, grid_files, extpar_dirs):
     for i, exptar_dir in enumerate(extpar_dirs):
         # Move logfiles
