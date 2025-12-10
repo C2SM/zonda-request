@@ -34,8 +34,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const labelsToRemove = ['completed', 'failed', 'aborted']
-            for (const label of labelsToRemove) {
+            const labels_to_remove = ['completed', 'failed', 'aborted']
+            for (const label of labels_to_remove) {
               try {
                 await github.issues.removeLabel({
                   owner: context.repo.owner,

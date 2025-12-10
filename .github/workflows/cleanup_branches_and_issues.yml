@@ -42,8 +42,8 @@ jobs:
               per_page: 100
             });
             for (const issue of issues.data) {
-              const createdAt = new Date(issue.created_at);
-              if (now - createdAt > max_age) {
+              const created_at = new Date(issue.created_at);
+              if (now - created_at > max_age) {
                 await github.issues.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
