@@ -265,7 +265,7 @@ def write_gridgen_namelist(config, wrk_dir):
 
     # base grid
     namelist.append(f"  basegrid%grid_root   = {basegrid['grid_root']}")
-    namelist.append(f"  basegrid%grid_level  = {basegrid['grid_level']}")
+    namelist.append(f"  basegrid%grid_level  = {basegrid['grid_level']-1}")  # Subtract 1 because initial_refinement is always on
     namelist.append(f"  basegrid%icopole_lon = {basegrid['icopole_lon']}")
     namelist.append(f"  basegrid%icopole_lat = {basegrid['icopole_lat']}")
     namelist.append(f"  basegrid%icorotation = {basegrid['icorotation']}")
@@ -382,7 +382,7 @@ def run_rotgrid(workspace, config, grid_files):
             hwidth_lon = icontools['hwidth_lon']
 
             n = basegrid['grid_root']
-            k = basegrid['grid_level'] + 1 + i
+            k = basegrid['grid_level'] + i
             grid_spacing = compute_resolution_from_rnbk(n, k)
 
             grid_file_base = grid_files[i].removesuffix('.nc')
