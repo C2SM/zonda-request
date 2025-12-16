@@ -31,7 +31,7 @@ code_font       = {'family': 'Courier New'             }
 ### Main function ###
 #####################
 
-def visualize_topography(icontools_config, workspace, data_file, grid_file, output_dir):
+def visualize_topography(icontools_config, workspace_path, grid_file, data_file, output_dir):
 
     logging.info(f"Starting the visualization of topography data")
 
@@ -216,7 +216,7 @@ def visualize_topography(icontools_config, workspace, data_file, grid_file, outp
     # Add the Zonda logo to the plot
     logging.info(f"Adding Zonda logo to {output_filepath}")
 
-    zonda_logo = Image.open(f"{workspace}/img/zonda_logo.png")
+    zonda_logo = Image.open(f"{workspace_path}/img/zonda_logo.png")
     plot_image = Image.open(output_filepath)
 
     plot_image_width, plot_image_height = plot_image.size
