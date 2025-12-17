@@ -1,77 +1,12 @@
 import json
 import argparse
 import os
-import shutil
 import logging
 import subprocess
-import glob
-import zipfile
 from math import sqrt, pow, pi
+from output_manager import OutputManager
 from zonda_rotgrid.core import create_rotated_grid, create_latlon_grid
 from visualize_data import visualize_topography
-
-def move_files(src_pattern, dest_dir, prefix="",blacklist={}):
-    for file in glob.glob(src_pattern):
-        if os.path.basename(file) in blacklist:
-            logging.info(f"Skipping {file}")
-            continue
-        dest_file = os.path.join(dest_dir, prefix + os.path.basename(file))
-        logging.info(f"Move {file} to {dest_file}")
-        shutil.move(file, dest_file)
-
-
-def move_extpar(output_dir, log_dir, namelist_dir, extpar_dirs, outfile):
-    for i, exptar_dir in enumerate(extpar_dirs):
-        # Move logfiles
-        move_files(os.path.join(exptar_dir, "*.log"), log_dir, f"{domain_label(i+1)}_")
-        # Move external parameter files
-        move_files(os.path.join(exptar_dir, "external_parameter.nc"), output_dir, f"{outfile}_")
-        move_files(os.path.join(exptar_dir, "topography.png"), output_dir, f"{outfile}_")
-        # Create directories for each domain
-        domain_dir = os.path.join(namelist_dir, domain_label(i+1))
-        os.makedirs(os.path.join(domain_dir), exist_ok=True)
-        move_files(os.path.join(exptar_dir, "INPUT_*"), domain_dir)
-        move_files(os.path.join(exptar_dir, "namelist.py"), domain_dir)
-        move_files(os.path.join(exptar_dir, "config.json"), domain_dir)
-
-
-def move_icontools(workspace_path, output_dir, namelist_dir, keep_basegrid_files):
-    # too big for high-res grids
-    blacklist = {} if keep_basegrid_files else {'base_grid.nc', 'base_grid.html'}
-    # Move .nc files
-    move_files(os.path.join(workspace_path, 'icontools', '*.nc'), output_dir, blacklist=blacklist)  # TODO: Separate icontools folder per nesting group
-    # Move .html files
-    move_files(os.path.join(workspace_path, 'icontools', '*.html'), output_dir, blacklist=blacklist)
-    # Move namelist file
-    move_files(os.path.join(workspace_path, 'icontools', 'nml_gridgen'), namelist_dir)
-
-
-def create_zip(zip_filepath, source_dir):
-    logging.info(f"Creating zip file {zip_filepath}")
-    with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_STORED) as zipf:
-        for root, dirs, files in os.walk(source_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, source_dir)
-                zipf.write(file_path, arcname)
-
-
-def move_output(workspace_path, extpar_dirs, outfile, keep_basegrid_files):  # TODO: Use a class for this and the rest of output, like OutputManager or something
-
-    output_dir = os.path.join(workspace_path, 'output')
-    log_dir = os.path.join(output_dir, 'logs')
-    namelist_dir = os.path.join(output_dir, 'namelists')
-
-    # Ensure the output directory exists
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(log_dir, exist_ok=True)
-    os.makedirs(namelist_dir, exist_ok=True)
-
-    # Move icontools files
-    move_icontools(workspace_path, output_dir, namelist_dir, keep_basegrid_files)
-
-    # Move extpar files
-    move_extpar(output_dir, log_dir, namelist_dir, extpar_dirs, outfile)
 
 
 def run_extpar(config, workspace_path, extpar_raw_data_path, nesting_group, grid_dirs, grid_filenames, extpar_tag, use_apptainer):
@@ -120,7 +55,7 @@ def run_extpar(config, workspace_path, extpar_raw_data_path, nesting_group, grid
             json.dump(domain_extpar_config, f, indent=4)
         logging.info(f"Domain-specific config.json written to {domain_extpar_config_path}")
 
-        os.chdir(extpar_dir)
+        # os.chdir(extpar_dir)  # TODO: Remove this, I don't think it's needed, but it should be checked
 
         logging.info(f"Running {'apptainer' if use_apptainer else 'podman'} command for extpar in {extpar_dir}")
 
@@ -158,7 +93,7 @@ def run_extpar(config, workspace_path, extpar_raw_data_path, nesting_group, grid
 
         extpar_dirs.append(extpar_dir)
 
-    os.chdir(workspace_path)
+    # os.chdir(workspace_path)  # TODO: Remove this, I don't think it's needed, but it should be checked
     logging.info("Extpar completed")
     return extpar_dirs
 
@@ -224,7 +159,7 @@ def shell_cmd(bin, *args):
     return output
 
 
-def load_config(config_file):
+def load_config(config_file): # TODO: Maybe put this into an io_utilities file
     logging.info(f"Loading configuration from {config_file}")
     with open(config_file, 'r') as f:
         config = json.load(f)
@@ -257,6 +192,9 @@ def write_gridgen_namelist(config, nesting_group, primary_grid_source, icontools
     lspring_dynamics = True
     maxit = 2000
     beta_spring = 0.9
+
+    # TODO: Move the Zonda parameters on the frontend to the top and add keep_basegrid_files and outfile there.
+    #       Maybe rename outfile to request_name.
 
     # Create the ICON gridgen namelist content
     namelist = []
@@ -520,6 +458,8 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
     zonda_config = config["zonda"]
     outfile = config["basegrid"]["outfile"]
 
+    output_manager = OutputManager(workspace_path, outfile)
+
     nesting_groups, grid_sources = create_nesting_groups(config)
 
     grid_dirs = []
@@ -566,13 +506,9 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
 
             logging.warning("An input grid was provided. Skipping generation of rotated lat-lon grid and visualization of topography!")
 
-        move_output(workspace_path, extpar_dirs, outfile, keep_basegrid_files)
+        output_manager.move_output(extpar_dirs, keep_basegrid_files)
 
-    # Create a zip file
-    zip_filepath = os.path.join(workspace_path, f"zonda_output_{outfile}.zip")
-    output_dir = os.path.join(workspace_path, "output")
-    create_zip(zip_filepath, output_dir)
-    logging.info(f"Output zip file created at {zip_filepath}")
+    output_manager.zip_output()
 
     logging.info("Process completed")
 
