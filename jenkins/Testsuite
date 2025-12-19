@@ -79,13 +79,13 @@ pipeline {
                             }
                         }
                     }
-                    stage('Run GridExtpar') {
+                    stage('Process Request') {
                         steps {
                             sh """
                             source ${WORKSPACE}/activate_conda.sh
                             export OMP_NUM_THREADS=24
                             export NETCDF_OUTPUT_FILETYPE=NETCDF4
-                            python src/GridExtpar.py --config config.json --workspace ${WORKSPACE} --extpar-raw-data /net/co2/c2sm-data/extpar-input-data --logfile ${WORKSPACE}/output/logs/gridextpar.log
+                            python src/process_request.py --config config.json --workspace ${WORKSPACE} --extpar-raw-data /net/co2/c2sm-data/extpar-input-data --logfile ${WORKSPACE}/output/logs/zonda_request.log
                             """
                         }
                     }
