@@ -46,13 +46,14 @@ class OutputManager:
 
         self.move_files(os.path.join(icontools_dir, "*.nc"), self.output_dir, blacklist=blacklist)  # TODO: Separate icontools folder per nesting group
         self.move_files(os.path.join(icontools_dir, "*.html"), self.output_dir, blacklist=blacklist)
-        self.move_files(os.path.join(icontools_dir, "nml_gridgen"), self.namelists_dir)
+        self.move_files(os.path.join(icontools_dir, "nml_gridgen"), self.namelists_dir)  # TODO: The name of the namelist file is actually set in GridManager, so this should be passed or this function placed in GridManager. Maybe have GridManager and ExtparManager provide a list of output, logs, namelists files (or file patterns) bundled in a dictionary and then pass them to move_output, which simply moves them to the right location.
 
 
     def move_extpar_output(self, extpar_dirs):
         for i, exptar_dir in enumerate(extpar_dirs):
 
-            # TODO: Create subfolders for the different domains also for logs and normal output (keep the domain label suffix?)
+            # TODO: Create subfolders for the different domains also for logs and normal output (keep the domain label suffix?).
+            #       Create them in the __init__ method if possible.
             self.move_files(os.path.join(exptar_dir, "external_parameter.nc"), self.output_dir, prefix=f"{self.outfile}_{domain_label(i+1)}_")
             self.move_files(os.path.join(exptar_dir, "topography.png"), self.output_dir, prefix=f"{self.outfile}_{domain_label(i+1)}_")
 
@@ -62,7 +63,7 @@ class OutputManager:
             os.makedirs(os.path.join(domain_dir), exist_ok=True)  # TODO: Actually create the extpar_dirs and the icontools dir in the __init__ method here instead of just before running EXTPAR and icontools
             self.move_files(os.path.join(exptar_dir, "INPUT_*"), domain_dir)
             self.move_files(os.path.join(exptar_dir, "namelist.py"), domain_dir)
-            self.move_files(os.path.join(exptar_dir, "config.json"), domain_dir)
+            self.move_files(os.path.join(exptar_dir, "extpar-config.json"), domain_dir)
 
 
     def move_output(self, icontools_dir, extpar_dirs, keep_basegrid_files):  # TODO: we could put extpar_dirs and keep_basegrid_files in __init__ so move_output doesn't require any args

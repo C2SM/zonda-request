@@ -70,14 +70,38 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
     nesting_groups, grid_sources = create_nesting_groups(config)  # TODO: Move grid_sources generation in GridManager
 
     for nesting_group in nesting_groups:
-        grid_manager.generate_icon_grids(nesting_group, grid_sources)
-
-        extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames)
 
         primary_grid_source = grid_sources[nesting_group[0]]
-        if primary_grid_source == "icontools":
-            keep_basegrid_files = config["basegrid"]["keep_basegrid_files"]  # TODO: Should this be moved in OutputManager or GridManager?
 
+        if primary_grid_source == "icontools":  # TODO: This can probably be moved outside of the for, since keep_basegrid_files makes only sense if icontools is the grid source of the first domain (in general, not of the nesting group)
+            keep_basegrid_files = config["basegrid"].get("keep_basegrid_files", False)
+        else:
+            keep_basegrid_files = False  # Likely no basegrid files if the grid is provided by the user
+
+        ### GRID GENERATION ###
+        try:
+            grid_manager.generate_icon_grids(nesting_group, grid_sources)
+        except Exception:
+            program_failed = True
+            raise
+        finally:
+            output_manager.move_icontools_output(grid_manager.icontools_dir, keep_basegrid_files)
+            if program_failed:
+                output_manager.zip_output()
+
+        ### EXTPAR ###
+        try:
+            extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames)
+        except Exception:
+            program_failed = True
+            raise
+        finally:
+            output_manager.move_extpar_output(extpar_manager.extpar_dirs)
+            if program_failed:
+                output_manager.zip_output()
+
+        if primary_grid_source == "icontools":  # TODO: Should we do this also when we have input_grid as the primary grid source and icontools as the next?
+            ### LAT-LON GRID GENERATION ###
             try:
                 grid_manager.generate_latlon_grids(nesting_group)
             except Exception as e:
@@ -86,6 +110,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
                                  f"{repr(e)}\n"
                                  "Skipping generation of lat-lon grids!" )
 
+            ### TOPOGRAPHY VISUALIZATION ###
             try:
                 for domain_id in nesting_group:
                     domain_idx = domain_id - 1
@@ -101,11 +126,10 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
                                  f"{repr(e)}\n"
                                  "Skipping the visualization!" )
         else:
-            keep_basegrid_files = False  # Likely no basegrid files if the grid is provided by the user
-
             logging.warning("An input grid was provided. Skipping generation of rotated lat-lon grid and visualization of topography!")
 
-        output_manager.move_output(grid_manager.icontools_dir, extpar_manager.extpar_dirs, keep_basegrid_files)
+        # TODO: Check if this can actually be removed safely
+        # output_manager.move_output(grid_manager.icontools_dir, extpar_manager.extpar_dirs, keep_basegrid_files)
 
     output_manager.zip_output()
 
