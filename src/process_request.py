@@ -17,7 +17,7 @@ def create_nesting_groups(config):
     zonda_config = config["zonda"]  # TODO: Remove this in v2.0
 
     nesting_groups = []
-    grid_sources = []
+    grid_sources = []  # TODO: Compute grid_sources in GridManager
 
     input_grid_path = zonda_config.get("input_grid_path")  # TODO: Remove this in v2.0
 
