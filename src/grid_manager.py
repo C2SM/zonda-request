@@ -165,7 +165,7 @@ class GridManager:
         match primary_grid_source:
 
             case "icontools":
-                self.write_gridgen_namelist(nesting_group, primary_grid_source)
+                self.write_icon_gridgen_namelist(nesting_group, primary_grid_source)
 
                 self.run_icon_gridgen()
 
