@@ -27,7 +27,7 @@ class ExtparManager:
             self.extpar_container_image = os.path.join(self.workspace_path, "extpar.sif")
         else:
             extpar_tag = self.config["zonda"].get("extpar_tag", "latest")
-            self.pull_extpar_image(self.extpar_tag)
+            self.pull_extpar_image(extpar_tag)
             self.extpar_container_image = f"extpar:{extpar_tag}"
 
 
