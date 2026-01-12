@@ -54,10 +54,7 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
 
     # Move the zip file to the destination
-    if args.success:
-        move_zip(args.destination, os.path.join(args.workspace, f"zonda_output_{outfile}.zip"), hash)
-    else:
-        move_logs(output_dir, args.destination, hash)
+    move_zip(args.destination, os.path.join(args.workspace, f"zonda_output_{outfile}.zip"), hash)
 
 if __name__ == "__main__":
     main()
