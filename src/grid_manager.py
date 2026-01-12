@@ -89,7 +89,8 @@ class GridManager:
         namelist.append("")
 
         for domain_id in nesting_group:
-            icontools_config = self.domain_config["icontools"]
+            domain_config = self.domains_config[domain_id-1]
+            icontools_config = domain_config["icontools"]
 
             lwrite_parent = (domain_id == 1)
 
