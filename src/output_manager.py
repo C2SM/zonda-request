@@ -33,7 +33,12 @@ class OutputManager:
             filename = os.path.basename(source_file)
             is_hidden_file = filename.startswith(".")
             tmp = filename.split(".", 2 if is_hidden_file else 1)
-            destination_filename = f"{"." if is_hidden_file else ""}{prefix}{tmp[0+is_hidden_file]}{suffix}.{tmp[1+is_hidden_file]}"
+            if is_hidden_file:
+                tmp.pop(0)
+
+            destination_filename = f"{"." if is_hidden_file else ""}{prefix}{tmp[0]}{suffix}"
+            if len(tmp) >= 2:
+                destination_filename += f".{tmp[1]}"
 
             destination_filepath = os.path.join(destination_dir, destination_filename)
 
