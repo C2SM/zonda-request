@@ -16,13 +16,14 @@ class ExtparManager:
 
         self.domains_config = self.config["domains"]
 
+        self.extpar_config_filename = "extpar_config.json"
+
         self.extpar_dirs = []
         for domain_config in self.domains_config:
             extpar_dir = self.setup_extpar_dir(domain_config)
             self.extpar_dirs.append(extpar_dir)
 
         self.extpar_filename = "external_parameter.nc"
-        self.extpar_config_filename = "extpar_config.json"
 
         if self.use_apptainer:
             self.extpar_container_image = os.path.join(self.workspace_path, "extpar.sif")
