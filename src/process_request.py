@@ -69,6 +69,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
 
     nesting_groups, grid_sources = create_nesting_groups(config)  # TODO: Move grid_sources generation in GridManager
 
+    program_failed = False
     for nesting_group in nesting_groups:
 
         primary_grid_source = grid_sources[nesting_group[0]]
