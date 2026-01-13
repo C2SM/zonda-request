@@ -22,6 +22,7 @@ class ExtparManager:
             self.extpar_dirs.append(extpar_dir)
 
         self.extpar_filename = "external_parameter.nc"
+        self.extpar_config_filename = "extpar_config.json"
 
         if self.use_apptainer:
             self.extpar_container_image = os.path.join(self.workspace_path, "extpar.sif")
@@ -48,10 +49,10 @@ class ExtparManager:
         logging.info(f"Created directory \"{extpar_dir}\".")
 
         extpar_config = {"extpar": domain_config["extpar"]}
-        extpar_config_filepath = os.path.join(extpar_dir, "extpar-config.json")
+        extpar_config_filepath = os.path.join(extpar_dir, self.extpar_config_filename)
         with open(extpar_config_filepath, "w") as file:
             json.dump(extpar_config, file, indent=4)
-        logging.info(f"Domain-specific extpar-config.json written to \"{extpar_config_filepath}\".")
+        logging.info(f"Domain-specific {self.extpar_config_filename} written to \"{extpar_config_filepath}\".")
 
         return extpar_dir
 
@@ -109,7 +110,7 @@ class ExtparManager:
                 "--no-batch-job",
                 "--host", "docker",
                 "--input-grid", f"/grid/{grid_filenames[domain_idx]}",
-                "--extpar-config", "/work/config.json"
+                "--extpar-config", f"/work/{self.extpar_config_filename}"
             )
 
         logging.info("EXTPAR run completed.")
