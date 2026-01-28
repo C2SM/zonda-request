@@ -20,8 +20,30 @@ class GridManager:
         self.domains_config = self.config["domains"]
 
         n_domains = len(self.domains_config)
-        self.grid_dirs = [None] * n_domains 
-        self.grid_filenames = [None] * n_domains 
+
+        self.grid_dirs = [None] * n_domains
+        self.grid_filenames = [None] * n_domains
+
+        input_grid_path = self.zonda_config.get("input_grid_path")  # TODO v2.0: Remove this in v2.0
+
+        self.grid_sources = [None] * n_domains
+        self.valid_grid_sources = ["input_grid", "icontools"]
+        for domain_config in self.domains_config:
+            domain_id = domain_config["domain_id"]
+            domain_idx = domain_id - 1
+
+            if (domain_id == 1) and (input_grid_path is not None):  # TODO v2.0: Remove this in v2.0
+                self.grid_sources[domain_idx] = "input_grid"
+                continue
+
+            for grid_source in self.valid_grid_sources:
+                if grid_source in domain_config:
+                    self.grid_sources[domain_idx] = grid_source
+
+                    break
+            else:
+                logging.error(f"No valid grid generation method defined in config for domain {domain_id}!")
+                raise KeyError(f"Missing one of these entries in JSON config: {self.valid_grid_sources}!")
 
         self.icontools_dir = os.path.join(self.workspace_path, "icontools")
         for domain_config in self.domains_config:
@@ -159,10 +181,10 @@ class GridManager:
         logging.info("Grid generation completed.")
 
 
-    def generate_icon_grids(self, nesting_group, grid_sources):
+    def generate_icon_grids(self, nesting_group):
         logging.info("Generating ICON grids.")
 
-        primary_grid_source = grid_sources[nesting_group[0]]
+        primary_grid_source = self.grid_sources[nesting_group[0]]
         match primary_grid_source:
 
             case "icontools":

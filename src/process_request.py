@@ -10,45 +10,27 @@ from visualize_data import visualize_topography
 
 
 
-def create_nesting_groups(config):
+def create_nesting_groups(config, grid_sources):
     logging.info("Creating nesting groups.")
 
     domains_config = config["domains"]
-    zonda_config = config["zonda"]  # TODO: Remove this in v2.0
 
     nesting_groups = []
-    grid_sources = []  # TODO: Compute grid_sources in GridManager
-
-    input_grid_path = zonda_config.get("input_grid_path")  # TODO: Remove this in v2.0
-
-    valid_grid_sources = ["input_grid", "icontools"]  # TODO: Use an Enum or anyway pull them outside
 
     for domain_config in domains_config:
         domain_id = domain_config["domain_id"]
+        domain_idx = domain_id - 1
 
-        if (domain_id == 1) and (input_grid_path is not None):  # TODO: Remove this in v2.0
-            grid_sources.append("input_grid")
-            continue
-
-        for grid_source in valid_grid_sources:
-            if grid_source in domain_config:
-                grid_sources.append(grid_source)
-
-                # ATTENTION:
-                # The condition below should be added to the if only if more valid grid sources are added, but for now
-                # let's assume "input_grid" and "icontools" are the only possible ones.
-                # ... and ((grid_sources[-2] == "input_grid") or (grid_sources[-2] == "icontools")):
-                if (len(grid_sources) > 1) and (grid_source == "icontools"):  # TODO: Can we make it independent of the grid_source name, i.e. icontools in this case?
-                    nesting_groups[-1].append(domain_id)
-                else:
-                    nesting_groups.append([domain_id])
-
-                break
+        # ATTENTION:
+        # The condition below should be added to the if only if more valid grid sources are added, but for now
+        # let's assume "input_grid" and "icontools" are the only possible ones.
+        # ... and ((grid_sources[domain_idx-1] == "input_grid") or (grid_sources[domain_idx-1] == "icontools")):
+        if (len(nesting_groups) > 0) and (grid_sources[domain_idx] == "icontools"):
+            nesting_groups[-1].append(domain_id)
         else:
-            logging.error(f"No valid grid generation method defined in config for domain {domain_id}!")
-            raise KeyError(f"Missing one of these entries in JSON config: {valid_grid_sources}!")
+            nesting_groups.append([domain_id])
 
-    return nesting_groups, grid_sources
+    return nesting_groups
 
 def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
 
@@ -67,12 +49,11 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
     grid_manager = GridManager(config, workspace_path, output_manager, use_apptainer=use_apptainer)
     extpar_manager = ExtparManager(config, workspace_path, extpar_raw_data_path, use_apptainer=use_apptainer)
 
-    nesting_groups, grid_sources = create_nesting_groups(config)  # TODO: Move grid_sources generation in GridManager
+    nesting_groups = create_nesting_groups(config, grid_manager.grid_sources)
 
-    program_failed = False
     for nesting_group in nesting_groups:
 
-        primary_grid_source = grid_sources[nesting_group[0]]
+        primary_grid_source = grid_manager.grid_sources[nesting_group[0]]
 
         if primary_grid_source == "icontools":  # TODO: This can probably be moved outside of the for, since keep_basegrid_files makes only sense if icontools is the grid source of the first domain (in general, not of the nesting group)
             keep_basegrid_files = config["basegrid"].get("keep_basegrid_files", False)
@@ -81,7 +62,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
 
         try:
             ### GRID GENERATION ###
-            grid_manager.generate_icon_grids(nesting_group, grid_sources)
+            grid_manager.generate_icon_grids(nesting_group)
 
             ### EXTPAR ###
             extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames)
