@@ -55,20 +55,20 @@ class OutputManager:
 
 
     def move_extpar_output(self, extpar_dirs):
-        for i, exptar_dir in enumerate(extpar_dirs):
+        for i, extpar_dir in enumerate(extpar_dirs):
 
             # TODO: Create subfolders for the different domains also for logs and normal output (keep the domain label suffix?).
             #       Create them in the __init__ method if possible.
-            self.move_files(os.path.join(exptar_dir, "external_parameter.nc"), self.output_dir, prefix=f"{self.outfile}_{domain_label(i+1)}_")
-            self.move_files(os.path.join(exptar_dir, "topography.png"), self.output_dir, prefix=f"{self.outfile}_{domain_label(i+1)}_")
+            self.move_files(os.path.join(extpar_dir, "external_parameter.nc"), self.output_dir, prefix=f"{self.outfile}_{domain_label(i+1)}_")
+            self.move_files(os.path.join(extpar_dir, "topography.png"), self.output_dir, prefix=f"{self.outfile}_{domain_label(i+1)}_")
 
-            self.move_files(os.path.join(exptar_dir, "*.log"), self.logs_dir, prefix=f"{domain_label(i+1)}_")
+            self.move_files(os.path.join(extpar_dir, "*.log"), self.logs_dir, prefix=f"{domain_label(i+1)}_")
 
             domain_dir = os.path.join(self.namelists_dir, domain_label(i+1))
             os.makedirs(os.path.join(domain_dir), exist_ok=True)  # TODO: Actually create the extpar_dirs and the icontools dir in the __init__ method here instead of just before running EXTPAR and icontools
-            self.move_files(os.path.join(exptar_dir, "INPUT_*"), domain_dir)
-            self.move_files(os.path.join(exptar_dir, "namelist.py"), domain_dir)
-            self.move_files(os.path.join(exptar_dir, "extpar-config.json"), domain_dir)
+            self.move_files(os.path.join(extpar_dir, "INPUT_*"), domain_dir)
+            self.move_files(os.path.join(extpar_dir, "namelist.py"), domain_dir)
+            self.move_files(os.path.join(extpar_dir, "extpar_config.json"), domain_dir)
 
 
     def move_output(self, icontools_dir, extpar_dirs, keep_basegrid_files):  # TODO: we could put extpar_dirs and keep_basegrid_files in __init__ so move_output doesn't require any args
