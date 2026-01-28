@@ -63,8 +63,8 @@ class GridManager:
     def write_icon_gridgen_namelist(self, nesting_group, primary_grid_source):
         logging.info("Writing ICON gridgen namelist.")
 
-        # TODO: For primary_grid_source == input_grid the parent_id and domain_id may need to be adapted if the
-        #       nesting_group doesn't start from domain_id == 1.
+        # TODO v2.0: For primary_grid_source == input_grid the parent_id and domain_id may need to be adapted if the
+        #            nesting_group doesn't start from domain_id == 1.
         # Ensure the first domain has parent_id = 0
         if self.domains_config[0]["icontools"]["parent_id"] != 0:
             self.domains_config[0]["icontools"]["parent_id"] = 0
@@ -79,8 +79,8 @@ class GridManager:
         maxit = 2000
         beta_spring = 0.9
 
-        # TODO: Move the Zonda parameters on the frontend to the top and add keep_basegrid_files and outfile there.
-        #       Maybe rename outfile to request_name.
+        # TODO v2.0: Move the Zonda parameters on the frontend to the top and add keep_basegrid_files and outfile there.
+        #            Maybe rename outfile to request_name.
 
         # Create the ICON gridgen namelist content
         namelist = []
@@ -199,7 +199,7 @@ class GridManager:
                     self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
 
             case "input_grid":
-                if len(nesting_group) == 1:  # TODO: This section will probably need to be adapted for v2.0
+                if len(nesting_group) == 1:  # TODO v2.0: This section will probably need to be adapted for v2.0
                     domain_id = nesting_group[0]
                     domain_idx = domain_id - 1
                     input_grid_path = os.path.abspath(self.zonda_config.get("input_grid_path"))
@@ -218,7 +218,7 @@ class GridManager:
                                        f"Please provide the correct path." )
                         raise FileNotFoundError(f"\"{input_grid_path}\" not found!")
                 else:
-                    pass # TODO: Add this in v2.0; Pass input grid to icontools to add nests
+                    pass # TODO v2.0: Add this in v2.0; Pass input grid to icontools to add nests
 
             case _:
                 logging.error("No valid grid generation method could be selected!")
