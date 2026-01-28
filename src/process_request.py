@@ -79,27 +79,16 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
         else:
             keep_basegrid_files = False  # Likely no basegrid files if the grid is provided by the user
 
-        ### GRID GENERATION ###
         try:
+            ### GRID GENERATION ###
             grid_manager.generate_icon_grids(nesting_group, grid_sources)
-        except Exception:
-            program_failed = True
-            raise
-        finally:
-            output_manager.move_icontools_output(grid_manager.icontools_dir, keep_basegrid_files)
-            if program_failed:
-                output_manager.zip_output()
 
-        ### EXTPAR ###
-        try:
+            ### EXTPAR ###
             extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames)
         except Exception:
-            program_failed = True
+            output_manager.move_output(grid_manager.icontools_dir, extpar_manager.extpar_dirs, keep_basegrid_files)
+            output_manager.zip_output()
             raise
-        finally:
-            output_manager.move_extpar_output(extpar_manager.extpar_dirs)
-            if program_failed:
-                output_manager.zip_output()
 
         if primary_grid_source == "icontools":  # TODO: Should we do this also when we have input_grid as the primary grid source and icontools as the next?
             ### LAT-LON GRID GENERATION ###
@@ -129,9 +118,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
         else:
             logging.warning("An input grid was provided. Skipping generation of rotated lat-lon grid and visualization of topography!")
 
-        # TODO: Check if this can actually be removed safely
-        # output_manager.move_output(grid_manager.icontools_dir, extpar_manager.extpar_dirs, keep_basegrid_files)
-
+    output_manager.move_output(grid_manager.icontools_dir, extpar_manager.extpar_dirs, keep_basegrid_files)
     output_manager.zip_output()
 
     logging.info("Process completed.")
