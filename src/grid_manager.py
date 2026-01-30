@@ -60,6 +60,7 @@ class GridManager:
             icontools_tag = self.zonda_config.get("icontools_tag", "latest")
             self.icontools_container_image = f"execute:{icontools_tag}"
 
+
     def write_icon_gridgen_namelist(self, nesting_group, primary_grid_source):
         logging.info("Writing ICON gridgen namelist.")
 

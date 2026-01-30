@@ -23,8 +23,6 @@ class ExtparManager:
             extpar_dir = self.setup_extpar_dir(domain_config)
             self.extpar_dirs.append(extpar_dir)
 
-        self.extpar_filename = "external_parameter.nc"
-
         if self.use_apptainer:
             self.extpar_container_image = os.path.join(self.workspace_path, "extpar.sif")
         else:

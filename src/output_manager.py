@@ -8,20 +8,46 @@ from utilities import domain_label
 
 class OutputManager:
 
-    def __init__(self, config, workspace_path, output_dirname="output", logs_dirname="logs", namelists_dirname="namelists", zip_file_prefix="zonda_output_"):
+    def __init__( self, config, workspace_path,
+                  output_dirname="output",
+                  data_dirname="data",
+                  visualizations_dirname="visualizations",
+                  logs_dirname="logs",
+                  namelists_dirname="namelists",
+                  zip_file_prefix="zonda_output_" ):
+
         self.config = config
         self.workspace_path = workspace_path
         self.outfile = self.config["basegrid"]["outfile"]
 
+        self.domains_config = self.config["domains"]
+
+        self.visualizations_dirname = visualizations_dirname
+
         self.output_dir = os.path.join(self.workspace_path, output_dirname)
+        self.data_dir = os.path.join(self.output_dir, data_dirname)
         self.logs_dir = os.path.join(self.output_dir, logs_dirname)
         self.namelists_dir = os.path.join(self.output_dir, namelists_dirname)
 
         self.zip_filepath = os.path.join(self.workspace_path, f"{zip_file_prefix}{self.outfile}.zip")
 
         os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.data_dir, exist_ok=True)
         os.makedirs(self.logs_dir, exist_ok=True)
         os.makedirs(self.namelists_dir, exist_ok=True)
+
+        for domain_config in self.domains_config:
+            domain_id = domain_config["domain_id"]
+
+            data_domain_dir = os.path.join(self.data_dir, domain_label(domain_id))
+            logs_domain_dir = os.path.join(self.logs_dir, domain_label(domain_id))
+            namelists_domain_dir = os.path.join(self.namelists_dir, domain_label(domain_id))
+            
+            os.makedirs(data_domain_dir, exist_ok=True)
+            os.makedirs(os.path.join(data_domain_dir, self.visualizations_dirname), exist_ok=True)
+
+            os.makedirs(logs_domain_dir, exist_ok=True)
+            os.makedirs(namelists_domain_dir, exist_ok=True)
 
 
     def move_files(self, source_dir_pattern, destination_dir, prefix="", suffix="", blacklist={}):
@@ -46,34 +72,47 @@ class OutputManager:
             shutil.move(source_file, destination_filepath)
 
 
-    def move_icontools_output(self, icontools_dir, keep_basegrid_files):
-        blacklist = {} if keep_basegrid_files else {"base_grid.nc", "base_grid.html"}
+    def move_icontools_output(self, grid_manager, keep_basegrid_files):
+        if keep_basegrid_files:
+            self.move_files(os.path.join(grid_manager.icontools_dir, "base_grid.*"), self.data_dir)
 
-        self.move_files(os.path.join(icontools_dir, "*.nc"), self.output_dir, blacklist=blacklist)  # TODO: Separate icontools folder per nesting group
-        self.move_files(os.path.join(icontools_dir, "*.html"), self.output_dir, blacklist=blacklist)
-        self.move_files(os.path.join(icontools_dir, "nml_gridgen"), self.namelists_dir)  # TODO: The name of the namelist file is actually set in GridManager, so this should be passed or this function placed in GridManager. Maybe have GridManager and ExtparManager provide a list of output, logs, namelists files (or file patterns) bundled in a dictionary and then pass them to move_output, which simply moves them to the right location.
+        for domain_config in self.domains_config:
+            domain_id = domain_config["domain_id"]
 
+            current_domain_label = domain_label(domain_id)
 
-    def move_extpar_output(self, extpar_dirs):
-        for i, extpar_dir in enumerate(extpar_dirs):
+            data_domain_dir = os.path.join(self.data_dir, current_domain_label)
+            self.move_files(os.path.join(grid_manager.icontools_dir, "*{current_domain_label}*.nc"), data_domain_dir)
 
-            # TODO: Create subfolders for the different domains also for logs and normal output (keep the domain label suffix?).
-            #       Create them in the __init__ method if possible.
-            self.move_files(os.path.join(extpar_dir, "external_parameter.nc"), self.output_dir, prefix=f"{self.outfile}_{domain_label(i+1)}_")
-            self.move_files(os.path.join(extpar_dir, "topography.png"), self.output_dir, prefix=f"{self.outfile}_{domain_label(i+1)}_")
+            visualizations_dir = os.path.join(data_domain_dir, self.visualizations_dirname)
+            self.move_files(os.path.join(grid_manager.icontools_dir, "*{current_domain_label}*.html"), visualizations_dir)
 
-            self.move_files(os.path.join(extpar_dir, "*.log"), self.logs_dir, prefix=f"{domain_label(i+1)}_")
-
-            domain_dir = os.path.join(self.namelists_dir, domain_label(i+1))
-            os.makedirs(os.path.join(domain_dir), exist_ok=True)  # TODO: Actually create the extpar_dirs and the icontools dir in the __init__ method here instead of just before running EXTPAR and icontools
-            self.move_files(os.path.join(extpar_dir, "INPUT_*"), domain_dir)
-            self.move_files(os.path.join(extpar_dir, "namelist.py"), domain_dir)
-            self.move_files(os.path.join(extpar_dir, "extpar_config.json"), domain_dir)
+        self.move_files(os.path.join(grid_manager.icontools_dir, grid_manager.namelist_filename), self.namelists_dir)
 
 
-    def move_output(self, icontools_dir, extpar_dirs, keep_basegrid_files):  # TODO: we could put extpar_dirs and keep_basegrid_files in __init__ so move_output doesn't require any args
-        self.move_icontools_output(icontools_dir, keep_basegrid_files)
-        self.move_extpar_output(extpar_dirs)
+    def move_extpar_output(self, extpar_manager):
+        for domain_idx, extpar_dir in enumerate(extpar_manager.extpar_dirs):
+
+            current_domain_label = domain_label(domain_idx+1)
+
+            data_domain_dir = os.path.join(self.data_dir, current_domain_label)
+            self.move_files(os.path.join(extpar_dir, "external_parameter.nc"), data_domain_dir, prefix=f"{self.outfile}_{current_domain_label}_")
+
+            visualizations_dir = os.path.join(data_domain_dir, self.visualizations_dirname)
+            self.move_files(os.path.join(extpar_dir, "*.png"), visualizations_dir, prefix=f"{self.outfile}_{current_domain_label}_")
+
+            logs_domain_dir = os.path.join(self.logs_dir, current_domain_label)
+            self.move_files(os.path.join(extpar_dir, "*.log"), logs_domain_dir)
+
+            namelists_domain_dir = os.path.join(self.namelists_dir, current_domain_label)
+            self.move_files(os.path.join(extpar_dir, "INPUT_*"), namelists_domain_dir)
+            self.move_files(os.path.join(extpar_dir, "namelist.py"), namelists_domain_dir)
+            self.move_files(os.path.join(extpar_dir, extpar_manager.extpar_config_filename), namelists_domain_dir)
+
+
+    def move_output(self, grid_manager, extpar_manager, keep_basegrid_files):
+        self.move_icontools_output(grid_manager, keep_basegrid_files)
+        self.move_extpar_output(extpar_manager)
 
 
     def zip_output(self):

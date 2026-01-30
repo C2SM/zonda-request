@@ -51,14 +51,15 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
 
     nesting_groups = create_nesting_groups(config, grid_manager.grid_sources)
 
-    for nesting_group in nesting_groups:
+    for nesting_group_idx, nesting_group in enumerate(nesting_groups):
 
         primary_grid_source = grid_manager.grid_sources[nesting_group[0]]
 
-        if primary_grid_source == "icontools":  # TODO: This can probably be moved outside of the for, since keep_basegrid_files makes only sense if icontools is the grid source of the first domain (in general, not of the nesting group)
+        # Keeping the base grid only makes sense when icontools is the grid source of the first domain
+        if nesting_group_idx == 0 and primary_grid_source == "icontools":
             keep_basegrid_files = config["basegrid"].get("keep_basegrid_files", False)
         else:
-            keep_basegrid_files = False  # Likely no basegrid files if the grid is provided by the user
+            keep_basegrid_files = False  # No basegrid files if the grid is provided by the user or it's not the first domain
 
         try:
             ### GRID GENERATION ###
@@ -67,7 +68,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
             ### EXTPAR ###
             extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames)
         except Exception:
-            output_manager.move_output(grid_manager.icontools_dir, extpar_manager.extpar_dirs, keep_basegrid_files)
+            output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files)
             output_manager.zip_output()
             raise
 
@@ -99,7 +100,8 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
         else:
             logging.warning("An input grid was provided. Skipping generation of rotated lat-lon grid and visualization of topography!")
 
-    output_manager.move_output(grid_manager.icontools_dir, extpar_manager.extpar_dirs, keep_basegrid_files)
+        output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files)
+
     output_manager.zip_output()
 
     logging.info("Process completed.")
