@@ -111,7 +111,7 @@ class OutputManager:
 
 
     def move_zonda_config(self):
-        self.move_files(os.path.join(self.workpace_path, "config.json"), self.output_dir)
+        self.move_files(os.path.join(self.workspace_path, "config.json"), self.output_dir)
 
 
     def move_output(self, grid_manager, extpar_manager, keep_basegrid_files):
