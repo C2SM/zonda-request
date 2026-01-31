@@ -92,7 +92,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
                     icontools_config = config["domains"][domain_idx]["icontools"]
 
                     grid_filepath = os.path.join(grid_manager.grid_dirs[domain_idx], grid_manager.grid_filenames[domain_idx])
-                    extpar_filepath = os.path.join(extpar_manager.extpar_dirs[domain_idx], extpar_manager.extpar_filename)
+                    extpar_filepath = os.path.join(extpar_manager.extpar_dirs[domain_idx], "external_parameter.nc")
 
                     visualize_topography(icontools_config, workspace_path, grid_filepath, extpar_filepath, extpar_manager.extpar_dirs[domain_idx])
                 else:
