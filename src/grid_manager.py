@@ -246,9 +246,10 @@ class GridManager:
                 k = self.basegrid_config["grid_level"] + domain_id
                 grid_spacing = compute_resolution_from_rnbk(n, k)
 
+                data_domain_dir = os.path.join(self.data_dir, domain_label(domain_id))
                 grid_filename_base = self.grid_filenames[domain_idx].removesuffix(".nc")
                 latlon_grid_filename_suffix = "_rotated" if lrotate else ""
-                latlon_grid_filepath = os.path.join(self.output_manager.output_dir, f"{grid_filename_base}_latlon{latlon_grid_filename_suffix}.nc")
+                latlon_grid_filepath = os.path.join(data_domain_dir, f"{grid_filename_base}_latlon{latlon_grid_filename_suffix}.nc")
 
                 if lrotate:
                     pole_lat = icontools_config["pole_lat"]
