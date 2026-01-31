@@ -50,7 +50,7 @@ class OutputManager:
             os.makedirs(namelists_domain_dir, exist_ok=True)
 
 
-    def move_files(self, source_dir_pattern, destination_dir, prefix="", suffix="", blacklist={}):
+    def move_files(self, source_dir_pattern, destination_dir, prefix="", suffix="", blacklist={}, copy=False):
         for source_file in glob.glob(source_dir_pattern):
             if os.path.basename(source_file) in blacklist:
                 logging.info(f"Skipping {source_file}.")
@@ -69,7 +69,10 @@ class OutputManager:
             destination_filepath = os.path.join(destination_dir, destination_filename)
 
             logging.info(f"Move {source_file} to {destination_filepath}.")
-            shutil.move(source_file, destination_filepath)
+            if copy:
+                shutil.copy(source_file, destination_filepath)
+            else:
+                shutil.move(source_file, destination_filepath)
 
 
     def move_icontools_output(self, grid_manager, keep_basegrid_files):
@@ -111,7 +114,7 @@ class OutputManager:
 
 
     def move_zonda_config(self):
-        self.move_files(os.path.join(self.workspace_path, "config.json"), self.output_dir)
+        self.move_files(os.path.join(self.workspace_path, "config.json"), self.output_dir, copy=True)
 
 
     def move_output(self, grid_manager, extpar_manager, keep_basegrid_files):
