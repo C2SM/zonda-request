@@ -49,7 +49,7 @@ def visualize_topography(icontools_config, workspace_path, grid_file, data_file,
     dpi = 560
 
     # Get the necessary data
-    grid_coords    = grid_dataset.coords
+    grid_coords = grid_dataset.coords
     grid_data_vars = grid_dataset.data_vars
 
     vertex_longitudes = np.rad2deg(grid_coords["vlon"].values)

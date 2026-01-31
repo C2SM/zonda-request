@@ -73,34 +73,36 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
             output_manager.zip_output()
             raise
 
-        if primary_grid_source == "icontools":  # TODO: Should we do this also when we have input_grid as the primary grid source and icontools as the next?
-            ### LAT-LON GRID GENERATION ###
-            try:
-                grid_manager.generate_latlon_grids(nesting_group)
-            except Exception as e:
-                logging.warning( "An error occurred during the generation of the lat-lon grids for domains "
-                                 f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
-                                 f"{repr(e)}\n"
-                                 "Skipping generation of lat-lon grids!" )
+        ### LAT-LON GRID GENERATION ###
+        try:
+            grid_manager.generate_latlon_grids(nesting_group)
+        except Exception as e:
+            logging.warning( "An error occurred during the generation of the lat-lon grids for domains "
+                             f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
+                             f"{repr(e)}\n"
+                             "Skipping generation of lat-lon grids!" )
 
-            ### TOPOGRAPHY VISUALIZATION ###
-            try:
-                for domain_id in nesting_group:
-                    domain_idx = domain_id - 1
+        ### TOPOGRAPHY VISUALIZATION ###
+        try:
+            for domain_id in nesting_group:
+                domain_idx = domain_id - 1
+
+                if grid_manager.grid_sources[domain_idx] == "icontools":
                     icontools_config = config["domains"][domain_idx]["icontools"]
 
                     grid_filepath = os.path.join(grid_manager.grid_dirs[domain_idx], grid_manager.grid_filenames[domain_idx])
                     extpar_filepath = os.path.join(extpar_manager.extpar_dirs[domain_idx], extpar_manager.extpar_filename)
 
                     visualize_topography(icontools_config, workspace_path, grid_filepath, extpar_filepath, extpar_manager.extpar_dirs[domain_idx])
-            except Exception as e:
-                logging.warning( "An error occurred during the visualization of topography data for domains "
-                                 f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
-                                 f"{repr(e)}\n"
-                                 "Skipping the visualization!" )
-        else:
-            logging.warning("An input grid was provided. Skipping generation of rotated lat-lon grid and visualization of topography!")
+                else:
+                    logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of topography!")
+        except Exception as e:
+            logging.warning( "An error occurred during the visualization of topography data for domains "
+                             f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
+                             f"{repr(e)}\n"
+                             "Skipping the visualization!" )
 
+        ### MOVE OUTPUT ###
         output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files)
 
     output_manager.move_zonda_config()

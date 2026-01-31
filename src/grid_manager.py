@@ -231,51 +231,55 @@ class GridManager:
         for domain_id in nesting_group:
             domain_idx = domain_id - 1
             domain_config = self.domains_config[domain_idx]
-            icontools_config = domain_config["icontools"]
 
-            # Only rectangular domains are supported
-            if icontools_config["region_type"] == 3:
-                lrotate = icontools_config.get("lrotate", False)
+            if self.grid_sources[domain_idx] == "icontools":
+                icontools_config = domain_config["icontools"]
 
-                center_lat = icontools_config["center_lat"]
-                center_lon = icontools_config["center_lon"]
-                hwidth_lat = icontools_config["hwidth_lat"]
-                hwidth_lon = icontools_config["hwidth_lon"]
+                # Only rectangular domains are supported
+                if icontools_config["region_type"] == 3:
+                    lrotate = icontools_config.get("lrotate", False)
 
-                n = self.basegrid_config["grid_root"]
-                k = self.basegrid_config["grid_level"] + domain_id
-                grid_spacing = compute_resolution_from_rnbk(n, k)
+                    center_lat = icontools_config["center_lat"]
+                    center_lon = icontools_config["center_lon"]
+                    hwidth_lat = icontools_config["hwidth_lat"]
+                    hwidth_lon = icontools_config["hwidth_lon"]
 
-                data_domain_dir = os.path.join(self.data_dir, domain_label(domain_id))
-                grid_filename_base = self.grid_filenames[domain_idx].removesuffix(".nc")
-                latlon_grid_filename_suffix = "_rotated" if lrotate else ""
-                latlon_grid_filepath = os.path.join(data_domain_dir, f"{grid_filename_base}_latlon{latlon_grid_filename_suffix}.nc")
+                    n = self.basegrid_config["grid_root"]
+                    k = self.basegrid_config["grid_level"] + domain_id
+                    grid_spacing = compute_resolution_from_rnbk(n, k)
 
-                if lrotate:
-                    pole_lat = icontools_config["pole_lat"]
-                    pole_lon = icontools_config["pole_lon"]
+                    data_domain_dir = os.path.join(self.data_dir, domain_label(domain_id))
+                    grid_filename_base = self.grid_filenames[domain_idx].removesuffix(".nc")
+                    latlon_grid_filename_suffix = "_rotated" if lrotate else ""
+                    latlon_grid_filepath = os.path.join(data_domain_dir, f"{grid_filename_base}_latlon{latlon_grid_filename_suffix}.nc")
 
-                    create_rotated_grid( grid_spacing,
-                                         center_lat,
-                                         center_lon,
-                                         hwidth_lat,
-                                         hwidth_lon,
-                                         pole_lat,
-                                         pole_lon,
-                                         0,
-                                         latlon_grid_filepath )
+                    if lrotate:
+                        pole_lat = icontools_config["pole_lat"]
+                        pole_lon = icontools_config["pole_lon"]
 
-                    logging.info(f"Rotated lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
+                        create_rotated_grid( grid_spacing,
+                                            center_lat,
+                                            center_lon,
+                                            hwidth_lat,
+                                            hwidth_lon,
+                                            pole_lat,
+                                            pole_lon,
+                                            0,
+                                            latlon_grid_filepath )
+
+                        logging.info(f"Rotated lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
+                    else:
+                        create_latlon_grid( grid_spacing,
+                                            center_lat,
+                                            center_lon,
+                                            hwidth_lat,
+                                            hwidth_lon,
+                                            0,
+                                            latlon_grid_filepath )
+
+                        logging.info(f"Lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
                 else:
-                    create_latlon_grid( grid_spacing,
-                                        center_lat,
-                                        center_lon,
-                                        hwidth_lat,
-                                        hwidth_lon,
-                                        0,
-                                        latlon_grid_filepath )
-
-                    logging.info(f"Lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
+                    logging.info( f"Domain {domain_id} is not rectangular (i.e., region_type = 3).\n"
+                                  "Skipping generation of lat-lon grid!" )
             else:
-                logging.info( f"Domain {domain_id} is not rectangular (i.e., region_type = 3).\n"
-                              "Skipping generation of lat-lon grid!" )
+                logging.warning(f"An input grid was provided for domain {domain_id}. Skipping generation of lat-lon grid!")
