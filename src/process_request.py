@@ -69,6 +69,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
             extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames)
         except Exception:
             output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files)
+            output_manager.move_zonda_config()
             output_manager.zip_output()
             raise
 
@@ -102,6 +103,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
 
         output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files)
 
+    output_manager.move_zonda_config()
     output_manager.zip_output()
 
     logging.info("Process completed.")
