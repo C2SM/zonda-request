@@ -82,10 +82,10 @@ class OutputManager:
             current_domain_label = domain_label(domain_id)
 
             data_domain_dir = os.path.join(self.data_dir, current_domain_label)
-            self.move_files(os.path.join(grid_manager.icontools_dir, "*{current_domain_label}*.nc"), data_domain_dir)
+            self.move_files(os.path.join(grid_manager.icontools_dir, f"*{current_domain_label}*.nc"), data_domain_dir)
 
             visualizations_dir = os.path.join(data_domain_dir, self.visualizations_dirname)
-            self.move_files(os.path.join(grid_manager.icontools_dir, "*{current_domain_label}*.html"), visualizations_dir)
+            self.move_files(os.path.join(grid_manager.icontools_dir, f"*{current_domain_label}*.html"), visualizations_dir)
 
         self.move_files(os.path.join(grid_manager.icontools_dir, grid_manager.namelist_filename), self.namelists_dir)
 
