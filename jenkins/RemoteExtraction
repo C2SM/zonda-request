@@ -64,7 +64,7 @@ pipeline {
                 source ${WORKSPACE}/activate_conda.sh
                 export OMP_NUM_THREADS=24
                 export NETCDF_OUTPUT_FILETYPE=NETCDF4
-                python src/process_request.py --config config.json --workspace ${WORKSPACE} --extpar-raw-data /net/co2/c2sm-data/extpar-input-data --logfile ${WORKSPACE}/output/logs/zonda_request.log
+                python src/process_request.py --config config.json --workspace ${WORKSPACE} --extpar-raw-data /net/co2/c2sm-data/extpar-input-data --logfile ${WORKSPACE}/zonda_request.log
                 """
             }
         }
@@ -72,21 +72,21 @@ pipeline {
     post {
         success {
             sh "source ${WORKSPACE}/activate_conda.sh"
-            sh "python src/archive_artifacts.py --config config.json --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt --success"
+            sh "python src/archive_artifacts.py --config config.json --workspace ${WORKSPACE} --destination ${https_public_root} --logfile ${WORKSPACE}/zonda_request.log --hash-file ${WORKSPACE}/hash.txt --success"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
                 sh "python src/report.py --config config.json --auth_token ${GITHUB_AUTH_TOKEN} --jenkins_job_name ${env.JOB_NAME} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt"
             }
         }
         failure {
             sh "source ${WORKSPACE}/activate_conda.sh"
-            sh "python src/archive_artifacts.py --config config.json --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
+            sh "python src/archive_artifacts.py --config config.json --workspace ${WORKSPACE} --destination ${https_public_root} --logfile ${WORKSPACE}/zonda_request.log --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
                 sh "python src/report.py --config config.json --auth_token ${GITHUB_AUTH_TOKEN} --jenkins_job_name ${env.JOB_NAME} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --failure"
             }
         }
         aborted {
             sh "source ${WORKSPACE}/activate_conda.sh"
-            sh "python src/archive_artifacts.py --config config.json --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
+            sh "python src/archive_artifacts.py --config config.json --workspace ${WORKSPACE} --destination ${https_public_root} --logfile ${WORKSPACE}/zonda_request.log --hash-file ${WORKSPACE}/hash.txt"
             withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
                 sh "python src/report.py --config config.json --auth_token ${GITHUB_AUTH_TOKEN} --jenkins_job_name ${env.JOB_NAME} --issue_id_file ${WORKSPACE}/issue.txt --hash-file ${WORKSPACE}/hash.txt --abort"
             }

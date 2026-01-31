@@ -8,7 +8,7 @@ from utilities import domain_label
 
 class OutputManager:
 
-    def __init__( self, config, workspace_path,
+    def __init__( self, config, workspace_path, config_filename, zonda_log_filename,
                   output_dirname="output",
                   data_dirname="data",
                   visualizations_dirname="visualizations",
@@ -18,8 +18,10 @@ class OutputManager:
 
         self.config = config
         self.workspace_path = workspace_path
-        self.outfile = self.config["basegrid"]["outfile"]
+        self.config_filename = config_filename
+        self.zonda_log_filename = zonda_log_filename
 
+        self.outfile = self.config["basegrid"]["outfile"]
         self.domains_config = self.config["domains"]
 
         self.visualizations_dirname = visualizations_dirname
@@ -113,8 +115,9 @@ class OutputManager:
             self.move_files(os.path.join(extpar_dir, extpar_manager.extpar_config_filename), namelists_domain_dir)
 
 
-    def move_zonda_config(self):
-        self.move_files(os.path.join(self.workspace_path, "config.json"), self.output_dir, copy=True)
+    def move_zonda_files(self):
+        self.move_files(os.path.join(self.workspace_path, self.config_filename), self.output_dir, copy=True)
+        self.move_files(os.path.join(self.workspace_path, self.zonda_log_filename), self.logs_dir, copy=True)
 
 
     def move_output(self, grid_manager, extpar_manager, keep_basegrid_files):

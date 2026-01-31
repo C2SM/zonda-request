@@ -1,4 +1,3 @@
-import json
 import argparse
 import os
 import logging
@@ -32,20 +31,22 @@ def create_nesting_groups(config, grid_sources):
 
     return nesting_groups
 
-def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
+def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, use_apptainer):
 
     logging.info( f"Starting main process with\n"
                   f"  config_path: {config_path}\n"
                   f"  workspace_path: {workspace_path}\n"
                   f"  extpar_raw_data_path: {extpar_raw_data_path}\n"
+                  f"  zonda_log_filename: {zonda_log_filename}\n"
                   f"  use_apptainer: {use_apptainer}" )
 
     if use_apptainer:
         logging.warning("Apptainer is being used, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
 
     config = load_config(config_path)
+    config_filename = os.path.basename(config_path)
 
-    output_manager = OutputManager(config, workspace_path)
+    output_manager = OutputManager(config, workspace_path, config_filename, zonda_log_filename)
     grid_manager = GridManager(config, workspace_path, output_manager, use_apptainer=use_apptainer)
     extpar_manager = ExtparManager(config, workspace_path, extpar_raw_data_path, use_apptainer=use_apptainer)
 
@@ -69,7 +70,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
             extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames)
         except Exception:
             output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files)
-            output_manager.move_zonda_config()
+            output_manager.move_zonda_files()
             output_manager.zip_output()
             raise
 
@@ -105,7 +106,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, use_apptainer):
         ### MOVE OUTPUT ###
         output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files)
 
-    output_manager.move_zonda_config()
+    output_manager.move_zonda_files()
     output_manager.zip_output()
 
     logging.info("Process completed.")
@@ -132,6 +133,8 @@ if __name__ == "__main__":
     workspace_path = os.path.abspath(args.workspace)
     extpar_raw_data_path = os.path.abspath(args.extpar_raw_data)
 
+    zonda_log_filename = os.path.basename(args.logfile)
+
     use_apptainer = args.apptainer
 
-    main(config_path, workspace_path, extpar_raw_data_path, use_apptainer)
+    main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, use_apptainer)

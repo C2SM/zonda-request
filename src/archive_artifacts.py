@@ -32,6 +32,7 @@ def main():
 
     # Add the arguments
     parser.add_argument('--config', type=str, required=True, help="Path to the configuration file")
+    parser.add_argument('--logfile', type=str, help="Path to the log file")
     parser.add_argument('--destination', type=str, required=True, help='The destination folder to store the zip file')
     parser.add_argument('--hash-file', type=str, required=True, help='Hash file')
     parser.add_argument('--workspace', type=str, required=True, help='The workspace folder')
@@ -55,6 +56,8 @@ def main():
 
     # Move the zip file to the destination
     move_zip(args.destination, os.path.join(args.workspace, f"zonda_output_{outfile}.zip"), hash)
+    folder = os.path.join(args.destination, hash)
+    shutil.copy(args.logfile, folder)
 
 if __name__ == "__main__":
     main()
