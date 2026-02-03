@@ -5,7 +5,13 @@ from math import sqrt, pow, pi
 
 
 
-def shell_command(bin, *args):
+LOG_PADDING_INFO = 33
+LOG_PADDING_WARNING = 36
+LOG_PADDING_ERROR = 34
+LOG_INDENTATION_STR = ".."
+
+
+def shell_command(bin, *args, logging_indentation_level=0):
     arg_list = []
     arg_list.insert(0, str(bin))
     for arg in args:
@@ -14,8 +20,7 @@ def shell_command(bin, *args):
 
     args_for_logger = " ".join(arg_list)
 
-    logging.info(f"Shell command: {args_for_logger}")
-    logging.info("")
+    logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Shell command: {args_for_logger}")
 
     try:
         process = subprocess.run( arg_list,
@@ -28,7 +33,7 @@ def shell_command(bin, *args):
 
     except FileNotFoundError:
         logging.warning( f"Problems with shell command: {args_for_logger}\n"
-                         "-> it appears your shell does not know this command." )
+                         f"{LOG_PADDING_WARNING}-> it appears your shell does not know this command." )
 
         logging.error("Shell command failed!", exc_info=True)
         raise
@@ -37,24 +42,21 @@ def shell_command(bin, *args):
         output = e.stdout + e.stderr
 
         logging.warning( f"Problems with shell command: {args_for_logger}\n"
-                         "-> the output returned to the shell is:\n"
+                         "{LOG_PADDING_WARNING}-> the output returned to the shell is:\n"
                          f"{output}" )
 
         logging.error("Shell command failed!", exc_info=True)
         raise
 
-    logging.info("Output:")
-    logging.info(f"{output}")
+    logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level+1} Output:\n"
+                  f"{output}" )
 
     return output
 
 
 def load_config(config_path):
-    logging.info(f"Loading configuration from \"{config_path}\".")
-
     with open(config_path, "r") as file:
         config = json.load(file)
-    logging.info("Configuration loaded successfully.")
 
     return config
 

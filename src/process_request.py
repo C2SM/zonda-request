@@ -4,14 +4,12 @@ import logging
 from output_manager import OutputManager
 from grid_manager import GridManager
 from extpar_manager import ExtparManager
-from utilities import load_config
+from utilities import load_config, LOG_PADDING_INFO, LOG_PADDING_WARNING, LOG_INDENTATION_STR
 from visualize_data import visualize_topography
 
 
 
 def create_nesting_groups(config, grid_sources):
-    logging.info("Creating nesting groups.")
-
     domains_config = config["domains"]
 
     nesting_groups = []
@@ -33,26 +31,30 @@ def create_nesting_groups(config, grid_sources):
 
 def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, use_apptainer):
 
-    logging.info( f"Starting main process with\n"
-                  f"  config_path: {config_path}\n"
-                  f"  workspace_path: {workspace_path}\n"
-                  f"  extpar_raw_data_path: {extpar_raw_data_path}\n"
-                  f"  zonda_log_filename: {zonda_log_filename}\n"
-                  f"  use_apptainer: {use_apptainer}" )
+    logging.info( f"Start main process with\n"
+                  f"{LOG_PADDING_INFO}  config_path: {config_path}\n"
+                  f"{LOG_PADDING_INFO}  workspace_path: {workspace_path}\n"
+                  f"{LOG_PADDING_INFO}  extpar_raw_data_path: {extpar_raw_data_path}\n"
+                  f"{LOG_PADDING_INFO}  zonda_log_filename: {zonda_log_filename}\n"
+                  f"{LOG_PADDING_INFO}  use_apptainer: {use_apptainer}" )
 
-    if use_apptainer:
-        logging.warning("Apptainer is being used, thus the extpar_tag and icontools_tag entries in the config file are ignored!")
-
+    logging.info(f"{LOG_INDENTATION_STR} Load configuration from \"{config_path}\".")
     config = load_config(config_path)
     config_filename = os.path.basename(config_path)
+
+    if use_apptainer:
+        logging.warning(f"Apptainer is being used, the extpar_tag and icontools_tag entries in the config file {config_filename} are ignored!")
 
     output_manager = OutputManager(config, workspace_path, config_filename, zonda_log_filename)
     grid_manager = GridManager(config, workspace_path, output_manager, use_apptainer=use_apptainer)
     extpar_manager = ExtparManager(config, workspace_path, extpar_raw_data_path, use_apptainer=use_apptainer)
 
+    logging.info(f"{LOG_INDENTATION_STR} Create nesting groups from grid sources: {grid_manager.grid_sources}.")
     nesting_groups = create_nesting_groups(config, grid_manager.grid_sources)
+    n_nesting_groups = len(nesting_groups)
 
     for nesting_group_idx, nesting_group in enumerate(nesting_groups):
+        logging.info(f"{LOG_INDENTATION_STR} Work on nesting group {nesting_group_idx+1} of {n_nesting_groups}.")
 
         primary_grid_source = grid_manager.grid_sources[nesting_group[0]]
 
@@ -64,50 +66,51 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
 
         try:
             ### GRID GENERATION ###
-            grid_manager.generate_icon_grids(nesting_group)
+            grid_manager.generate_icon_grids(nesting_group, logging_indentation_level=2)
 
             ### EXTPAR ###
-            extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames)
+            extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames, logging_indentation_level=2)
         except Exception:
-            output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files)
-            output_manager.move_zonda_files()
-            output_manager.zip_output()
+            output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files, logging_indentation_level=1)
+            output_manager.move_zonda_files(logging_indentation_level=1)
+            output_manager.zip_output(logging_indentation_level=1)
             raise
 
         ### LAT-LON GRID GENERATION ###
         try:
-            grid_manager.generate_latlon_grids(nesting_group)
+            grid_manager.generate_latlon_grids(nesting_group, logging_indentation_level=2)
         except Exception as e:
             logging.warning( "An error occurred during the generation of the lat-lon grids for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
                              f"{repr(e)}\n"
-                             "Skipping generation of lat-lon grids!" )
+                             f"{LOG_PADDING_WARNING}Skipping generation of lat-lon grids!" )
 
         ### TOPOGRAPHY VISUALIZATION ###
         try:
             for domain_id in nesting_group:
                 domain_idx = domain_id - 1
 
+                logging.info(f"{LOG_INDENTATION_STR*2} Visualization of EXTPAR fields for domain {domain_id}.")
                 if grid_manager.grid_sources[domain_idx] == "icontools":
                     icontools_config = config["domains"][domain_idx]["icontools"]
 
                     grid_filepath = os.path.join(grid_manager.grid_dirs[domain_idx], grid_manager.grid_filenames[domain_idx])
                     extpar_filepath = os.path.join(extpar_manager.extpar_dirs[domain_idx], "external_parameter.nc")
 
-                    visualize_topography(icontools_config, workspace_path, grid_filepath, extpar_filepath, extpar_manager.extpar_dirs[domain_idx])
+                    visualize_topography(icontools_config, workspace_path, grid_filepath, extpar_filepath, extpar_manager.extpar_dirs[domain_idx], logging_indentation_level=3)
                 else:
-                    logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of topography!")
+                    logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR fields!")
         except Exception as e:
             logging.warning( "An error occurred during the visualization of topography data for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
                              f"{repr(e)}\n"
-                             "Skipping the visualization!" )
+                             "{LOG_PADDING_WARNING}Skipping the visualization!" )
 
         ### MOVE OUTPUT ###
-        output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files)
+        output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files, logging_indentation_level=2)
 
-    output_manager.move_zonda_files()
-    output_manager.zip_output()
+    output_manager.move_zonda_files(logging_indentation_level=1)
+    output_manager.zip_output(logging_indentation_level=1)
 
     logging.info("Process completed.")
 

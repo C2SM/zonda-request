@@ -1,7 +1,7 @@
 import os
 import logging
 from zonda_rotgrid.core import create_rotated_grid, create_latlon_grid
-from utilities import shell_command, convert_to_fortran_bool, domain_label, compute_resolution_from_rnbk
+from utilities import shell_command, convert_to_fortran_bool, domain_label, compute_resolution_from_rnbk, LOG_PADDING_INFO, LOG_INDENTATION_STR
 
 
 
@@ -49,7 +49,7 @@ class GridManager:
         for domain_config in self.domains_config:
             if "icontools" in domain_config:
                 os.makedirs(self.icontools_dir, exist_ok=True)
-                logging.info(f"Created directory \"{self.icontools_dir}\".")
+                logging.info(f"{LOG_INDENTATION_STR} Created directory \"{self.icontools_dir}\".")
                 break
 
         self.namelist_filepath = os.path.join(self.icontools_dir, self.namelist_filename)
@@ -61,8 +61,8 @@ class GridManager:
             self.icontools_container_image = f"execute:{icontools_tag}"
 
 
-    def write_icon_gridgen_namelist(self, nesting_group, primary_grid_source):
-        logging.info("Writing ICON gridgen namelist.")
+    def write_icon_gridgen_namelist(self, nesting_group, primary_grid_source, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Write ICON gridgen namelist.")
 
         # TODO v2.0: For primary_grid_source == input_grid the parent_id and domain_id may need to be adapted if the
         #            nesting_group doesn't start from domain_id == 1.
@@ -149,11 +149,12 @@ class GridManager:
         # Write the namelist content to a file
         with open(self.namelist_filepath, "w") as file:
             file.write("\n".join(namelist))
-        logging.info(f"Namelist written to \"{self.namelist_filepath}\".")
+
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1} ICON gridgen namelist written to \"{self.namelist_filepath}\".")
 
 
-    def run_icon_gridgen(self):
-        logging.info("Running ICON gridgen.")
+    def run_icon_gridgen(self, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Run ICON gridgen.")
 
         if self.use_apptainer:
             container_cmd = [
@@ -176,22 +177,21 @@ class GridManager:
         shell_command(
             *container_cmd,
             "/home/dwd/icontools/icongridgen",
-            "--nml", f"/work/{self.namelist_filename}"
+            "--nml", f"/work/{self.namelist_filename}",
+            logging_indentation_level=logging_indentation_level+1
         )
 
-        logging.info("Grid generation completed.")
 
-
-    def generate_icon_grids(self, nesting_group):
-        logging.info("Generating ICON grids.")
+    def generate_icon_grids(self, nesting_group, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Generate/retrieve ICON grids.")
 
         primary_grid_source = self.grid_sources[nesting_group[0]]
         match primary_grid_source:
 
             case "icontools":
-                self.write_icon_gridgen_namelist(nesting_group, primary_grid_source)
+                self.write_icon_gridgen_namelist(nesting_group, primary_grid_source, logging_indentation_level=logging_indentation_level+1)
 
-                self.run_icon_gridgen()
+                self.run_icon_gridgen(logging_indentation_level=logging_indentation_level+1)
 
                 for domain_id in nesting_group:
                     domain_idx = domain_id - 1
@@ -209,11 +209,13 @@ class GridManager:
                         self.grid_dirs[domain_idx] = os.path.dirname(input_grid_path)
                         self.grid_filenames[domain_idx] = os.path.basename(input_grid_path)
 
-                        logging.info( f"An input grid was provided for domain {domain_id} at \"{input_grid_path}\" "
+                        logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level+1} "
+                                      f"An input grid was provided for domain {domain_id} at \"{input_grid_path}\" "
                                       f"and the generation of additional nests was not requested, thus the grid "
                                       f"generation step is skipped for domain {domain_id}!\n"
-                                      f"For this reason the \"basegrid\", \"icontools\", and \"icontools_tag\" entries "
-                                      f"in the JSON config are ignored." )
+                                      f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level+1)} "
+                                      f"For this reason the \"basegrid\", \"icontools\", and "
+                                      f"\"icontools_tag\" entries in the JSON config are ignored." )
                     else:
                         logging.error( f"The provided input grid does not exist: \"{input_grid_path}\". "
                                        f"Please provide the correct path." )
@@ -225,12 +227,13 @@ class GridManager:
                 logging.error("No valid grid generation method could be selected!")
 
 
-    def generate_latlon_grids(self, nesting_group):
-        logging.info("Generating lat-lon grids.")
+    def generate_latlon_grids(self, nesting_group, logging_indentation_level=0):
 
         for domain_id in nesting_group:
             domain_idx = domain_id - 1
             domain_config = self.domains_config[domain_idx]
+
+            logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Generation of lat-lon grid for domain {domain_id}.")
 
             if self.grid_sources[domain_idx] == "icontools":
                 icontools_config = domain_config["icontools"]
@@ -258,16 +261,16 @@ class GridManager:
                         pole_lon = icontools_config["pole_lon"]
 
                         create_rotated_grid( grid_spacing,
-                                            center_lat,
-                                            center_lon,
-                                            hwidth_lat,
-                                            hwidth_lon,
-                                            pole_lat,
-                                            pole_lon,
-                                            0,
-                                            latlon_grid_filepath )
+                                             center_lat,
+                                             center_lon,
+                                             hwidth_lat,
+                                             hwidth_lon,
+                                             pole_lat,
+                                             pole_lon,
+                                             0,
+                                             latlon_grid_filepath )
 
-                        logging.info(f"Rotated lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
+                        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1} Rotated lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
                     else:
                         create_latlon_grid( grid_spacing,
                                             center_lat,
@@ -277,9 +280,8 @@ class GridManager:
                                             0,
                                             latlon_grid_filepath )
 
-                        logging.info(f"Lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
+                        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1} Lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
                 else:
-                    logging.info( f"Domain {domain_id} is not rectangular (i.e., region_type = 3).\n"
-                                  "Skipping generation of lat-lon grid!" )
+                    logging.warning(f"Domain {domain_id} is not rectangular (i.e., region_type = 3). Skipping generation of lat-lon grid!")
             else:
                 logging.warning(f"An input grid was provided for domain {domain_id}. Skipping generation of lat-lon grid!")
