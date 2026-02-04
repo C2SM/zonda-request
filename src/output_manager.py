@@ -3,7 +3,7 @@ import shutil
 import glob
 import zipfile
 import logging
-from utilities import domain_label, LOG_INDENTATION_STR
+from utilities import domain_label, LOG_PADDING_INFO, LOG_INDENTATION_STR
 
 
 class OutputManager:
@@ -72,11 +72,11 @@ class OutputManager:
 
             if copy:
                 logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level}Copy {source_file}\n"
-                              f"{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to {destination_filepath}." )
+                              f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to {destination_filepath}." )
                 shutil.copy(source_file, destination_filepath)
             else:
                 logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level}Move {source_file}\n"
-                              f"{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to {destination_filepath}." )
+                              f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to {destination_filepath}." )
                 shutil.move(source_file, destination_filepath)
 
 
