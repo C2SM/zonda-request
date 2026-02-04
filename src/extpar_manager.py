@@ -61,14 +61,14 @@ class ExtparManager:
 
         try:
             num_threads = os.environ["OMP_NUM_THREADS"]
-            logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1} Using {num_threads} OpenMP threads.")
+            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Using {num_threads} OpenMP threads.")
         except KeyError:
             num_threads = 1
             logging.warning("OMP_NUM_THREADS not set -> using OMP_NUM_THREADS = {num_threads} instead.")
 
         try:
             netcdf_filetype = os.environ["NETCDF_OUTPUT_FILETYPE"]
-            logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1} Using {netcdf_filetype} file format.")
+            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Using {netcdf_filetype} file format.")
         except KeyError:
             netcdf_filetype = "NETCDF4"
             logging.warning("NETCDF_OUTPUT_FILETYPE not set -> falling back to NetCDF 4.")
@@ -78,7 +78,7 @@ class ExtparManager:
 
             extpar_dir = self.extpar_dirs[domain_idx]
 
-            logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1} Running {'apptainer' if self.use_apptainer else 'podman'} command for EXTPAR in {extpar_dir}.")
+            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Running {'apptainer' if self.use_apptainer else 'podman'} command for EXTPAR in {extpar_dir}.")
 
             if self.use_apptainer:
                 container_cmd = [

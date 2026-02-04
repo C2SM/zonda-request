@@ -150,7 +150,7 @@ class GridManager:
         with open(self.namelist_filepath, "w") as file:
             file.write("\n".join(namelist))
 
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1} ICON gridgen namelist written to \"{self.namelist_filepath}\".")
+        logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} ICON gridgen namelist written to \"{self.namelist_filepath}\".")
 
 
     def run_icon_gridgen(self, logging_indentation_level=0):
@@ -209,7 +209,7 @@ class GridManager:
                         self.grid_dirs[domain_idx] = os.path.dirname(input_grid_path)
                         self.grid_filenames[domain_idx] = os.path.basename(input_grid_path)
 
-                        logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level+1} "
+                        logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} "
                                       f"An input grid was provided for domain {domain_id} at \"{input_grid_path}\" "
                                       f"and the generation of additional nests was not requested, thus the grid "
                                       f"generation step is skipped for domain {domain_id}!\n"
@@ -270,7 +270,7 @@ class GridManager:
                                              0,
                                              latlon_grid_filepath )
 
-                        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1} Rotated lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
+                        logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Rotated lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
                     else:
                         create_latlon_grid( grid_spacing,
                                             center_lat,
@@ -280,7 +280,7 @@ class GridManager:
                                             0,
                                             latlon_grid_filepath )
 
-                        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1} Lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
+                        logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
                 else:
                     logging.warning(f"Domain {domain_id} is not rectangular (i.e., region_type = 3). Skipping generation of lat-lon grid!")
             else:

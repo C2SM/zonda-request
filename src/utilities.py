@@ -48,7 +48,7 @@ def shell_command(bin, *args, logging_indentation_level=0):
         logging.error("Shell command failed!", exc_info=True)
         raise
 
-    logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level+1} Output:\n"
+    logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Output:\n"
                   f"{output}" )
 
     return output
