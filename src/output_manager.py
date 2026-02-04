@@ -55,7 +55,7 @@ class OutputManager:
     def move_files(self, source_dir_pattern, destination_dir, prefix="", suffix="", blacklist={}, copy=False, logging_indentation_level=0):
         for source_file in glob.glob(source_dir_pattern):
             if os.path.basename(source_file) in blacklist:
-                logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Skipping {source_file} because it's blacklisted.")
+                logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Skipping {source_file} because it's blacklisted.")
                 continue
 
             filename = os.path.basename(source_file)
@@ -71,15 +71,17 @@ class OutputManager:
             destination_filepath = os.path.join(destination_dir, destination_filename)
 
             if copy:
-                logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Copy {source_file} to {destination_filepath}.")
+                logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level}Copy {source_file}\n"
+                              f"{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to {destination_filepath}." )
                 shutil.copy(source_file, destination_filepath)
             else:
-                logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Move {source_file} to {destination_filepath}.")
+                logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level}Move {source_file}\n"
+                              f"{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to {destination_filepath}." )
                 shutil.move(source_file, destination_filepath)
 
 
     def move_icontools_output(self, grid_manager, keep_basegrid_files, logging_indentation_level=0):
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Move ICON Tools output.")
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Move ICON Tools output.")
 
         if keep_basegrid_files:
             self.move_files(os.path.join(grid_manager.icontools_dir, "base_grid.*"), self.data_dir, logging_indentation_level=logging_indentation_level+1)
@@ -99,7 +101,7 @@ class OutputManager:
 
 
     def move_extpar_output(self, extpar_manager, logging_indentation_level=0):
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Move EXTPAR output.")
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Move EXTPAR output.")
 
         for domain_idx, extpar_dir in enumerate(extpar_manager.extpar_dirs):
 
@@ -121,21 +123,21 @@ class OutputManager:
 
 
     def move_zonda_files(self, logging_indentation_level=0):
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Move Zonda files.")
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Move Zonda files.")
 
         self.move_files(os.path.join(self.workspace_path, self.config_filename), self.output_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
         self.move_files(os.path.join(self.workspace_path, self.zonda_log_filename), self.logs_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
 
 
     def move_output(self, grid_manager, extpar_manager, keep_basegrid_files, logging_indentation_level=0):
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Move output.")
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Move output.")
 
         self.move_icontools_output(grid_manager, keep_basegrid_files, logging_indentation_level=logging_indentation_level+1)
         self.move_extpar_output(extpar_manager, logging_indentation_level=logging_indentation_level+1)
 
 
     def zip_output(self, logging_indentation_level=0):
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Create zip file (no compression): \"{self.zip_filepath}\".")
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Create zip file (no compression): \"{self.zip_filepath}\".")
 
         with zipfile.ZipFile(self.zip_filepath, 'w', zipfile.ZIP_STORED) as zip_file:
             for root, _, filenames in os.walk(self.output_dir):

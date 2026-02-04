@@ -38,7 +38,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
                   f"{LOG_PADDING_INFO}  zonda_log_filename: {zonda_log_filename}\n"
                   f"{LOG_PADDING_INFO}  use_apptainer: {use_apptainer}" )
 
-    logging.info(f"{LOG_INDENTATION_STR} Load configuration from \"{config_path}\".")
+    logging.info(f"{LOG_INDENTATION_STR}Load configuration from \"{config_path}\".")
     config = load_config(config_path)
     config_filename = os.path.basename(config_path)
 
@@ -49,12 +49,12 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
     grid_manager = GridManager(config, workspace_path, output_manager, use_apptainer=use_apptainer)
     extpar_manager = ExtparManager(config, workspace_path, extpar_raw_data_path, use_apptainer=use_apptainer)
 
-    logging.info(f"{LOG_INDENTATION_STR} Create nesting groups from grid sources: {grid_manager.grid_sources}.")
+    logging.info(f"{LOG_INDENTATION_STR}Create nesting groups from grid sources: {grid_manager.grid_sources}.")
     nesting_groups = create_nesting_groups(config, grid_manager.grid_sources)
     n_nesting_groups = len(nesting_groups)
 
     for nesting_group_idx, nesting_group in enumerate(nesting_groups):
-        logging.info(f"{LOG_INDENTATION_STR} Work on nesting group {nesting_group_idx+1} of {n_nesting_groups}.")
+        logging.info(f"{LOG_INDENTATION_STR}Work on nesting group {nesting_group_idx+1} of {n_nesting_groups}.")
 
         primary_grid_source = grid_manager.grid_sources[nesting_group[0]]
 
@@ -90,7 +90,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
             for domain_id in nesting_group:
                 domain_idx = domain_id - 1
 
-                logging.info(f"{LOG_INDENTATION_STR*2} Visualization of EXTPAR fields for domain {domain_id}.")
+                logging.info(f"{LOG_INDENTATION_STR*2}Visualization of EXTPAR fields for domain {domain_id}.")
                 if grid_manager.grid_sources[domain_idx] == "icontools":
                     icontools_config = config["domains"][domain_idx]["icontools"]
 

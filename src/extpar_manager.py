@@ -27,16 +27,16 @@ class ExtparManager:
             self.extpar_container_image = os.path.join(self.workspace_path, "extpar.sif")
         else:
             extpar_tag = self.config["zonda"].get("extpar_tag", "latest")
-            self.pull_extpar_image(extpar_tag)
+            self.pull_extpar_image(extpar_tag, logging_indentation_level=1)
             self.extpar_container_image = f"extpar:{extpar_tag}"
 
 
     def pull_extpar_image(self, extpar_tag, logging_indentation_level=0):
         if extpar_tag != "latest":
-            logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Pull EXTPAR image.")
+            logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Pull EXTPAR image.")
             shell_command("podman", "pull", f"docker.io/c2sm/extpar:{extpar_tag}", logging_indentation_level=logging_indentation_level+1)
         else:
-            logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Using latest EXTPAR tag (it must already be present on the system).")
+            logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Using latest EXTPAR tag (it must already be present on the system).")
 
 
     def setup_extpar_dir(self, domain_config, logging_indentation_level=0):
@@ -45,30 +45,30 @@ class ExtparManager:
         extpar_dir = os.path.join(self.workspace_path, f"extpar_{domain_label(domain_id)}")
 
         os.makedirs(extpar_dir, exist_ok=True)
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Created directory \"{extpar_dir}\".")
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Created directory \"{extpar_dir}\".")
 
         extpar_config = {"extpar": domain_config["extpar"]}
         extpar_config_filepath = os.path.join(extpar_dir, self.extpar_config_filename)
         with open(extpar_config_filepath, "w") as file:
             json.dump(extpar_config, file, indent=4)
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Domain-specific {self.extpar_config_filename} written to \"{extpar_config_filepath}\".")
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Domain-specific {self.extpar_config_filename} written to \"{extpar_config_filepath}\".")
 
         return extpar_dir
 
 
     def run_extpar(self, nesting_group, grid_dirs, grid_filenames, logging_indentation_level=0):
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Run EXTPAR.")
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run EXTPAR.")
 
         try:
             num_threads = os.environ["OMP_NUM_THREADS"]
-            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Using {num_threads} OpenMP threads.")
+            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Using {num_threads} OpenMP threads.")
         except KeyError:
             num_threads = 1
             logging.warning("OMP_NUM_THREADS not set -> using OMP_NUM_THREADS = {num_threads} instead.")
 
         try:
             netcdf_filetype = os.environ["NETCDF_OUTPUT_FILETYPE"]
-            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Using {netcdf_filetype} file format.")
+            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Using {netcdf_filetype} file format.")
         except KeyError:
             netcdf_filetype = "NETCDF4"
             logging.warning("NETCDF_OUTPUT_FILETYPE not set -> falling back to NetCDF 4.")
@@ -78,7 +78,7 @@ class ExtparManager:
 
             extpar_dir = self.extpar_dirs[domain_idx]
 
-            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Running {'apptainer' if self.use_apptainer else 'podman'} command for EXTPAR in {extpar_dir}.")
+            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Running {'apptainer' if self.use_apptainer else 'podman'} command for EXTPAR in {extpar_dir}.")
 
             if self.use_apptainer:
                 container_cmd = [

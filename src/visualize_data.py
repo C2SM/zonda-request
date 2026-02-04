@@ -35,17 +35,17 @@ code_font       = {'family': 'Courier New'             }
 
 def visualize_topography(icontools_config, workspace_path, grid_filepath, data_filepath, output_dir, logging_indentation_level=0):
 
-    logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Visualization of topography data.")
+    logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Visualization of topography data.")
 
     ##################################
     ### Get and transform the data ###
     ##################################
 
     # Read NetCDF files (field values and grid data)
-    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Reading EXTPAR file: \"{data_filepath}\".")
+    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Reading EXTPAR file: \"{data_filepath}\".")
     icon_output_dataset = xr.open_dataset(data_filepath)
 
-    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Reading grid file: \"{grid_filepath}\".")
+    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Reading grid file: \"{grid_filepath}\".")
     grid_dataset = xr.open_dataset(grid_filepath)
 
     dpi = 560
@@ -115,7 +115,7 @@ def visualize_topography(icontools_config, workspace_path, grid_filepath, data_f
     vertices_at_boundary_mask = (vertex_longitudes_abs >= boundary_degrees - delta_degrees) & (vertex_longitudes_abs <= boundary_degrees)
     if any(vertices_at_boundary_mask):
 
-        logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Create new vertices at the boundaries to account for periodicity.")
+        logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Create new vertices at the boundaries to account for periodicity.")
 
         cells_at_boundary = np.unique(cells_of_vertices[vertices_at_boundary_mask].flatten())
         index_to_delete = np.argwhere(cells_at_boundary == -1)
@@ -145,7 +145,7 @@ def visualize_topography(icontools_config, workspace_path, grid_filepath, data_f
     ### Plot the requested field ###
     ################################
 
-    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Plotting {topography_variable_name}")
+    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Plotting {topography_variable_name}")
 
     # Create figure and axis
     fig = plt.figure(figsize=(16, 9), dpi=dpi)
@@ -209,14 +209,14 @@ def visualize_topography(icontools_config, workspace_path, grid_filepath, data_f
 
     # Save and close the figure
     output_filepath = path.join(output_dir, "topography.png")
-    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Saving plot to \"{output_filepath}\".")
+    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Saving plot to \"{output_filepath}\".")
 
     fig.savefig(output_filepath, bbox_inches='tight', dpi=dpi)
 
     plt.close(fig)
 
     # Add the Zonda logo to the plot
-    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Adding Zonda logo to \"{output_filepath}\".")
+    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Adding Zonda logo to \"{output_filepath}\".")
 
     zonda_logo = Image.open(f"{workspace_path}/img/zonda_logo.png")
     plot_image = Image.open(output_filepath)
@@ -246,4 +246,4 @@ def visualize_topography(icontools_config, workspace_path, grid_filepath, data_f
 
     plot_image.save(output_filepath)
 
-    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Plot completed.")
+    logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Plot completed.")

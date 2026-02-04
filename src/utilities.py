@@ -5,9 +5,9 @@ from math import sqrt, pow, pi
 
 
 
-LOG_PADDING_INFO = 33
-LOG_PADDING_WARNING = 36
-LOG_PADDING_ERROR = 34
+LOG_PADDING_INFO = 33 * " "
+LOG_PADDING_WARNING = 36 * " "
+LOG_PADDING_ERROR = 34 * " "
 LOG_INDENTATION_STR = ".."
 
 
@@ -20,7 +20,7 @@ def shell_command(bin, *args, logging_indentation_level=0):
 
     args_for_logger = " ".join(arg_list)
 
-    logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Shell command: {args_for_logger}")
+    logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Shell command: {args_for_logger}")
 
     try:
         process = subprocess.run( arg_list,
@@ -48,7 +48,7 @@ def shell_command(bin, *args, logging_indentation_level=0):
         logging.error("Shell command failed!", exc_info=True)
         raise
 
-    logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)} Output:\n"
+    logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Output:\n"
                   f"{output}" )
 
     return output
