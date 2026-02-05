@@ -34,7 +34,7 @@ pipeline {
                 bash miniforge.sh -b -p ${WORKSPACE}/miniforge
                 source ${WORKSPACE}/miniforge/bin/activate
                 conda env create -f environment.yml
-                echo "source ${WORKSPACE}/miniforge/bin/activate myenv" >> ${WORKSPACE}/activate_conda.sh
+                echo "source ${WORKSPACE}/miniforge/bin/activate zonda_env" >> ${WORKSPACE}/activate_conda.sh
                 """
             }
         }

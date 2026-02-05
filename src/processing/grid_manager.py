@@ -1,7 +1,7 @@
 import os
 import logging
 from zonda_rotgrid.core import create_rotated_grid, create_latlon_grid
-from utilities import shell_command, convert_to_fortran_bool, domain_label, compute_resolution_from_rnbk, LOG_PADDING_INFO, LOG_INDENTATION_STR
+from utilities.utilities import shell_command, convert_to_fortran_bool, domain_label, compute_resolution_from_rnbk, LOG_PADDING_INFO, LOG_INDENTATION_STR
 
 
 

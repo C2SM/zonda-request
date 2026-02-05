@@ -4,8 +4,8 @@ import logging
 from output_manager import OutputManager
 from grid_manager import GridManager
 from extpar_manager import ExtparManager
-from utilities import load_config, LOG_PADDING_INFO, LOG_PADDING_WARNING, LOG_INDENTATION_STR
-from visualize_data import visualize_topography
+from utilities.utilities import load_config, LOG_PADDING_INFO, LOG_PADDING_WARNING, LOG_INDENTATION_STR
+from visualization.visualize_data import visualize_topography
 
 
 

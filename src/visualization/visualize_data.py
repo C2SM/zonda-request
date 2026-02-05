@@ -14,7 +14,7 @@ from PIL import Image
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from cartopy.io import DownloadWarning
 
-from utilities import LOG_INDENTATION_STR
+from utilities.utilities import LOG_INDENTATION_STR
 
 warnings.filterwarnings("ignore", category=DownloadWarning)
 

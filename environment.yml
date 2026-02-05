@@ -1,4 +1,4 @@
-name: myenv
+name: zondaenv
 channels:
   - conda-forge
 dependencies:

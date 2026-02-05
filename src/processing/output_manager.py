@@ -3,7 +3,7 @@ import shutil
 import glob
 import zipfile
 import logging
-from utilities import domain_label, LOG_PADDING_INFO, LOG_INDENTATION_STR
+from utilities.utilities import domain_label, LOG_PADDING_INFO, LOG_INDENTATION_STR
 
 
 class OutputManager:

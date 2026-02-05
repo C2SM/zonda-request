@@ -1,7 +1,7 @@
 import os
 import logging
 import json
-from utilities import shell_command, domain_label, LOG_INDENTATION_STR
+from utilities.utilities import shell_command, domain_label, LOG_INDENTATION_STR
 
 
 
