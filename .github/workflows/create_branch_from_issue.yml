@@ -72,7 +72,7 @@ jobs:
             core.setFailed("Invalid JSON snippet!.");
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
         with:
           ref: ${{ env.BACKEND_TAG }}
 
