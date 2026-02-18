@@ -37,22 +37,28 @@ jobs:
         uses: actions/github-script@v3
         with:
           script: |
-            const fs = require('fs');
-            const error = fs.readFileSync('jq_error.txt', 'utf8');
+            const fs = require('fs')
+            const error = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
 
             const message = `
             The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.
 
+            <details>
+            
+            <summary>Expand to see the error message from the \`jq\` command.</summary>
+            
             \`\`\`
             ${error}
             \`\`\`
+            
+            </details>
 
-            Common errors are:
+            Common problems are:
 
-            - The string \`PASTE_YOUR_REQUEST_HERE\` was not replaced correctly with the JSON snippet. Note that the JSON code-block (\`\`\`json ... \`\`\`) must not be removed.
+            - The string \`PASTE_YOUR_REQUEST_HERE\` was not replaced correctly with the JSON snippet. Note that the JSON code-block (\\`\\`\\`json ... \\`\\`\\`) must not be removed.
             - Syntax errors in the JSON snippet. E.g., commas after the last entry of a JSON object ({...}) or array ([...]).
 
-            Note that you can edit the JSON snippet in the description to fix the errors and then rerun the request by commenting "**rerun request**".
+            Please close this request and open a new one to correct the error.
             `.replace(/^ {12}/gm, '');
 
             await github.issues.createComment({
@@ -69,10 +75,10 @@ jobs:
               labels: ['invalid']
             })
 
-            core.setFailed("Invalid JSON snippet!.");
+            core.setFailed("Invalid JSON snippet!")
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
         with:
           ref: ${{ env.BACKEND_TAG }}
 
