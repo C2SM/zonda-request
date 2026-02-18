@@ -15,7 +15,7 @@ for BRANCH in $BRANCHES; do
 
     if [ $AGE -gt $MAX_AGE ]; then
         echo "Deleting branch $BRANCH"
-        # Delete the branch
+
         curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
         "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/heads/$BRANCH"
     fi

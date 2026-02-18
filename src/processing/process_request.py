@@ -118,11 +118,11 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup workspace and generate namelist")
-    parser.add_argument('--config', type=str, required=True, help="Path to the configuration file")
-    parser.add_argument('--workspace', type=str, required=True, help="Path to the workspace directory")
-    parser.add_argument('--extpar-raw-data', type=str, required=True, help="Path to the EXTPAR raw input data")
-    parser.add_argument('--logfile', type=str, help="Path to the log file")
-    parser.add_argument('--apptainer', action=argparse.BooleanOptionalAction, default=False, help="Use apptainer instead of podman to run containers")
+    parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
+    parser.add_argument("--workspace", type=str, required=True, help="Path to the workspace directory")
+    parser.add_argument("--extpar-raw-data", type=str, required=True, help="Path to the EXTPAR raw input data")
+    parser.add_argument("--logfile", type=str, help="Path to the log file")
+    parser.add_argument("--apptainer", action=argparse.BooleanOptionalAction, default=False, help="Use apptainer instead of podman to run containers")
 
     args = parser.parse_args()
 

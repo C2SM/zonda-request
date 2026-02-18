@@ -11,10 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Install jq
-        run: sudo apt-get install -y jq
+        uses: actions/checkout@v3
 
       - name: Fetch all branches
         run: git fetch --all
@@ -22,7 +19,7 @@ jobs:
       - name: Delete old branches
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./src/delete_old_branches.sh
+        run: ./scripts/delete_old_branches.sh
 
   closeOldIssues:
     runs-on: ubuntu-latest
