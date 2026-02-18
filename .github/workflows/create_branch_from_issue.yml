@@ -9,13 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Extract backend_tag
+        id: extract_backend_tag
+        continue-on-error: true
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          backend_tag=$(echo "$ISSUE_BODY" \
+          json_block=$(echo "$ISSUE_BODY" \
             | sed -n '/^```json$/,${p;/^```$/q}' \
-            | sed '1d;$d' \
-            | jq -r '.zonda.backend_tag // empty')
+            | sed '1d;$d')
+
+          if ! echo "$json_block" | jq . > /dev/null 2> jq_error.txt; then
+            echo "invalid_json=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          backend_tag=$(echo "$json_block" | jq -r '.zonda.backend_tag // empty')
 
           if [ -z "$backend_tag" ]; then
             backend_tag="main"
@@ -24,8 +32,47 @@ jobs:
 
           echo "BACKEND_TAG=$backend_tag" >> $GITHUB_ENV
 
+      - name: Report status on invalid JSON
+        if: steps.extract_backend_tag.outcome == 'failure'
+        uses: actions/github-script@v3
+        with:
+          script: |
+            const fs = require('fs');
+            const error = fs.readFileSync('jq_error.txt', 'utf8');
+
+            const message = `
+            The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.
+
+            \`\`\`
+            ${error}
+            \`\`\`
+
+            Common errors are:
+
+            - The string \`PASTE_YOUR_REQUEST_HERE\` was not replaced correctly with the JSON snippet. Note that the JSON code-block (\`\`\`json ... \`\`\`) must not be removed.
+            - Syntax errors in the JSON snippet. E.g., commas after the last entry of a JSON object ({...}) or array ([...]).
+
+            Note that you can edit the JSON snippet in the description to fix the errors and then rerun the request by commenting "**rerun request**".
+            `.replace(/^ {12}/gm, '');
+
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: message
+            })
+
+            await github.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['invalid']
+            })
+
+            core.setFailed("Invalid JSON snippet!.");
+
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ env.BACKEND_TAG }}
 
@@ -34,8 +81,8 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git checkout -b issue-${{ github.event.issue.number }}/request
-          echo "${{ github.event.issue.number }}" > issue.txt
-          git add issue.txt
+          echo "${{ github.event.issue.number }}" > issue-id.txt
+          git add issue-id.txt
           git commit -m "Add file for issue #${{ github.event.issue.number }}"
           git push origin issue-${{ github.event.issue.number }}/request
 
