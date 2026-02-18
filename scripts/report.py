@@ -132,7 +132,7 @@ if __name__ == "__main__":
     elif args.invalid:
         comment = (
             f"The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.\n\n"
-            f"Common errors are:\n\n"
+            f"Common problems are:\n\n"
             f"- The string `PASTE_YOUR_REQUEST_HERE` was not replaced correctly with the JSON snippet. Note that the "
             f"JSON code-block (\`\`\`json ... \`\`\`) must not be removed.\n"
             f"- Syntax errors in the JSON snippet. E.g., commas after the last entry of a JSON object ({{...}}) or array ([...]).\n\n"
