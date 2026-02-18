@@ -260,25 +260,25 @@ class GridManager:
                         pole_lat = icontools_config["pole_lat"]
                         pole_lon = icontools_config["pole_lon"]
 
-                        create_rotated_grid( grid_spacing,
-                                             center_lat,
-                                             center_lon,
-                                             hwidth_lat,
-                                             hwidth_lon,
-                                             pole_lat,
-                                             pole_lon,
-                                             0,
-                                             latlon_grid_filepath )
+                        create_rotated_grid( grid_spacing = grid_spacing,
+                                             center_lat = center_lat,
+                                             center_lon = center_lon,
+                                             hwidth_lat = hwidth_lat,
+                                             hwidth_lon = hwidth_lon,
+                                             pole_lat = pole_lat,
+                                             pole_lon = pole_lon,
+                                             ncells_boundary = 0,
+                                             output_path = latlon_grid_filepath )
 
                         logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Rotated lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
                     else:
-                        create_latlon_grid( grid_spacing,
-                                            center_lat,
-                                            center_lon,
-                                            hwidth_lat,
-                                            hwidth_lon,
-                                            0,
-                                            latlon_grid_filepath )
+                        create_latlon_grid( grid_spacing = grid_spacing,
+                                            center_lat = center_lat,
+                                            center_lon = center_lon,
+                                            hwidth_lat = hwidth_lat,
+                                            hwidth_lon = hwidth_lon,
+                                            ncells_boundary = 0,
+                                            output_path = latlon_grid_filepath )
 
                         logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
                 else:
