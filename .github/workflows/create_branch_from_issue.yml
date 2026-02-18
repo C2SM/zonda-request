@@ -43,10 +43,15 @@ jobs:
             const message = `
             The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.
 
-            Error message from \`jq\` command:
+            <details>
+            
+            <summary>Expand to see the error message from the \`jq\` command.</summary>
+            
             \`\`\`
             ${error}
             \`\`\`
+            
+            </details>
 
             Common problems are:
 
