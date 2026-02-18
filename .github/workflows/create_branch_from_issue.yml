@@ -81,8 +81,8 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git checkout -b issue-${{ github.event.issue.number }}/request
-          echo "${{ github.event.issue.number }}" > issue-id.txt
-          git add issue-id.txt
+          echo "${{ github.event.issue.number }}" > issue.txt
+          git add issue.txt
           git commit -m "Add file for issue #${{ github.event.issue.number }}"
           git push origin issue-${{ github.event.issue.number }}/request
 
