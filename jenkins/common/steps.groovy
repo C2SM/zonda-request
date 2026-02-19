@@ -56,7 +56,7 @@ def archiveAndReport(String status, String commitSha = null, String buildUrl = n
         sh """
         source ${WORKSPACE}/activate_conda.sh
         python scripts/archive_output.py --config ${commonVars.configFilename} --workspace ${WORKSPACE} --destination ${commonVars.publicDataPath} --logfile ${WORKSPACE}/${commonVars.logFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename}
-        python scripts/report.py --config ${commonVars.configFilename} --auth_token ${GITHUB_AUTH_TOKEN} --jenkins_job_name ${JOB_NAME} --issue_id_file ${WORKSPACE}/${commonVars.issueIdFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename} ${extraArgs} --${status}
+        python scripts/report.py --config ${commonVars.configFilename} --auth_token ${GITHUB_AUTH_TOKEN} --jenkins_job_name ${JOB_NAME} --issue_id_file ${WORKSPACE}/${commonVars.issueIdFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename} ${optionalArgs} --${status}
         """
     }
 }
