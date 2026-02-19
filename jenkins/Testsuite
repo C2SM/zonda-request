@@ -38,34 +38,48 @@ pipeline {
                     }
                     stage('Setup Conda Environment') {
                         steps {
-                            commonSteps.setupCondaEnv()
+                            script {
+                                commonSteps.setupCondaEnv()
+                            }
                         }
                     }
                     stage('Create Hash from Current Time') {
                         steps {
-                            commonSteps.createHash()
+                            script {
+                                commonSteps.createHash()
+                            }
                         }
                     }
                     stage('Create Config File') {
                         steps {
-                            commonSteps.createConfig()
+                            script {
+                                commonSteps.createConfig()
+                            }
                         }
                     }
                     stage('Process Request') {
                         steps {
-                            commonSteps.processRequest()
+                            script {
+                                commonSteps.processRequest()
+                            }
                         }
                     }
                 }
                 post {
                     success {
-                        commonSteps.archiveAndReport('success', env.GIT_COMMIT, env.BUILD_URL)
+                        script {
+                            commonSteps.archiveAndReport('success', env.GIT_COMMIT, env.BUILD_URL)
+                        }
                     }
                     failure {
-                        commonSteps.archiveAndReport('failure', env.GIT_COMMIT, env.BUILD_URL)
+                        script {
+                            commonSteps.archiveAndReport('failure', env.GIT_COMMIT, env.BUILD_URL)
+                        }
                     }
                     aborted {
-                        commonSteps.archiveAndReport('aborted', env.GIT_COMMIT, env.BUILD_URL)
+                        script {
+                            commonSteps.archiveAndReport('aborted', env.GIT_COMMIT, env.BUILD_URL)
+                        }
                     }
                     cleanup {
                         script {

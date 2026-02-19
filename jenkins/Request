@@ -24,34 +24,48 @@ pipeline {
         }
         stage('Setup Conda Environment') {
             steps {
-                commonSteps.setupCondaEnv()
+                script {
+                    commonSteps.setupCondaEnv()
+                }
             }
         }
         stage('Create Hash from Current Time') {
             steps {
-                commonSteps.createHash()
+                script {
+                    commonSteps.createHash()
+                }
             }
         }
         stage('Create Config File') {
             steps {
-                commonSteps.createConfig()
+                script {
+                    commonSteps.createConfig()
+                }
             }
         }
         stage('Process Request') {
             steps {
-                commonSteps.processRequest()
+                script {
+                    commonSteps.processRequest()
+                }
             }
         }
     }
     post {
         success {
-            commonSteps.archiveAndReport('success')
+            script {
+                commonSteps.archiveAndReport('success')
+            }
         }
         failure {
-            commonSteps.archiveAndReport('failure')
+            script {
+                commonSteps.archiveAndReport('failure')
+            }
         }
         aborted {
-            commonSteps.archiveAndReport('aborted')
+            script {
+                commonSteps.archiveAndReport('aborted')
+            }
         }
         cleanup {
             script {
