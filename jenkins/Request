@@ -1,4 +1,4 @@
-def commonSteps = load 'common/steps.groovy'
+def commonSteps
 
 
 
@@ -20,6 +20,9 @@ pipeline {
             steps {
                 deleteDir()
                 checkout scm
+                script {
+                    commonSteps = load 'jenkins/common/steps.groovy'
+                }
             }
         }
         stage('Setup Conda Environment') {

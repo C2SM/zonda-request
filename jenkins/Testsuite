@@ -1,4 +1,4 @@
-def commonSteps = load 'common/steps.groovy'
+def commonSteps
 
 
 
@@ -33,6 +33,7 @@ pipeline {
                             script {
                                 def scm_vars = checkout scm
                                 env.GIT_COMMIT = scm_vars.GIT_COMMIT
+                                commonSteps = load 'jenkins/common/steps.groovy'
                             }
                         }
                     }
