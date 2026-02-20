@@ -1,4 +1,4 @@
-def commonVars = load 'jenkins/common/variables.groovy'
+this.commonVars = load 'jenkins/common/variables.groovy'
 
 
 
