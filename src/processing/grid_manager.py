@@ -93,7 +93,7 @@ class GridManager:
 
         # Base grid settings
         namelist.append(f"  basegrid%grid_root   = {self.basegrid_config['grid_root']}")
-        namelist.append(f"  basegrid%grid_level  = {self.basegrid_config['grid_level']}")
+        namelist.append(f"  basegrid%grid_level  = {self.basegrid_config['grid_level']-1}")  # Subtract 1 because initial_refinement is always on
         namelist.append(f"  basegrid%icopole_lon = {self.basegrid_config['icopole_lon']}")
         namelist.append(f"  basegrid%icopole_lat = {self.basegrid_config['icopole_lat']}")
         namelist.append(f"  basegrid%icorotation = {self.basegrid_config['icorotation']}")
@@ -248,7 +248,7 @@ class GridManager:
                     hwidth_lon = icontools_config["hwidth_lon"]
 
                     n = self.basegrid_config["grid_root"]
-                    k = self.basegrid_config["grid_level"] + domain_id
+                    k = self.basegrid_config["grid_level"] - 1 + domain_id  # Subtract 1 from grid_level because initial_refinement is always on
                     grid_spacing = compute_resolution_from_rnbk(n, k)
 
                     data_domain_dir = os.path.join(self.output_manager.data_dir, domain_label(domain_id))
