@@ -1,0 +1,87 @@
+# ICON External Parameter Request
+
+## Instructions
+
+1. Give this issue a meaningful title (e.g. including domain name, grid specifications, project, etc.).
+
+2. Replace `PASTE_YOUR_REQUEST_HERE` with your request that you copied to clipboard:
+```json
+{
+  "zonda": {
+    "icontools_tag": "icontools-2.8.1",
+    "extpar_tag": "v5.19"
+  },
+  "basegrid": {
+    "keep_basegrid_files": false,
+    "grid_root": 13,
+    "grid_level": 6,
+    "outfile": "europe011",
+    "icorotation": 0,
+    "icopole_lat": 90,
+    "icopole_lon": 0,
+    "centre": 78,
+    "subcentre": 255
+  },
+  "domains": [
+    {
+      "domain_id": 1,
+      "icontools": {
+        "parent_id": 0,
+        "region_type": 3,
+        "center_lat": -2.77,
+        "center_lon": -5.11,
+        "hwidth_lat": 13.243225,
+        "hwidth_lon": 19.762085,
+        "lrotate": true,
+        "pole_lat": 39.25,
+        "pole_lon": -162
+      },
+      "extpar": {
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 3,
+        "itopo_type": 3,
+        "it_cl_type": 2,
+        "iera_type": 1,
+        "iemiss_type": 1,
+        "icdnc_type": 3,
+        "lradtopo": false,
+        "enable_cdnc": true,
+        "enable_edgar": false,
+        "radtopo_radius": 40000,
+        "enable_art": false,
+        "nhori": 24,
+        "l_use_corine": false,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0,
+        "use_array_cache": false
+      }
+    }
+  ]
+}
+```
+
+3. Click on the "Preview" tab (top left) to verify that the JSON format of your request is correctly formatted and displayed within a code block.
+
+4. Click on "Create" below to submit the data request.
+
+Zonda Request will now process your data based on your request. Once the processing is successful, it will post a link in the issue you have just created. The processed data will be available under that link for up to **7 days**.
+
+If you want to re-submit the data request, you can write a comment containing (only) the string "**rerun request**". Note that this new submission uses the JSON snippet in the current description, thus editing it will also change the behavior of your data request. Also note that resubmission only works if the issue is not closed and the request is not already running.
+
+If you encounter any problems, please ping a maintainer (e.g., `@stelliom` or `@mjaehn`) on the issue. Make sure you post all relevant information from the logfiles in the issue directly.
+
+## Status Labels
+
+Labels reflect the current state of your request:
+
+![Static Badge](https://img.shields.io/badge/submitted-yellow) - Your request is currently under processing. Please wait for further updates.
+
+![Static Badge](https://img.shields.io/badge/completed-green) - Your request has been successfully processed. You can download your data using the provided link.
+
+![Static Badge](https://img.shields.io/badge/failed-red) - Unfortunately, your request could not be processed. Please refer to the log files in the zip file at the download link for more details.
+
+![Static Badge](https://img.shields.io/badge/aborted-lightgray) - Your request was aborted. This might be due to a timeout. Please try again or contact support if the problem persists.
+
