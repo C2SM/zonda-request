@@ -25,8 +25,8 @@ def createConfig() {
     withCredentials([string(credentialsId: commonVars.githubCredentialsId, variable: 'GITHUB_AUTH_TOKEN')]) {
         sh """
         source ${WORKSPACE}/activate_conda.sh
-        python scripts/create_config_file.py --config ${commonVars.configFilename} --auth-token ${GITHUB_AUTH_TOKEN} --issue-id-file ${WORKSPACE}/${commonVars.issueIdFilename} ||
-        (python scripts/report.py --config ${commonVars.configFilename} --auth-token ${GITHUB_AUTH_TOKEN} --issue-id-file ${WORKSPACE}/${commonVars.issueIdFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename} --jenkins-job-name ${JOB_NAME} --invalid &&
+        python scripts/create_config_file.py --config ${commonVars.configFilename} --auth-token \${GITHUB_AUTH_TOKEN} --issue-id-file ${WORKSPACE}/${commonVars.issueIdFilename} ||
+        (python scripts/report.py --config ${commonVars.configFilename} --auth-token \${GITHUB_AUTH_TOKEN} --issue-id-file ${WORKSPACE}/${commonVars.issueIdFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename} --jenkins-job-name ${JOB_NAME} --invalid &&
         exit 1)
         """
     }
@@ -57,7 +57,7 @@ def archiveAndReport(String status, String commitSha = null, String buildUrl = n
         sh """
         source ${WORKSPACE}/activate_conda.sh
         python scripts/archive_output.py --config ${commonVars.configFilename} --workspace ${WORKSPACE} --destination ${commonVars.publicDataPath} --logfile ${WORKSPACE}/${commonVars.logFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename}
-        python scripts/report.py --config ${commonVars.configFilename} --auth_token ${GITHUB_AUTH_TOKEN} --jenkins_job_name ${JOB_NAME} --issue_id_file ${WORKSPACE}/${commonVars.issueIdFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename} ${optionalArgs} --${status}
+        python scripts/report.py --config ${commonVars.configFilename} --auth_token \${GITHUB_AUTH_TOKEN} --jenkins_job_name ${JOB_NAME} --issue_id_file ${WORKSPACE}/${commonVars.issueIdFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename} ${optionalArgs} --${status}
         """
     }
 }
