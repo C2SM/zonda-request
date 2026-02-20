@@ -223,7 +223,7 @@ class GridManager:
                     self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
 
             case "input_grid":
-                if len(nesting_group) == 1:  # TODO v2.0: This section will probably need to be adapted for v2.0
+                if len(nesting_group) == 1:
                     domain_id = nesting_group[0]
                     domain_idx = domain_id - 1
                     input_grid_path = self.get_input_grid_path(domain_id, logging_indentation_level=logging_indentation_level+1)
