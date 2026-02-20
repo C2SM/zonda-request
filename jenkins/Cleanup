@@ -1,4 +1,4 @@
-def commonVars = load 'common/variables.groovy'
+def commonVars
 
 
 
@@ -6,9 +6,19 @@ pipeline {
     agent {
         node {
             label 'iacdipl-7'
+            customWorkspace "workspace/${env.JOB_NAME}"
         }
     }
     stages {
+        stage('Clean Workspace Before Checkout') {
+            steps {
+                deleteDir()
+                checkout scm
+                script {
+                    commonVars = load 'jenkins/common/variables.groovy'
+                }
+            }
+        }
         stage('Cleanup HTTPS-Server') {
             steps {
                 sh """
