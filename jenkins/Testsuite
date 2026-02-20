@@ -1,4 +1,6 @@
-def https_public_root = '/net/co2/c2sm-services/zonda-request/'
+def commonSteps
+
+
 
 pipeline {
     agent none
@@ -25,117 +27,59 @@ pipeline {
                     }
                 }
                 stages {
-                    stage('Clean workspace before checkout') {
+                    stage('Clean Workspace Before Checkout') {
                         steps {
                             deleteDir()
                             script {
                                 def scm_vars = checkout scm
                                 env.GIT_COMMIT = scm_vars.GIT_COMMIT
+                                commonSteps = load 'jenkins/common/steps.groovy'
                             }
-                        }
-                    }
-                    stage('Create issue.txt') {
-                        steps {
-                            sh """
-                            echo ${ISSUE_ID} > ${WORKSPACE}/issue.txt
-                            """
-                        }
-                    }
-                    stage('Create archive') {
-                        steps {
-                            sh """
-                            mkdir -p ${WORKSPACE}/output/logs
-                            """
                         }
                     }
                     stage('Setup Conda Environment') {
                         steps {
-                            sh """
-                            wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh
-                            bash miniforge.sh -b -p ${WORKSPACE}/miniforge
-                            source ${WORKSPACE}/miniforge/bin/activate
-                            conda env create -f environment.yml
-                            echo "source ${WORKSPACE}/miniforge/bin/activate myenv" >> ${WORKSPACE}/activate_conda.sh
-                            """
-                        }
-                    }
-                    stage('Create Hash from Build ID') {
-                        steps {
-                            sh """
-                            source ${WORKSPACE}/activate_conda.sh
-                            python src/hash.py --hash-file ${WORKSPACE}/hash.txt
-                            """
-                        }
-                    }
-                    stage('Validate User Input') {
-                        steps {
-                            withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                                sh """
-                                source ${WORKSPACE}/activate_conda.sh
-                                python src/validate_user_input.py --auth_token ${GITHUB_AUTH_TOKEN} --issue_id_file ${WORKSPACE}/issue.txt ||
-                                (echo "The request you submitted is not valid! \n Please check for typos or wrong format of JSON" > ${WORKSPACE}/output/logs/pipeline.log &&
-                                exit 1)
-                                """
+                            script {
+                                commonSteps.setupCondaEnv()
                             }
                         }
                     }
-                    stage('Run GridExtpar') {
+                    stage('Create Hash from Current Time') {
                         steps {
-                            sh """
-                            source ${WORKSPACE}/activate_conda.sh
-                            export OMP_NUM_THREADS=24
-                            export NETCDF_OUTPUT_FILETYPE=NETCDF4
-                            python src/GridExtpar.py --config config.json --workspace ${WORKSPACE} --extpar-rawdata /net/co2/c2sm-data/extpar-input-data --logfile ${WORKSPACE}/output/logs/gridextpar.log
-                            """
+                            script {
+                                commonSteps.createHash()
+                            }
+                        }
+                    }
+                    stage('Create Config File') {
+                        steps {
+                            script {
+                                commonSteps.createConfig()
+                            }
+                        }
+                    }
+                    stage('Process Request') {
+                        steps {
+                            script {
+                                commonSteps.processRequest()
+                            }
                         }
                     }
                 }
                 post {
                     success {
-                        sh "source ${WORKSPACE}/activate_conda.sh"
-                        sh "python src/archive_artifacts.py --config config.json --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt --success"
-                        withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                            sh """
-                            python src/report.py --config config.json \
-                                                 --auth_token ${GITHUB_AUTH_TOKEN} \
-                                                 --commit_sha ${env.GIT_COMMIT} \
-                                                 --build_url ${env.BUILD_URL} \
-                                                 --jenkins_job_name ${env.JOB_NAME} \
-                                                 --issue_id_file ${WORKSPACE}/issue.txt \
-                                                 --hash-file ${WORKSPACE}/hash.txt
-                            """
+                        script {
+                            commonSteps.archiveAndReport('success', env.GIT_COMMIT, env.BUILD_URL)
                         }
                     }
                     failure {
-                        sh "source ${WORKSPACE}/activate_conda.sh"
-                        sh "python src/archive_artifacts.py --config config.json --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
-                        withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                            sh """
-                            python src/report.py --config config.json \
-                                                 --auth_token ${GITHUB_AUTH_TOKEN} \
-                                                 --commit_sha ${env.GIT_COMMIT} \
-                                                 --build_url ${env.BUILD_URL} \
-                                                 --jenkins_job_name ${env.JOB_NAME} \
-                                                 --issue_id_file ${WORKSPACE}/issue.txt \
-                                                 --hash-file ${WORKSPACE}/hash.txt \
-                                                 --failure
-                            """
+                        script {
+                            commonSteps.archiveAndReport('failure', env.GIT_COMMIT, env.BUILD_URL)
                         }
                     }
                     aborted {
-                        sh "source ${WORKSPACE}/activate_conda.sh"
-                        sh "python src/archive_artifacts.py --config config.json --workspace ${WORKSPACE} --destination ${https_public_root} --hash-file ${WORKSPACE}/hash.txt"
-                        withCredentials([string(credentialsId: 'd976fe24-cabf-479e-854f-587c152644bc', variable: 'GITHUB_AUTH_TOKEN')]) {
-                            sh """
-                            python src/report.py --config config.json \
-                                                 --auth_token ${GITHUB_AUTH_TOKEN} \
-                                                 --commit_sha ${env.GIT_COMMIT} \
-                                                 --build_url ${env.BUILD_URL} \
-                                                 --jenkins_job_name ${env.JOB_NAME} \
-                                                 --issue_id_file ${WORKSPACE}/issue.txt \
-                                                 --hash-file ${WORKSPACE}/hash.txt \
-                                                 --abort
-                            """
+                        script {
+                            commonSteps.archiveAndReport('aborted', env.GIT_COMMIT, env.BUILD_URL)
                         }
                     }
                     cleanup {

@@ -1,38 +1,50 @@
-def https_public_root = '/net/co2/c2sm-services/zonda-request/'
+def commonVars
+
+
 
 pipeline {
     agent {
         node {
             label 'iacdipl-7'
+            customWorkspace "workspace/${env.JOB_NAME}"
         }
     }
     stages {
-        stage('Cleanup HTTPS-server') {
+        stage('Clean Workspace Before Checkout') {
+            steps {
+                deleteDir()
+                checkout scm
+                script {
+                    commonVars = load 'jenkins/common/variables.groovy'
+                }
+            }
+        }
+        stage('Cleanup HTTPS-Server') {
             steps {
                 sh """
-                python3 src/cleanup.py --path ${https_public_root} --threshold 7 --exclude ${https_public_root}/file_index
+                python3 scripts/cleanup_data_server.py --path ${commonVars.publicDataPath} --threshold 7 --exclude ${commonVars.publicDataPath}/file_index
                 """
             }
         }
-        stage('Delete all non-running containers') {
+        stage('Delete All Non-Running Containers') {
             steps {
-                sh '''
+                sh """
                 podman container prune -f
-                '''
+                """
             }
         }
-        stage('Delete all unused images') {
+        stage('Delete All Unused Images') {
             steps {
-                sh '''
+                sh """
                 podman image prune -f
-                '''
+                """
             }
         }
-        stage('Delete all unused layers') {
+        stage('Delete All Unused Layers') {
             steps {
-                sh '''
+                sh """
                 podman system prune -f
-                '''
+                """
             }
         }
     }
