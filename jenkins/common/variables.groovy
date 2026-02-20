@@ -3,7 +3,7 @@ this.githubCredentialsId = 'd976fe24-cabf-479e-854f-587c152644bc'
 this.condaEnvYaml = 'environment.yml'
 this.condaEnvName = 'zonda_env'
 
-this.issueIdFilename = 'issue-id.txt'
+this.issueIdFilename = 'issue.txt'  // TODO v2.0: Just before merging change this to issue-id.txt
 this.hashFilename = 'hash.txt'
 this.configFilename = 'config.json'
 this.logFilename = 'zonda_request.log'
