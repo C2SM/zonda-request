@@ -6,6 +6,7 @@ pipeline {
     agent {
         node {
             label 'iacdipl-7'
+            customWorkspace "workspace/${env.JOB_NAME}"
         }
     }
     options {
