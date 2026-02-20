@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          ref: issue-${{ github.event.issue.number }}/request
+          ref: request-${{ github.event.issue.number }}
 
       - name: Extract JSON from issue description and commit to re-trigger request
         env:
@@ -27,7 +27,7 @@ jobs:
           git config --global user.email 'action@github.com'
           git add "$FILENAME"
           git commit -m "Rerun request commit for issue #${{ github.event.issue.number }}"
-          git push origin issue-${{ github.event.issue.number }}/request
+          git push origin request-${{ github.event.issue.number }}
 
       - name: Re-add 'submitted' label to issue
         uses: actions/github-script@v3

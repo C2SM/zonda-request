@@ -86,11 +86,11 @@ jobs:
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
-          git checkout -b issue-${{ github.event.issue.number }}/request
+          git checkout -b request-${{ github.event.issue.number }}
           echo "${{ github.event.issue.number }}" > issue-id.txt
           git add issue-id.txt
           git commit -m "Add file for issue #${{ github.event.issue.number }}"
-          git push origin issue-${{ github.event.issue.number }}/request
+          git push origin request-${{ github.event.issue.number }}
 
       - name: Add 'submitted' label to issue
         uses: actions/github-script@v3
