@@ -36,6 +36,7 @@ def createConfig() {
 def processRequest() {
     sh """
     source ${WORKSPACE}/activate_conda.sh
+    export PYTHONPATH=${WORKSPACE}/src:${PYTHONPATH}
     export OMP_NUM_THREADS=${commonVars.nThreads}
     export NETCDF_OUTPUT_FILETYPE=${commonVars.netcdfFormat}
     python src/processing/process_request.py --config ${commonVars.configFilename} --workspace ${WORKSPACE} --extpar-raw-data ${commonVars.extparInputDataPath} --logfile ${WORKSPACE}/${commonVars.logFilename}
