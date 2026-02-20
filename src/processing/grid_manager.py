@@ -1,17 +1,22 @@
 import os
 import logging
 from zonda_rotgrid.core import create_rotated_grid, create_latlon_grid
-from utilities.utilities import shell_command, convert_to_fortran_bool, domain_label, compute_resolution_from_rnbk, LOG_PADDING_INFO, LOG_INDENTATION_STR
+from utilities.utilities import shell_command, convert_to_fortran_bool, domain_label, compute_resolution_from_rnbk, LOG_PADDING_INFO, LOG_PADDING_ERROR, LOG_INDENTATION_STR
 
 
 
 class GridManager:
 
-    def __init__(self, config, workspace_path, output_manager, namelist_filename="nml_gridgen", use_apptainer=False):
+    def __init__( self, config, workspace_path, output_manager,
+                  institution_input_grids_dir="/net/co2/c2sm-data/icon-grids/",
+                  namelist_filename="nml_gridgen",
+                  use_apptainer=False ):
+
         self.config = config
         self.workspace_path = workspace_path
         self.output_manager = output_manager
 
+        self.institution_input_grids_dir = institution_input_grids_dir
         self.namelist_filename = namelist_filename
         self.use_apptainer = use_apptainer
 
@@ -24,17 +29,11 @@ class GridManager:
         self.grid_dirs = [None] * n_domains
         self.grid_filenames = [None] * n_domains
 
-        input_grid_path = self.zonda_config.get("input_grid_path")  # TODO v2.0: Remove this in v2.0
-
         self.grid_sources = [None] * n_domains
         self.valid_grid_sources = ["input_grid", "icontools"]
         for domain_config in self.domains_config:
             domain_id = domain_config["domain_id"]
             domain_idx = domain_id - 1
-
-            if (domain_id == 1) and (input_grid_path is not None):  # TODO v2.0: Remove this in v2.0
-                self.grid_sources[domain_idx] = "input_grid"
-                continue
 
             for grid_source in self.valid_grid_sources:
                 if grid_source in domain_config:
@@ -182,6 +181,30 @@ class GridManager:
         )
 
 
+    def get_input_grid_path(self, domain_id, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Retrieve path to input ICON grid for domain {domain_id}.")
+
+        domain_idx = domain_id - 1
+        domain_config = self.domains_config[domain_idx]
+        input_grid_config = domain_config["input_grid"]
+
+        input_grid_path = input_grid_config.get("filepath")
+        if not input_grid_path:
+            input_grid_institution = input_grid_config.get("institution")
+            input_grid_name = input_grid_config.get("filename")
+
+            if input_grid_institution and input_grid_name:
+                input_grid_path = os.path.join(self.institution_input_grids_dir, input_grid_institution, input_grid_name)
+            else:
+                logging.error( f"Could not retrieve the input grid for domain {domain_id} due to lack of information!\n"
+                               f"{LOG_PADDING_ERROR}Please provide at least one of the following:\n"
+                               f"{LOG_PADDING_ERROR}  (1) A valid path to the input grid file (via the \"filepath\" entry).\n"
+                               f"{LOG_PADDING_ERROR}  (2) A valid institution and grid file name pair (via the \"institution\" and \"filename\" entries)." )
+                raise KeyError(f"No details to the input grid provided for domain {domain_id}!")
+
+        return os.path.abspath(input_grid_path)
+
+
     def generate_icon_grids(self, nesting_group, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Generate/retrieve ICON grids.")
 
@@ -200,10 +223,10 @@ class GridManager:
                     self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
 
             case "input_grid":
-                if len(nesting_group) == 1:  # TODO v2.0: This section will probably need to be adapted for v2.0
+                if len(nesting_group) == 1:
                     domain_id = nesting_group[0]
                     domain_idx = domain_id - 1
-                    input_grid_path = os.path.abspath(self.zonda_config.get("input_grid_path"))
+                    input_grid_path = self.get_input_grid_path(domain_id, logging_indentation_level=logging_indentation_level+1)
 
                     if os.path.isfile(input_grid_path):
                         self.grid_dirs[domain_idx] = os.path.dirname(input_grid_path)
@@ -214,8 +237,8 @@ class GridManager:
                                       f"and the generation of additional nests was not requested, thus the grid "
                                       f"generation step is skipped for domain {domain_id}!\n"
                                       f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level+1)}"
-                                      f"For this reason the \"basegrid\", \"icontools\", and "
-                                      f"\"icontools_tag\" entries in the JSON config are ignored." )
+                                      f"For this reason the \"basegrid\" and \"icontools_tag\" entries in the JSON "
+                                      f"config are ignored." )
                     else:
                         logging.error( f"The provided input grid does not exist: \"{input_grid_path}\". "
                                        f"Please provide the correct path." )
