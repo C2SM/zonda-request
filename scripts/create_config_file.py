@@ -37,8 +37,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config_filename = args.config
 
-    with open(args.issue_id_file, "r") as f:
-        issue_id = f.read()
+    with open(args.issue_id_file, "r") as file:
+        issue_id = file.read()
 
     repository = GitHubRepo( group = "c2sm",
                              repo = "zonda-request",
