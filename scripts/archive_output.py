@@ -27,5 +27,13 @@ if __name__ == "__main__":
     hashed_destination_dir = os.path.join(args.destination, hash)
     os.makedirs(hashed_destination_dir, exist_ok=True)
 
-    shutil.move(os.path.join(args.workspace, f"zonda_output_{outfile}.zip"), hashed_destination_dir)
-    shutil.copy(args.logfile, hashed_destination_dir)
+    zip_filepath = os.path.join(args.workspace, f"zonda_output_{outfile}.zip")
+    try:
+        shutil.move(zip_filepath, hashed_destination_dir)
+    except FileNotFoundError:
+        print(f"Warning: zip file not found at \"{zip_filepath}\". Skipping move.")
+
+    try:
+        shutil.copy(args.logfile, hashed_destination_dir)
+    except FileNotFoundError:
+        print(f"Warning: log-file not found at \"{args.logfile}\". Skipping copy.")
