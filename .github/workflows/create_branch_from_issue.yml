@@ -44,13 +44,13 @@ jobs:
             The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.
 
             <details>
-            
-            <summary>Expand to see the error message from the \`jq\` command.</summary>
-            
+
+            <summary>Expand to see the error message from the jq command.</summary>
+
             \`\`\`
             ${error}
             \`\`\`
-            
+
             </details>
 
             Common problems are:
@@ -78,7 +78,7 @@ jobs:
             core.setFailed("Invalid JSON snippet!")
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ env.BACKEND_TAG }}
 
@@ -87,8 +87,8 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git checkout -b request-${{ github.event.issue.number }}
-          echo "${{ github.event.issue.number }}" > issue.txt
-          git add issue.txt
+          echo "${{ github.event.issue.number }}" > issue-id.txt
+          git add issue-id.txt
           git commit -m "Add file for issue #${{ github.event.issue.number }}"
           git push origin request-${{ github.event.issue.number }}
 
