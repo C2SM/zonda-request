@@ -38,7 +38,7 @@ def processRequest() {
     source ${WORKSPACE}/activate_conda.sh
     export OMP_NUM_THREADS=${commonVars.nThreads}
     export NETCDF_OUTPUT_FILETYPE=${commonVars.netcdfFormat}
-    python src/process_request.py --config ${commonVars.configFilename} --workspace ${WORKSPACE} --extpar-raw-data ${commonVars.extparInputDataPath} --logfile ${WORKSPACE}/${commonVars.logFilename}
+    python scripts/process_request.py --config ${commonVars.configFilename} --workspace ${WORKSPACE} --extpar-raw-data ${commonVars.extparInputDataPath} --logfile ${WORKSPACE}/${commonVars.logFilename}
     """
 }
 
