@@ -48,16 +48,16 @@ def archiveAndReport(String status, String commitSha = null, String buildUrl = n
     withCredentials([string(credentialsId: commonVars.githubCredentialsId, variable: 'GITHUB_AUTH_TOKEN')]) {
         def optionalArgs = ""
         if (commitSha) {
-            optionalArgs += " --commit_sha ${commitSha}"
+            optionalArgs += " --commit-sha ${commitSha}"
         }
         if (buildUrl) {
-            optionalArgs += " --build_url ${buildUrl}"
+            optionalArgs += " --build-url ${buildUrl}"
         }
 
         sh """
         source ${WORKSPACE}/activate_conda.sh
         python scripts/archive_output.py --config ${commonVars.configFilename} --workspace ${WORKSPACE} --destination ${commonVars.publicDataPath} --logfile ${WORKSPACE}/${commonVars.logFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename}
-        python scripts/report.py --config ${commonVars.configFilename} --auth_token \${GITHUB_AUTH_TOKEN} --jenkins_job_name ${JOB_NAME} --issue_id_file ${WORKSPACE}/${commonVars.issueIdFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename} ${optionalArgs} --${status}
+        python scripts/report.py --config ${commonVars.configFilename} --auth-token \${GITHUB_AUTH_TOKEN} --issue-id-file ${WORKSPACE}/${commonVars.issueIdFilename} --hash-file ${WORKSPACE}/${commonVars.hashFilename} --jenkins-job-name ${JOB_NAME} ${optionalArgs} --${status}
         """
     }
 }
