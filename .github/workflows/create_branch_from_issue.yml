@@ -44,13 +44,13 @@ jobs:
             The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.
 
             <details>
-            
-            <summary>Expand to see the error message from the \`jq\` command.</summary>
-            
+
+            <summary>Expand to see the error message from the jq command.</summary>
+
             \`\`\`
             ${error}
             \`\`\`
-            
+
             </details>
 
             Common problems are:
