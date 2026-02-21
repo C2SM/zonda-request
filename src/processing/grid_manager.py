@@ -60,8 +60,10 @@ class GridManager:
             self.icontools_container_image = f"execute:{icontools_tag}"
 
 
-    def write_icon_gridgen_namelist(self, nesting_group, primary_grid_source, logging_indentation_level=0):
+    def write_icon_gridgen_namelist(self, nesting_group, input_grid_path=None, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Write ICON gridgen namelist.")
+
+        start_from_input_grid = input_grid_path is not None
 
         # TODO v2.0: For primary_grid_source == input_grid the parent_id and domain_id may need to be adapted if the
         #            nesting_group doesn't start from domain_id == 1.
@@ -90,12 +92,16 @@ class GridManager:
         namelist.append(f"  initial_refinement = {convert_to_fortran_bool(initial_refinement)}")
         namelist.append("")
 
-        # Base grid settings
-        namelist.append(f"  basegrid%grid_root   = {self.basegrid_config['grid_root']}")
-        namelist.append(f"  basegrid%grid_level  = {self.basegrid_config['grid_level']}")
-        namelist.append(f"  basegrid%icopole_lon = {self.basegrid_config['icopole_lon']}")
-        namelist.append(f"  basegrid%icopole_lat = {self.basegrid_config['icopole_lat']}")
-        namelist.append(f"  basegrid%icorotation = {self.basegrid_config['icorotation']}")
+        if start_from_input_grid:
+            # Input grid settings
+            namelist.append(f"  filename = {input_grid_path}")
+        else:
+            # Base grid settings
+            namelist.append(f"  basegrid%grid_root   = {self.basegrid_config['grid_root']}")
+            namelist.append(f"  basegrid%grid_level  = {self.basegrid_config['grid_level']}")
+            namelist.append(f"  basegrid%icopole_lon = {self.basegrid_config['icopole_lon']}")
+            namelist.append(f"  basegrid%icopole_lat = {self.basegrid_config['icopole_lat']}")
+            namelist.append(f"  basegrid%icorotation = {self.basegrid_config['icorotation']}")
         namelist.append("")
 
         # Tuning parameters
@@ -223,28 +229,45 @@ class GridManager:
                     self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
 
             case "input_grid":
-                if len(nesting_group) == 1:
-                    domain_id = nesting_group[0]
-                    domain_idx = domain_id - 1
-                    input_grid_path = self.get_input_grid_path(domain_id, logging_indentation_level=logging_indentation_level+1)
+                primary_domain_id = nesting_group[0]
+                primary_domain_idx = primary_domain_id - 1
+                input_grid_path = self.get_input_grid_path(primary_domain_id, logging_indentation_level=logging_indentation_level+1)
 
-                    if os.path.isfile(input_grid_path):
-                        self.grid_dirs[domain_idx] = os.path.dirname(input_grid_path)
-                        self.grid_filenames[domain_idx] = os.path.basename(input_grid_path)
-
-                        logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}"
-                                      f"An input grid was provided for domain {domain_id} at \"{input_grid_path}\" "
-                                      f"and the generation of additional nests was not requested, thus the grid "
-                                      f"generation step is skipped for domain {domain_id}!\n"
-                                      f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level+1)}"
-                                      f"For this reason the \"basegrid\" and \"icontools_tag\" entries in the JSON "
-                                      f"config are ignored." )
-                    else:
-                        logging.error( f"The provided input grid does not exist: \"{input_grid_path}\". "
-                                       f"Please provide the correct path." )
-                        raise FileNotFoundError(f"\"{input_grid_path}\" not found!")
+                if os.path.isfile(input_grid_path):
+                    self.grid_dirs[primary_domain_idx] = os.path.dirname(input_grid_path)
+                    self.grid_filenames[primary_domain_idx] = os.path.basename(input_grid_path)
                 else:
-                    pass # TODO v2.0: Add this in v2.0; Pass input grid to icontools to add nests
+                    logging.error( f"The input grid provided for domain {primary_domain_id} does not exist: \"{input_grid_path}\". "
+                                    f"Please provide a valid path." )
+                    raise FileNotFoundError(f"\"{input_grid_path}\" not found!")
+
+                # Only input grid
+                if len(nesting_group) == 1:
+                    logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}"
+                                  f"An input grid was provided for domain {primary_domain_id} at \"{input_grid_path}\" "
+                                  f"and the generation of additional nests was not requested, thus the grid "
+                                  f"generation step is skipped for domain {primary_domain_id}!\n"
+                                  f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level+1)}"
+                                  f"For this reason the \"basegrid\" and \"icontools_tag\" entries in the JSON "
+                                  f"config are ignored." )
+
+                # Input grid plus generated nests
+                else:
+                    logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}"
+                                  f"An input grid was provided for domain {primary_domain_id} at \"{input_grid_path}\" "
+                                  f"and the generation of additional nests was requested.\n"
+                                  f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level+1)}"
+                                  f"Starting the generation of nests." )
+
+                    self.write_icon_gridgen_namelist(nesting_group, primary_grid_source, logging_indentation_level=logging_indentation_level+2)
+
+                    self.run_icon_gridgen(logging_indentation_level=logging_indentation_level+2)
+
+                    for domain_id in nesting_group[1:]:
+                        domain_idx = domain_id - 1
+
+                        self.grid_dirs[domain_idx] = self.icontools_dir
+                        self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
 
             case _:
                 logging.error("No valid grid generation method could be selected!")
