@@ -19,7 +19,7 @@ class GitHubRepo:
 
         requests.post(url, headers=self.headers, json={"body": text})
 
-    def update_commit_status(self, commit_sha, status, context, message, build_url) -> None:
+    def update_commit_status(self, commit_sha, status, context, message, build_url):
         url = f"{self.repo_api_url}/statuses/{commit_sha}"
 
         requests.post(url, headers=self.headers, json={"state": status, "context": context, "description": message, "target_url": build_url})
@@ -36,7 +36,7 @@ class GitHubRepo:
 
             requests.post(url, headers=self.headers, json={"labels": labels})
 
-    def get_issue(self, issue_id: str):
+    def get_issue(self, issue_id):
         url = f"{self.repo_api_url}/issues/{issue_id}"
 
         issue = requests.get(url, headers=self.headers)
