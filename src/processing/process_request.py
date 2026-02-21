@@ -85,19 +85,25 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
                              f"{repr(e)}\n"
                              f"{LOG_PADDING_WARNING}Skipping generation of lat-lon grids!" )
 
-        ### TOPOGRAPHY VISUALIZATION ###
+        ### EXTPAR FIELDS VISUALIZATION ###
         try:
             for domain_id in nesting_group:
                 domain_idx = domain_id - 1
 
                 logging.info(f"{LOG_INDENTATION_STR*2}Visualization of EXTPAR fields for domain {domain_id}.")
                 if grid_manager.grid_sources[domain_idx] == "icontools":
-                    icontools_config = config["domains"][domain_idx]["icontools"]
+                    domain_config = config["domains"][domain_idx]
+                    icontools_config = domain_config["icontools"]
+                    extpar_plots = domain_config.get("extpar_plots", [])
 
                     grid_filepath = os.path.join(grid_manager.grid_dirs[domain_idx], grid_manager.grid_filenames[domain_idx])
                     extpar_filepath = os.path.join(extpar_manager.extpar_dirs[domain_idx], "external_parameter.nc")
 
-                    visualize_topography(icontools_config, workspace_path, grid_filepath, extpar_filepath, extpar_manager.extpar_dirs[domain_idx], logging_indentation_level=3)
+                    for variable_name in extpar_plots:
+                        if variable_name == "topography_c":
+                            visualize_topography(icontools_config, workspace_path, grid_filepath, extpar_filepath, extpar_manager.extpar_dirs[domain_idx], logging_indentation_level=3)
+                        else:
+                            visualize_extpar_variable()  # TODO: we probably need a visualization manager now
                 else:
                     logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR fields!")
         except Exception as e:
