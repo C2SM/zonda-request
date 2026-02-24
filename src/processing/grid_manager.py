@@ -1,7 +1,7 @@
 import os
 import logging
 from zonda_rotgrid.core import create_rotated_grid, create_latlon_grid
-from utilities.utilities import shell_command, convert_to_fortran_bool, domain_label, compute_resolution_from_rnbk, LOG_PADDING_INFO, LOG_PADDING_ERROR, LOG_INDENTATION_STR
+from utilities.utilities import shell_command, convert_to_fortran_bool, domain_label, nesting_group_label, compute_resolution_from_rnbk, LOG_PADDING_INFO, LOG_PADDING_ERROR, LOG_INDENTATION_STR
 
 
 
@@ -26,6 +26,7 @@ class GridManager:
 
         n_domains = len(self.domains_config)
 
+        self.icontools_dirs = [None] * n_domains
         self.grid_dirs = [None] * n_domains
         self.grid_filenames = [None] * n_domains
 
@@ -44,20 +45,31 @@ class GridManager:
                 logging.error(f"No valid grid generation method defined in config for domain {domain_id}!")
                 raise KeyError(f"Missing one of these entries in JSON config: {self.valid_grid_sources}!")
 
-        self.icontools_dir = os.path.join(self.workspace_path, "icontools")
-        for domain_config in self.domains_config:
-            if "icontools" in domain_config:
-                os.makedirs(self.icontools_dir, exist_ok=True)
-                logging.info(f"{LOG_INDENTATION_STR}Created directory \"{self.icontools_dir}\".")
-                break
-
-        self.namelist_filepath = os.path.join(self.icontools_dir, self.namelist_filename)
-
         if self.use_apptainer:
             self.icontools_container_image = os.path.join(self.workspace_path, "icon_tools.sif")
         else:
             icontools_tag = self.zonda_config.get("icontools_tag", "latest")
             self.icontools_container_image = f"execute:{icontools_tag}"
+
+
+    def make_icontools_dirs(self, nesting_groups, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Make directories for ICON Tools.")
+
+        for nesting_group_idx, nesting_group in enumerate(nesting_groups):
+            primary_domain_idx = nesting_group[0] - 1
+            nesting_group_id = nesting_group_idx - 1
+            nesting_group_grid_sources = []
+
+            for domain_id in nesting_group:
+                domain_idx = domain_id - 1
+
+                self.icontools_dirs[domain_idx] = os.path.join(self.workspace_path, f"icontools_{nesting_group_label(nesting_group_id)}")
+
+                nesting_group_grid_sources.append(self.grid_sources[domain_idx])
+
+            if "icontools" in nesting_group_grid_sources:
+                os.makedirs(self.icontools_dirs[primary_domain_idx], exist_ok=True)
+                logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Created directory \"{self.icontools_dirs[primary_domain_idx]}\".")
 
 
     def write_icon_gridgen_namelist(self, nesting_group, input_grid_name=None, logging_indentation_level=0):
@@ -156,14 +168,17 @@ class GridManager:
         namelist.append("/")
         namelist.append("")
 
+        primary_domain_idx = nesting_group[0] - 1
+        namelist_filepath = os.path.join(self.icontools_dirs[primary_domain_idx], self.namelist_filename)
+
         # Write the namelist content to a file
-        with open(self.namelist_filepath, "w") as file:
+        with open(namelist_filepath, "w") as file:
             file.write("\n".join(namelist))
 
-        logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICON gridgen namelist written to \"{self.namelist_filepath}\".")
+        logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICON gridgen namelist written to \"{namelist_filepath}\".")
 
 
-    def run_icon_gridgen(self, input_grid_dir=None, logging_indentation_level=0):
+    def run_icon_gridgen(self, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICON gridgen.")
 
         if self.use_apptainer:
@@ -171,7 +186,7 @@ class GridManager:
                 "apptainer", "exec",
                 "--pwd", "/work",
                 "--env", "LD_LIBRARY_PATH=/home/dwd/software/lib",
-                "--bind", f"{self.icontools_dir}:/work"
+                "--bind", f"{icontools_dir}:/work"
             ]
 
             if input_grid_dir is not None:
@@ -186,7 +201,7 @@ class GridManager:
                 "-w", "/work",
                 "-u", "0",
                 "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib",
-                "-v", f"{self.icontools_dir}:/work"
+                "-v", f"{icontools_dir}:/work"
             ]
 
             if input_grid_dir is not None:
@@ -235,18 +250,21 @@ class GridManager:
 
         primary_domain_id = nesting_group[0]
         primary_domain_idx = primary_domain_id - 1
+
+        icontools_dir = self.icontools_dirs[primary_domain_idx]
+
         primary_grid_source = self.grid_sources[primary_domain_idx]
         match primary_grid_source:
 
             case "icontools":
                 self.write_icon_gridgen_namelist(nesting_group, logging_indentation_level=logging_indentation_level+1)
 
-                self.run_icon_gridgen(logging_indentation_level=logging_indentation_level+1)
+                self.run_icon_gridgen(icontools_dir, logging_indentation_level=logging_indentation_level+1)
 
                 for domain_id in nesting_group:
                     domain_idx = domain_id - 1
 
-                    self.grid_dirs[domain_idx] = self.icontools_dir
+                    self.grid_dirs[domain_idx] = icontools_dir
                     self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
 
             case "input_grid":
@@ -288,7 +306,7 @@ class GridManager:
                     for domain_id in nesting_group[1:]:
                         domain_idx = domain_id - 1
 
-                        self.grid_dirs[domain_idx] = self.icontools_dir
+                        self.grid_dirs[domain_idx] = icontools_dir
                         self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
 
             case _:

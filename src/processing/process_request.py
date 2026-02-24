@@ -53,6 +53,8 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
     nesting_groups = create_nesting_groups(config, grid_manager.grid_sources)
     n_nesting_groups = len(nesting_groups)
 
+    grid_manager.make_icontools_dirs(nesting_groups, logging_indentation_level=1)
+
     for nesting_group_idx, nesting_group in enumerate(nesting_groups):
         logging.info(f"{LOG_INDENTATION_STR}Work on nesting group {nesting_group_idx+1} of {n_nesting_groups}.")
 

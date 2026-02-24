@@ -69,6 +69,10 @@ def domain_label(domain_id):
     return f"DOM{domain_id:02d}"
 
 
+def nesting_group_label(nesting_group_id):
+    return f"NEG{nesting_group_id:02d}"
+
+
 def compute_resolution_from_rnbk(n, k):
     earth_radius = 6371.0
     return earth_radius * sqrt(pi / 5) / (n * pow(2, k))

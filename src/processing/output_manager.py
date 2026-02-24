@@ -84,20 +84,21 @@ class OutputManager:
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Move ICON Tools output.")
 
         if keep_basegrid_files:
-            self.move_files(os.path.join(grid_manager.icontools_dir, "base_grid.*"), self.data_dir, logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(grid_manager.icontools_dirs[0], "base_grid.*"), self.data_dir, logging_indentation_level=logging_indentation_level+1)
 
         for domain_config in self.domains_config:
             domain_id = domain_config["domain_id"]
+            domain_idx = domain_id - 1
 
             current_domain_label = domain_label(domain_id)
 
             data_domain_dir = os.path.join(self.data_dir, current_domain_label)
-            self.move_files(os.path.join(grid_manager.icontools_dir, f"*{current_domain_label}*.nc"), data_domain_dir, logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(grid_manager.icontools_dirs[domain_idx], f"*{current_domain_label}*.nc"), data_domain_dir, logging_indentation_level=logging_indentation_level+1)
 
             visualizations_dir = os.path.join(data_domain_dir, self.visualizations_dirname)
-            self.move_files(os.path.join(grid_manager.icontools_dir, f"*{current_domain_label}*.html"), visualizations_dir, logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(grid_manager.icontools_dirs[domain_idx], f"*{current_domain_label}*.html"), visualizations_dir, logging_indentation_level=logging_indentation_level+1)
 
-        self.move_files(os.path.join(grid_manager.icontools_dir, grid_manager.namelist_filename), self.namelists_dir, logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(grid_manager.icontools_dirs[domain_idx], grid_manager.namelist_filename), self.namelists_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
 
 
     def move_extpar_output(self, extpar_manager, logging_indentation_level=0):
