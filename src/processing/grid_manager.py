@@ -60,23 +60,21 @@ class GridManager:
             self.icontools_container_image = f"execute:{icontools_tag}"
 
 
-    def write_icon_gridgen_namelist(self, nesting_group, input_grid_path=None, logging_indentation_level=0):
+    def write_icon_gridgen_namelist(self, nesting_group, input_grid_name=None, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Write ICON gridgen namelist.")
 
-        start_from_input_grid = input_grid_path is not None
+        start_from_input_grid = input_grid_name is not None
 
         # TODO v2.0: For primary_grid_source == input_grid the parent_id and domain_id may need to be adapted if the
         #            nesting_group doesn't start from domain_id == 1.
-        # Ensure the first domain has parent_id = 0
-        if self.domains_config[0]["icontools"]["parent_id"] != 0:
-            self.domains_config[0]["icontools"]["parent_id"] = 0
-            logging.warning("Domain 1 has parent_id not set to 0. Resetting it to 0.")
 
-        # Create parent_id comma-separated list
-        parent_id = ",".join(str(self.domains_config[domain_id-1]["icontools"]["parent_id"]) for domain_id in nesting_group)
+        # Create parent_id comma-separated list and ensure first domain has parent_id=0
+        parent_id = "0"
+        for domain_id in nesting_group[1:]:
+            parent_id += f",{self.domains_config[domain_id-1]["icontools"]["parent_id"]}"
 
         # Set hardcoded entries
-        initial_refinement = True
+        initial_refinement = not start_from_input_grid
         lspring_dynamics = True
         maxit = 2000
         beta_spring = 0.9
@@ -94,7 +92,7 @@ class GridManager:
 
         if start_from_input_grid:
             # Input grid settings
-            namelist.append(f"  filename = {input_grid_path}")
+            namelist.append(f"  filename = \"/input_grid/{input_grid_name}\" ")
         else:
             # Base grid settings
             namelist.append(f"  basegrid%grid_root   = {self.basegrid_config['grid_root']}")
@@ -116,7 +114,14 @@ class GridManager:
         namelist.append(f"  subcentre = {self.basegrid_config.get('subcentre', 255)}")
         namelist.append("")
 
-        for domain_id in nesting_group:
+        if start_from_input_grid:
+            lwrite_parent = True
+
+            namelist.append(f"  dom(1)%outfile             = \"{self.basegrid_config['outfile']}\" ")
+            namelist.append(f"  dom(1)%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
+            namelist.append("")
+
+        for domain_id in nesting_group[(1 if start_from_input_grid else 0):]:
             domain_config = self.domains_config[domain_id-1]
             icontools_config = domain_config["icontools"]
 
@@ -158,26 +163,40 @@ class GridManager:
         logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICON gridgen namelist written to \"{self.namelist_filepath}\".")
 
 
-    def run_icon_gridgen(self, logging_indentation_level=0):
+    def run_icon_gridgen(self, input_grid_dir=None, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICON gridgen.")
 
         if self.use_apptainer:
             container_cmd = [
                 "apptainer", "exec",
                 "--pwd", "/work",
-                "--bind", f"{self.icontools_dir}:/work",
                 "--env", "LD_LIBRARY_PATH=/home/dwd/software/lib",
-                self.icontools_container_image
+                "--bind", f"{self.icontools_dir}:/work"
             ]
+
+            if input_grid_dir is not None:
+                container_cmd.extend([
+                    "--bind", f"{input_grid_dir}:/input_grid"
+                ])
+
+            container_cmd.append(self.icontools_container_image)
         else:
             container_cmd = [
                 "podman", "run",
                 "-w", "/work",
                 "-u", "0",
-                "-v", f"{self.icontools_dir}:/work",
                 "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib",
-                "-t", self.icontools_container_image
+                "-v", f"{self.icontools_dir}:/work"
             ]
+
+            if input_grid_dir is not None:
+                container_cmd.extend([
+                    "-v", f"{input_grid_dir}:/input_grid"
+                ])
+
+            container_cmd.extend([
+                "-t", self.icontools_container_image
+            ])
 
         shell_command(
             *container_cmd,
@@ -214,11 +233,13 @@ class GridManager:
     def generate_icon_grids(self, nesting_group, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Generate/retrieve ICON grids.")
 
-        primary_grid_source = self.grid_sources[nesting_group[0]]
+        primary_domain_id = nesting_group[0]
+        primary_domain_idx = primary_domain_id - 1
+        primary_grid_source = self.grid_sources[primary_domain_idx]
         match primary_grid_source:
 
             case "icontools":
-                self.write_icon_gridgen_namelist(nesting_group, primary_grid_source, logging_indentation_level=logging_indentation_level+1)
+                self.write_icon_gridgen_namelist(nesting_group, logging_indentation_level=logging_indentation_level+1)
 
                 self.run_icon_gridgen(logging_indentation_level=logging_indentation_level+1)
 
@@ -229,8 +250,6 @@ class GridManager:
                     self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
 
             case "input_grid":
-                primary_domain_id = nesting_group[0]
-                primary_domain_idx = primary_domain_id - 1
                 input_grid_path = self.get_input_grid_path(primary_domain_id, logging_indentation_level=logging_indentation_level+1)
 
                 if os.path.isfile(input_grid_path):
@@ -238,7 +257,7 @@ class GridManager:
                     self.grid_filenames[primary_domain_idx] = os.path.basename(input_grid_path)
                 else:
                     logging.error( f"The input grid provided for domain {primary_domain_id} does not exist: \"{input_grid_path}\". "
-                                    f"Please provide a valid path." )
+                                   f"Please provide a valid path." )
                     raise FileNotFoundError(f"\"{input_grid_path}\" not found!")
 
                 # Only input grid
@@ -247,7 +266,7 @@ class GridManager:
                                   f"An input grid was provided for domain {primary_domain_id} at \"{input_grid_path}\" "
                                   f"and the generation of additional nests was not requested, thus the grid "
                                   f"generation step is skipped for domain {primary_domain_id}!\n"
-                                  f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level+1)}"
+                                  f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*(logging_indentation_level+1))}"
                                   f"For this reason the \"basegrid\" and \"icontools_tag\" entries in the JSON "
                                   f"config are ignored." )
 
@@ -256,12 +275,15 @@ class GridManager:
                     logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}"
                                   f"An input grid was provided for domain {primary_domain_id} at \"{input_grid_path}\" "
                                   f"and the generation of additional nests was requested.\n"
-                                  f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level+1)}"
+                                  f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*(logging_indentation_level+1))}"
                                   f"Starting the generation of nests." )
 
-                    self.write_icon_gridgen_namelist(nesting_group, input_grid_path=input_grid_path, logging_indentation_level=logging_indentation_level+2)
+                    input_grid_dir = self.grid_dirs[primary_domain_idx]
+                    input_grid_name = self.grid_filenames[primary_domain_idx]
 
-                    self.run_icon_gridgen(logging_indentation_level=logging_indentation_level+2)
+                    self.write_icon_gridgen_namelist(nesting_group, input_grid_name=input_grid_name, logging_indentation_level=logging_indentation_level+2)
+
+                    self.run_icon_gridgen(input_grid_dir=input_grid_dir, logging_indentation_level=logging_indentation_level+2)
 
                     for domain_id in nesting_group[1:]:
                         domain_idx = domain_id - 1
