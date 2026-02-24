@@ -42,7 +42,7 @@ def shell_command(bin, *args, logging_indentation_level=0):
         output = e.stdout + e.stderr
 
         logging.warning( f"Problems with shell command: {args_for_logger}\n"
-                         "{LOG_PADDING_WARNING}-> the output returned to the shell is:\n"
+                         f"{LOG_PADDING_WARNING}-> the output returned to the shell is:\n"
                          f"{output}" )
 
         logging.error("Shell command failed!", exc_info=True)

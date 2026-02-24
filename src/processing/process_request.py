@@ -101,10 +101,10 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
                 else:
                     logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR fields!")
         except Exception as e:
-            logging.warning( "An error occurred during the visualization of topography data for domains "
+            logging.warning( f"An error occurred during the visualization of topography data for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
                              f"{repr(e)}\n"
-                             "{LOG_PADDING_WARNING}Skipping the visualization!" )
+                             f"{LOG_PADDING_WARNING}Skipping the visualization!" )
 
         ### MOVE OUTPUT ###
         output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files, logging_indentation_level=2)
