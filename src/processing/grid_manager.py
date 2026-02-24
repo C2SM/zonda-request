@@ -259,7 +259,7 @@ class GridManager:
                                   f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level+1)}"
                                   f"Starting the generation of nests." )
 
-                    self.write_icon_gridgen_namelist(nesting_group, primary_grid_source, logging_indentation_level=logging_indentation_level+2)
+                    self.write_icon_gridgen_namelist(nesting_group, input_grid_path=input_grid_path, logging_indentation_level=logging_indentation_level+2)
 
                     self.run_icon_gridgen(logging_indentation_level=logging_indentation_level+2)
 
