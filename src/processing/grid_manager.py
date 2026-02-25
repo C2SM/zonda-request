@@ -301,7 +301,7 @@ class GridManager:
 
                     self.write_icon_gridgen_namelist(nesting_group, input_grid_name=input_grid_name, logging_indentation_level=logging_indentation_level+2)
 
-                    self.run_icon_gridgen(input_grid_dir=input_grid_dir, logging_indentation_level=logging_indentation_level+2)
+                    self.run_icon_gridgen(icontools_dir, input_grid_dir=input_grid_dir, logging_indentation_level=logging_indentation_level+2)
 
                     for domain_id in nesting_group[1:]:
                         domain_idx = domain_id - 1
