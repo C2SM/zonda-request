@@ -57,7 +57,7 @@ class GridManager:
 
         for nesting_group_idx, nesting_group in enumerate(nesting_groups):
             primary_domain_idx = nesting_group[0] - 1
-            nesting_group_id = nesting_group_idx - 1
+            nesting_group_id = nesting_group_idx + 1
             nesting_group_grid_sources = []
 
             for domain_id in nesting_group:
