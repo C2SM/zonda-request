@@ -82,8 +82,12 @@ class GridManager:
         primary_domain_id = nesting_group[0]
         primary_domain_idx = primary_domain_id - 1
 
+        if start_from_input_grid:
+            parent_id_primary_domain = self.domains_config[primary_domain_idx+1]["icontools"]["parent_id"] - 1
+        else:
+            parent_id_primary_domain = self.domains_config[primary_domain_idx]["icontools"]["parent_id"]
+
         # Create parent_id comma-separated list and ensure first domain has parent_id=0
-        parent_id_primary_domain = self.domains_config[primary_domain_idx]["icontools"]["parent_id"]
         parent_id = "0"
         for domain_id in nesting_group[1:]:
             parent_id += f",{self.domains_config[domain_id-1]["icontools"]["parent_id"] - parent_id_primary_domain}"
