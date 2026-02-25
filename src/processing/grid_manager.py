@@ -79,11 +79,14 @@ class GridManager:
 
         # TODO v2.0: For primary_grid_source == input_grid the parent_id and domain_id may need to be adapted if the
         #            nesting_group doesn't start from domain_id == 1.
+        primary_domain_id = nesting_group[0]
+        primary_domain_idx = primary_domain_id - 1
 
         # Create parent_id comma-separated list and ensure first domain has parent_id=0
+        parent_id_primary_domain = self.domains_config[primary_domain_idx]["icontools"]["parent_id"]
         parent_id = "0"
         for domain_id in nesting_group[1:]:
-            parent_id += f",{self.domains_config[domain_id-1]["icontools"]["parent_id"]}"
+            parent_id += f",{self.domains_config[domain_id-1]["icontools"]["parent_id"] - parent_id_primary_domain}"
 
         # Set hardcoded entries
         initial_refinement = not start_from_input_grid
@@ -127,7 +130,7 @@ class GridManager:
         namelist.append("")
 
         if start_from_input_grid:
-            lwrite_parent = True
+            lwrite_parent = (primary_domain_id == 1)
 
             namelist.append(f"  dom(1)%outfile             = \"{self.basegrid_config['outfile']}\" ")
             namelist.append(f"  dom(1)%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
@@ -139,36 +142,37 @@ class GridManager:
 
             lwrite_parent = (domain_id == 1)
 
-            namelist.append(f"  dom({domain_id})%outfile             = \"{self.basegrid_config['outfile']}\" ")
-            namelist.append(f"  dom({domain_id})%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
-            namelist.append(f"  dom({domain_id})%region_type         = {icontools_config['region_type']}")
-            namelist.append(f"  dom({domain_id})%number_of_grid_used = {icontools_config.get('number_of_grid_used', 0)}")
+            local_domain_id = domain_id - primary_domain_id + 1
+
+            namelist.append(f"  dom({local_domain_id})%outfile             = \"{self.basegrid_config['outfile']}\" ")
+            namelist.append(f"  dom({local_domain_id})%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
+            namelist.append(f"  dom({local_domain_id})%region_type         = {icontools_config['region_type']}")
+            namelist.append(f"  dom({local_domain_id})%number_of_grid_used = {icontools_config.get('number_of_grid_used', 0)}")
             namelist.append("")
 
             # Circular domain
             if icontools_config["region_type"] == 2:
-                namelist.append(f"  dom({domain_id})%center_lon = {icontools_config['center_lon']}")
-                namelist.append(f"  dom({domain_id})%center_lat = {icontools_config['center_lat']}")
-                namelist.append(f"  dom({domain_id})%radius     = {icontools_config['radius']}")
+                namelist.append(f"  dom({local_domain_id})%center_lon = {icontools_config['center_lon']}")
+                namelist.append(f"  dom({local_domain_id})%center_lat = {icontools_config['center_lat']}")
+                namelist.append(f"  dom({local_domain_id})%radius     = {icontools_config['radius']}")
                 namelist.append("")
 
             # Regional domain
             elif icontools_config["region_type"] == 3:
-                namelist.append(f"  dom({domain_id})%center_lon = {icontools_config['center_lon']}")
-                namelist.append(f"  dom({domain_id})%center_lat = {icontools_config['center_lat']}")
-                namelist.append(f"  dom({domain_id})%hwidth_lon = {icontools_config['hwidth_lon']}")
-                namelist.append(f"  dom({domain_id})%hwidth_lat = {icontools_config['hwidth_lat']}")
+                namelist.append(f"  dom({local_domain_id})%center_lon = {icontools_config['center_lon']}")
+                namelist.append(f"  dom({local_domain_id})%center_lat = {icontools_config['center_lat']}")
+                namelist.append(f"  dom({local_domain_id})%hwidth_lon = {icontools_config['hwidth_lon']}")
+                namelist.append(f"  dom({local_domain_id})%hwidth_lat = {icontools_config['hwidth_lat']}")
                 namelist.append("")
 
-                namelist.append(f"  dom({domain_id})%lrotate  = {convert_to_fortran_bool(icontools_config['lrotate'])}")
-                namelist.append(f"  dom({domain_id})%pole_lon = {icontools_config.get('pole_lon', -180.0)}")
-                namelist.append(f"  dom({domain_id})%pole_lat = {icontools_config.get('pole_lat', 90.0)}")
+                namelist.append(f"  dom({local_domain_id})%lrotate  = {convert_to_fortran_bool(icontools_config['lrotate'])}")
+                namelist.append(f"  dom({local_domain_id})%pole_lon = {icontools_config.get('pole_lon', -180.0)}")
+                namelist.append(f"  dom({local_domain_id})%pole_lat = {icontools_config.get('pole_lat', 90.0)}")
                 namelist.append("")
 
         namelist.append("/")
         namelist.append("")
 
-        primary_domain_idx = nesting_group[0] - 1
         namelist_filepath = os.path.join(self.icontools_dirs[primary_domain_idx], self.namelist_filename)
 
         # Write the namelist content to a file
