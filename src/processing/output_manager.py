@@ -98,7 +98,8 @@ class OutputManager:
             visualizations_dir = os.path.join(data_domain_dir, self.visualizations_dirname)
             self.move_files(os.path.join(grid_manager.icontools_dirs[domain_idx], f"*{current_domain_label}*.html"), visualizations_dir, logging_indentation_level=logging_indentation_level+1)
 
-            self.move_files(os.path.join(grid_manager.icontools_dirs[domain_idx], grid_manager.namelist_filename), self.namelists_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
+            namelists_domain_dir = os.path.join(self.namelists_dir, current_domain_label)
+            self.move_files(os.path.join(grid_manager.icontools_dirs[domain_idx], grid_manager.namelist_filename), namelists_domain_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
 
 
     def move_extpar_output(self, extpar_manager, logging_indentation_level=0):
