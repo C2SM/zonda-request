@@ -80,34 +80,38 @@ class OutputManager:
                 shutil.move(source_file, destination_filepath)
 
 
-    def move_icontools_output(self, grid_manager, keep_basegrid_files, logging_indentation_level=0):
+    def move_icontools_output(self, grid_manager, domain_ids, keep_basegrid_files, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Move ICON Tools output.")
 
-        if keep_basegrid_files:
-            self.move_files(os.path.join(grid_manager.icontools_dirs[0], "base_grid.*"), self.data_dir, logging_indentation_level=logging_indentation_level+1)
-
-        for domain_config in self.domains_config:
-            domain_id = domain_config["domain_id"]
+        for domain_id in domain_ids:
             domain_idx = domain_id - 1
 
             current_domain_label = domain_label(domain_id)
 
+            icontools_dir = grid_manager.icontools_dirs[domain_idx]
+
+            if (domain_id == 1) and keep_basegrid_files:
+                self.move_files(os.path.join(icontools_dir, "base_grid.*"), self.data_dir, logging_indentation_level=logging_indentation_level+1)
+
             data_domain_dir = os.path.join(self.data_dir, current_domain_label)
-            self.move_files(os.path.join(grid_manager.icontools_dirs[domain_idx], f"*{current_domain_label}*.nc"), data_domain_dir, logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(icontools_dir, f"*{current_domain_label}*.nc"), data_domain_dir, logging_indentation_level=logging_indentation_level+1)
 
             visualizations_dir = os.path.join(data_domain_dir, self.visualizations_dirname)
-            self.move_files(os.path.join(grid_manager.icontools_dirs[domain_idx], f"*{current_domain_label}*.html"), visualizations_dir, logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(icontools_dir, f"*{current_domain_label}*.html"), visualizations_dir, logging_indentation_level=logging_indentation_level+1)
 
             namelists_domain_dir = os.path.join(self.namelists_dir, current_domain_label)
-            self.move_files(os.path.join(grid_manager.icontools_dirs[domain_idx], grid_manager.namelist_filename), namelists_domain_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(icontools_dir, grid_manager.namelist_filename), namelists_domain_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
 
 
-    def move_extpar_output(self, extpar_manager, logging_indentation_level=0):
+    def move_extpar_output(self, extpar_manager, domain_ids, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Move EXTPAR output.")
 
-        for domain_idx, extpar_dir in enumerate(extpar_manager.extpar_dirs):
+        for domain_id in domain_ids:
+            domain_idx = domain_id - 1
 
             current_domain_label = domain_label(domain_idx+1)
+
+            extpar_dir = extpar_manager.extpar_dirs[domain_idx]
 
             data_domain_dir = os.path.join(self.data_dir, current_domain_label)
             self.move_files(os.path.join(extpar_dir, "external_parameter.nc"), data_domain_dir, prefix=f"{self.outfile}_{current_domain_label}_", logging_indentation_level=logging_indentation_level+1)
@@ -131,11 +135,11 @@ class OutputManager:
         self.move_files(os.path.join(self.workspace_path, self.zonda_log_filename), self.logs_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
 
 
-    def move_output(self, grid_manager, extpar_manager, keep_basegrid_files, logging_indentation_level=0):
+    def move_output(self, grid_manager, extpar_manager, domain_ids, keep_basegrid_files, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Move output.")
 
-        self.move_icontools_output(grid_manager, keep_basegrid_files, logging_indentation_level=logging_indentation_level+1)
-        self.move_extpar_output(extpar_manager, logging_indentation_level=logging_indentation_level+1)
+        self.move_icontools_output(grid_manager, domain_ids, keep_basegrid_files, logging_indentation_level=logging_indentation_level+1)
+        self.move_extpar_output(extpar_manager, domain_ids, logging_indentation_level=logging_indentation_level+1)
 
 
     def zip_output(self, logging_indentation_level=0):

@@ -75,7 +75,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
             ### EXTPAR ###
             extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames, logging_indentation_level=2)
         except Exception:
-            output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files, logging_indentation_level=1)
+            output_manager.move_output(grid_manager, extpar_manager, nesting_group, keep_basegrid_files, logging_indentation_level=1)
             output_manager.move_zonda_files(logging_indentation_level=1)
             output_manager.zip_output(logging_indentation_level=1)
             raise
@@ -111,7 +111,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
                              f"{LOG_PADDING_WARNING}Skipping the visualization!" )
 
         ### MOVE OUTPUT ###
-        output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files, logging_indentation_level=2)
+        output_manager.move_output(grid_manager, extpar_manager, nesting_group, keep_basegrid_files, logging_indentation_level=2)
 
     output_manager.move_zonda_files(logging_indentation_level=1)
     output_manager.zip_output(logging_indentation_level=1)
