@@ -315,11 +315,17 @@ class GridManager:
                         self.grid_dirs[domain_idx] = icontools_dir
                         self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
 
-                        current_local_grid_filename = f"{self.output_manager.outfile}_{domain_label(local_domain_id)}.nc"
+                        current_local_grid_filestem = f"{self.output_manager.outfile}_{domain_label(local_domain_id)}"
 
                         # Rename grid files output from ICON Tools, because the domain label refers to the local_domain_id
-                        os.rename( os.path.join(self.grid_dirs[domain_idx], current_local_grid_filename),
+                        os.rename( os.path.join(self.grid_dirs[domain_idx], current_local_grid_filestem + ".nc"),
                                    os.path.join(self.grid_dirs[domain_idx], self.grid_filenames[domain_idx]) )
+
+                        # Remove extension from current grid filename
+                        current_grid_filestem = self.grid_filenames[domain_idx].split(".", 1)[0]
+
+                        os.rename( os.path.join(self.grid_dirs[domain_idx], current_local_grid_filestem + ".html"),
+                                   os.path.join(self.grid_dirs[domain_idx], current_grid_filestem + ".html") )
 
             case _:
                 logging.error("No valid grid generation method could be selected!")
