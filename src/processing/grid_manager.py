@@ -77,8 +77,6 @@ class GridManager:
 
         start_from_input_grid = input_grid_name is not None
 
-        # TODO v2.0: For primary_grid_source == input_grid the parent_id and domain_id may need to be adapted if the
-        #            nesting_group doesn't start from domain_id == 1.
         primary_domain_id = nesting_group[0]
         primary_domain_idx = primary_domain_id - 1
 
@@ -87,7 +85,7 @@ class GridManager:
         else:
             parent_id_primary_domain = self.domains_config[primary_domain_idx]["icontools"]["parent_id"]
 
-        # Create parent_id comma-separated list and ensure first domain has parent_id=0
+        # Create parent_id comma-separated list and ensure first local domain has parent_id=0
         parent_id = "0"
         for domain_id in nesting_group[1:]:
             parent_id += f",{self.domains_config[domain_id-1]["icontools"]["parent_id"] - parent_id_primary_domain}"
@@ -311,11 +309,17 @@ class GridManager:
 
                     self.run_icon_gridgen(icontools_dir, input_grid_dir=input_grid_dir, logging_indentation_level=logging_indentation_level+2)
 
-                    for domain_id in nesting_group[1:]:
+                    for local_domain_id, domain_id in enumerate(nesting_group[1:], start=2):
                         domain_idx = domain_id - 1
 
                         self.grid_dirs[domain_idx] = icontools_dir
                         self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
+
+                        current_local_grid_filename = f"{self.output_manager.outfile}_{domain_label(local_domain_id)}.nc"
+
+                        # Rename grid files output from ICON Tools, because the domain label refers to the local_domain_id
+                        os.rename( os.path.join(self.grid_dirs[domain_idx], current_local_grid_filename),
+                                   os.path.join(self.grid_dirs[domain_idx], self.grid_filenames[domain_idx]) )
 
             case _:
                 logging.error("No valid grid generation method could be selected!")
