@@ -42,14 +42,14 @@ def shell_command(bin, *args, logging_indentation_level=0):
         output = e.stdout + e.stderr
 
         logging.warning( f"Problems with shell command: {args_for_logger}\n"
-                         "{LOG_PADDING_WARNING}-> the output returned to the shell is:\n"
-                         f"{output}" )
+                         f"{LOG_PADDING_WARNING}-> the output returned to the shell is:\n\n"
+                         f"{output}\n" )
 
         logging.error("Shell command failed!", exc_info=True)
         raise
 
-    logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Output:\n"
-                  f"{output}" )
+    logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Output:\n\n"
+                  f"{output}\n" )
 
     return output
 
@@ -67,6 +67,10 @@ def convert_to_fortran_bool(boolean_value):
 
 def domain_label(domain_id):
     return f"DOM{domain_id:02d}"
+
+
+def nesting_group_label(nesting_group_id):
+    return f"NEG{nesting_group_id:02d}"
 
 
 def compute_resolution_from_rnbk(n, k):

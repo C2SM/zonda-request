@@ -53,10 +53,14 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
     nesting_groups = create_nesting_groups(config, grid_manager.grid_sources)
     n_nesting_groups = len(nesting_groups)
 
+    grid_manager.make_icontools_dirs(nesting_groups, logging_indentation_level=1)
+
     for nesting_group_idx, nesting_group in enumerate(nesting_groups):
         logging.info(f"{LOG_INDENTATION_STR}Work on nesting group {nesting_group_idx+1} of {n_nesting_groups}.")
 
-        primary_grid_source = grid_manager.grid_sources[nesting_group[0]]
+        primary_domain_id = nesting_group[0]
+        primary_domain_idx = primary_domain_id - 1
+        primary_grid_source = grid_manager.grid_sources[primary_domain_idx]
 
         # Keeping the base grid only makes sense when icontools is the grid source of the first domain
         if nesting_group_idx == 0 and primary_grid_source == "icontools":
@@ -71,7 +75,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
             ### EXTPAR ###
             extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames, logging_indentation_level=2)
         except Exception:
-            output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files, logging_indentation_level=1)
+            output_manager.move_output(grid_manager, extpar_manager, nesting_group, keep_basegrid_files, logging_indentation_level=1)
             output_manager.move_zonda_files(logging_indentation_level=1)
             output_manager.zip_output(logging_indentation_level=1)
             raise
@@ -80,7 +84,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
         try:
             grid_manager.generate_latlon_grids(nesting_group, logging_indentation_level=2)
         except Exception as e:
-            logging.warning( "An error occurred during the generation of the lat-lon grids for domains "
+            logging.warning( f"An error occurred during the generation of the lat-lon grids for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
                              f"{repr(e)}\n"
                              f"{LOG_PADDING_WARNING}Skipping generation of lat-lon grids!" )
@@ -101,13 +105,13 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
                 else:
                     logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR fields!")
         except Exception as e:
-            logging.warning( "An error occurred during the visualization of topography data for domains "
+            logging.warning( f"An error occurred during the visualization of topography data for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
                              f"{repr(e)}\n"
-                             "{LOG_PADDING_WARNING}Skipping the visualization!" )
+                             f"{LOG_PADDING_WARNING}Skipping the visualization!" )
 
         ### MOVE OUTPUT ###
-        output_manager.move_output(grid_manager, extpar_manager, keep_basegrid_files, logging_indentation_level=2)
+        output_manager.move_output(grid_manager, extpar_manager, nesting_group, keep_basegrid_files, logging_indentation_level=2)
 
     output_manager.move_zonda_files(logging_indentation_level=1)
     output_manager.zip_output(logging_indentation_level=1)
