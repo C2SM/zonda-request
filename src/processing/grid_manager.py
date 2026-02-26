@@ -289,8 +289,7 @@ class GridManager:
                     logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}"
                                   f"An input grid was provided for domain {primary_domain_id} at \"{input_grid_path}\" "
                                   f"and the generation of additional nests was not requested, thus the grid "
-                                  f"generation step is skipped for domain {primary_domain_id}!\n"
-                                  f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*(logging_indentation_level+1))}"
+                                  f"generation step is skipped for domain {primary_domain_id}! "
                                   f"For this reason the \"basegrid\" and \"icontools_tag\" entries in the JSON "
                                   f"config are ignored." )
 
@@ -298,8 +297,7 @@ class GridManager:
                 else:
                     logging.info( f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}"
                                   f"An input grid was provided for domain {primary_domain_id} at \"{input_grid_path}\" "
-                                  f"and the generation of additional nests was requested.\n"
-                                  f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*(logging_indentation_level+1))}"
+                                  f"and the generation of additional nests was requested. "
                                   f"Starting the generation of nests." )
 
                     input_grid_dir = self.grid_dirs[primary_domain_idx]
