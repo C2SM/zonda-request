@@ -18,7 +18,7 @@ jobs:
             | sed -n '/^```json$/,${p;/^```$/q}' \
             | sed '1d;$d')
 
-          if ! echo "$json_block" | jq . > /dev/null 2> jq_error.txt; then
+          if [ -z "$json_block" ] || ! echo "$json_block" | jq . > /dev/null 2> jq_error.txt; then
             echo "invalid_json=true" >> $GITHUB_OUTPUT
             exit 1
           fi
