@@ -23,7 +23,7 @@ class GridManager:
         self.basegrid_config = self.config["basegrid"]
         self.domains_config = self.config["domains"]
 
-        self.outfile = self.basegrid_config["outfile"]
+        self.request_name = self.basegrid_config["request_name"]
 
         n_domains = len(self.domains_config)
 
@@ -97,9 +97,6 @@ class GridManager:
         maxit = 2000
         beta_spring = 0.9
 
-        # TODO v2.0: Move the Zonda parameters on the frontend to the top and add keep_basegrid_files and outfile there.
-        #            Maybe rename outfile to request_name.
-
         # Create the ICON gridgen namelist content
         namelist = []
 
@@ -135,7 +132,7 @@ class GridManager:
         if start_from_input_grid:
             lwrite_parent = (primary_domain_id == 1)
 
-            namelist.append(f"  dom(1)%outfile             = \"{self.outfile}\" ")
+            namelist.append(f"  dom(1)%outfile             = \"{self.request_name}\" ")
             namelist.append(f"  dom(1)%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
             namelist.append("")
 
@@ -147,7 +144,7 @@ class GridManager:
 
             local_domain_id = domain_id - primary_domain_id + 1
 
-            namelist.append(f"  dom({local_domain_id})%outfile             = \"{self.outfile}\" ")
+            namelist.append(f"  dom({local_domain_id})%outfile             = \"{self.request_name}\" ")
             namelist.append(f"  dom({local_domain_id})%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
             namelist.append(f"  dom({local_domain_id})%region_type         = {icontools_config['region_type']}")
             namelist.append(f"  dom({local_domain_id})%number_of_grid_used = {icontools_config.get('number_of_grid_used', 0)}")
@@ -272,7 +269,7 @@ class GridManager:
                     domain_idx = domain_id - 1
 
                     self.grid_dirs[domain_idx] = icontools_dir
-                    self.grid_filenames[domain_idx] = f"{self.outfile}_{domain_label(domain_id)}.nc"
+                    self.grid_filenames[domain_idx] = f"{self.request_name}_{domain_label(domain_id)}.nc"
 
             case "input_grid":
                 input_grid_path = self.get_input_grid_path(primary_domain_id, logging_indentation_level=logging_indentation_level+1)
@@ -312,9 +309,9 @@ class GridManager:
                         domain_idx = domain_id - 1
 
                         self.grid_dirs[domain_idx] = icontools_dir
-                        self.grid_filenames[domain_idx] = f"{self.outfile}_{domain_label(domain_id)}.nc"
+                        self.grid_filenames[domain_idx] = f"{self.request_name}_{domain_label(domain_id)}.nc"
 
-                        current_local_grid_filestem = f"{self.outfile}_{domain_label(local_domain_id)}"
+                        current_local_grid_filestem = f"{self.request_name}_{domain_label(local_domain_id)}"
 
                         # Rename grid files output from ICON Tools, because the domain label refers to the local_domain_id
                         os.rename( os.path.join(self.grid_dirs[domain_idx], current_local_grid_filestem + ".nc"),

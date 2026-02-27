@@ -22,12 +22,12 @@ if __name__ == "__main__":
     with open(args.hash_file, "r") as file:
         hash = file.read().strip()
 
-    outfile = config["basegrid"]["outfile"]
+    request_name = config["basegrid"]["request_name"]
 
     hashed_destination_dir = os.path.join(args.destination, hash)
     os.makedirs(hashed_destination_dir, exist_ok=True)
 
-    zip_filepath = os.path.join(args.workspace, f"zonda_output_{outfile}.zip")
+    zip_filepath = os.path.join(args.workspace, f"zonda_output_{request_name}.zip")
     try:
         shutil.move(zip_filepath, hashed_destination_dir)
     except FileNotFoundError:

@@ -21,7 +21,7 @@ class OutputManager:
         self.config_filename = config_filename
         self.zonda_log_filename = zonda_log_filename
 
-        self.outfile = self.config["basegrid"]["outfile"]
+        self.request_name = self.config["basegrid"]["request_name"]
         self.domains_config = self.config["domains"]
 
         self.visualizations_dirname = visualizations_dirname
@@ -31,7 +31,7 @@ class OutputManager:
         self.logs_dir = os.path.join(self.output_dir, logs_dirname)
         self.namelists_dir = os.path.join(self.output_dir, namelists_dirname)
 
-        self.zip_filepath = os.path.join(self.workspace_path, f"{zip_file_prefix}{self.outfile}.zip")
+        self.zip_filepath = os.path.join(self.workspace_path, f"{zip_file_prefix}{self.request_name}.zip")
 
         os.makedirs(self.output_dir, exist_ok=True)
         os.makedirs(self.data_dir, exist_ok=True)
@@ -114,10 +114,10 @@ class OutputManager:
             extpar_dir = extpar_manager.extpar_dirs[domain_idx]
 
             data_domain_dir = os.path.join(self.data_dir, current_domain_label)
-            self.move_files(os.path.join(extpar_dir, "external_parameter.nc"), data_domain_dir, prefix=f"{self.outfile}_{current_domain_label}_", logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(extpar_dir, "external_parameter.nc"), data_domain_dir, prefix=f"{self.request_name}_{current_domain_label}_", logging_indentation_level=logging_indentation_level+1)
 
             visualizations_dir = os.path.join(data_domain_dir, self.visualizations_dirname)
-            self.move_files(os.path.join(extpar_dir, "*.png"), visualizations_dir, prefix=f"{self.outfile}_{current_domain_label}_", logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(extpar_dir, "*.png"), visualizations_dir, prefix=f"{self.request_name}_{current_domain_label}_", logging_indentation_level=logging_indentation_level+1)
 
             logs_domain_dir = os.path.join(self.logs_dir, current_domain_label)
             self.move_files(os.path.join(extpar_dir, "*.log"), logs_domain_dir, logging_indentation_level=logging_indentation_level+1)
