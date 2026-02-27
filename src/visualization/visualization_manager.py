@@ -185,7 +185,7 @@ class VisualizationManager:
             else:
                 ax = plt.axes(projection=ccrs.PlateCarree())
 
-            figure_title = f"{long_name} ({variable_name})"
+            figure_title = f"{long_name} ({variable_name} with {", ".join(f"{key}={value}" for key, value in indices_per_dim.items())})"
             ax.set_title(figure_title, **self.font)
 
             # Draw custom map on axis and lines delimiting coasts
