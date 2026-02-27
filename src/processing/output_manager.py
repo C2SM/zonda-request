@@ -21,7 +21,7 @@ class OutputManager:
         self.config_filename = config_filename
         self.zonda_log_filename = zonda_log_filename
 
-        self.request_name = self.config["basegrid"]["request_name"]
+        self.request_name = self.config["zonda"]["request_name"]
         self.domains_config = self.config["domains"]
 
         self.visualizations_dirname = visualizations_dirname

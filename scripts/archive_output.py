@@ -22,7 +22,7 @@ if __name__ == "__main__":
     with open(args.hash_file, "r") as file:
         hash = file.read().strip()
 
-    request_name = config["basegrid"]["request_name"]
+    request_name = config["zonda"]["request_name"]
 
     hashed_destination_dir = os.path.join(args.destination, hash)
     os.makedirs(hashed_destination_dir, exist_ok=True)

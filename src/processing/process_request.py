@@ -65,7 +65,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
 
         # Keeping the base grid only makes sense when icontools is the grid source of the first domain
         if nesting_group_idx == 0 and primary_grid_source == "icontools":
-            keep_basegrid_files = config["basegrid"].get("keep_basegrid_files", False)
+            keep_basegrid_files = config["globals"].get("keep_basegrid_files", False)
         else:
             keep_basegrid_files = False  # No basegrid files if the grid is provided by the user or it's not the first domain
 

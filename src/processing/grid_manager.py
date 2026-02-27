@@ -20,10 +20,10 @@ class GridManager:
         self.use_apptainer = use_apptainer
 
         self.zonda_config = self.config["zonda"]
-        self.basegrid_config = self.config["basegrid"]
+        self.globals_config = self.config["globals"]
         self.domains_config = self.config["domains"]
 
-        self.request_name = self.basegrid_config["request_name"]
+        self.request_name = self.zonda_config["request_name"]
 
         n_domains = len(self.domains_config)
 
@@ -110,23 +110,23 @@ class GridManager:
             namelist.append(f"  filename = \"/input_grid/{input_grid_name}\" ")
         else:
             # Base grid settings
-            namelist.append(f"  basegrid%grid_root   = {self.basegrid_config['grid_root']}")
-            namelist.append(f"  basegrid%grid_level  = {self.basegrid_config['grid_level']-1}")  # Subtract 1 because initial_refinement is always on
-            namelist.append(f"  basegrid%icopole_lon = {self.basegrid_config['icopole_lon']}")
-            namelist.append(f"  basegrid%icopole_lat = {self.basegrid_config['icopole_lat']}")
-            namelist.append(f"  basegrid%icorotation = {self.basegrid_config['icorotation']}")
+            namelist.append(f"  basegrid%grid_root   = {self.globals_config['grid_root']}")
+            namelist.append(f"  basegrid%grid_level  = {self.globals_config['grid_level']-1}")  # Subtract 1 because initial_refinement is always on
+            namelist.append(f"  basegrid%icopole_lon = {self.globals_config['icopole_lon']}")
+            namelist.append(f"  basegrid%icopole_lat = {self.globals_config['icopole_lat']}")
+            namelist.append(f"  basegrid%icorotation = {self.globals_config['icorotation']}")
         namelist.append("")
 
         # Tuning parameters
         namelist.append(f"  lspring_dynamics   = {convert_to_fortran_bool(lspring_dynamics)}")
         namelist.append(f"  maxit              = {maxit}")
         namelist.append(f"  beta_spring        = {beta_spring}")
-        namelist.append(f"  bdy_indexing_depth = {self.basegrid_config.get('bdy_indexing_depth', 14)}")
+        namelist.append(f"  bdy_indexing_depth = {self.globals_config.get('bdy_indexing_depth', 14)}")
         namelist.append("")
         
         # Set centre and subcentre
-        namelist.append(f"  centre    = {self.basegrid_config.get('centre', 78)}")
-        namelist.append(f"  subcentre = {self.basegrid_config.get('subcentre', 255)}")
+        namelist.append(f"  centre    = {self.globals_config.get('centre', 78)}")
+        namelist.append(f"  subcentre = {self.globals_config.get('subcentre', 255)}")
         namelist.append("")
 
         if start_from_input_grid:
@@ -288,7 +288,7 @@ class GridManager:
                                   f"An input grid was provided for domain {primary_domain_id} at \"{input_grid_path}\" "
                                   f"and the generation of additional nests was not requested, thus the grid "
                                   f"generation step is skipped for domain {primary_domain_id}! "
-                                  f"For this reason the \"basegrid\" and \"icontools_tag\" entries in the JSON "
+                                  f"For this reason the \"globals\" and \"icontools_tag\" entries in the JSON "
                                   f"config are ignored." )
 
                 # Input grid plus generated nests
@@ -347,8 +347,8 @@ class GridManager:
                     hwidth_lat = icontools_config["hwidth_lat"]
                     hwidth_lon = icontools_config["hwidth_lon"]
 
-                    n = self.basegrid_config["grid_root"]
-                    k = self.basegrid_config["grid_level"] - 1 + domain_id  # Subtract 1 from grid_level because initial_refinement is always on
+                    n = self.globals_config["grid_root"]
+                    k = self.globals_config["grid_level"] - 1 + domain_id  # Subtract 1 from grid_level because initial_refinement is always on
                     grid_spacing = compute_resolution_from_rnbk(n, k)
 
                     output_data_domain_dir = os.path.join(output_data_dir, domain_label(domain_id))
