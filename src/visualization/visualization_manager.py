@@ -44,8 +44,8 @@ class VisualizationManager:
         ]
 
 
-    def visualize_extpar_variables(self, variable_names, icontools_config, grid_filepath, extpar_filepath, output_dir, logging_indentation_level=0):
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Visualization of EXTPAR variables: {variable_names}.")
+    def visualize_extpar_variables(self, extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, output_dir, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Visualization of EXTPAR variables.")
 
         ##################################
         ### Get and transform the data ###
@@ -139,11 +139,25 @@ class VisualizationManager:
         ### Plot the requested field ###
         ################################
 
-        for variable_name in variable_names:
+        for variable_config in extpar_plots_config:
+            variable_name = variable_config["variable_name"]
+
             logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Plot \"{variable_name}\".")
 
-            variable = extpar_dataset[variable_name]
+            indices_per_dim = variable_config.copy()
+            indices_per_dim.pop("variable_name")
+            variable = extpar_dataset[variable_name].isel(**indices_per_dim)
+
             data = variable.values[:]
+            data_ndim = data.ndim
+            if data_ndim != 1:
+                logging.error( f"The visualization of EXTPAR variables only supports 1D data/slices (i.e. only the cells dimension)! "
+                               f"The data/slice for variable \"{variable_name}\" has {data_ndim} dimensions. "
+                               f"Please select a specific index for each additional dimension via the "
+                               f"\"extpar_plots\" entry in the JSON config." )
+                raise ValueError( f"The visualization of EXTPAR variables only supports 1D data/slices! "
+                                  f"The data/slice for variable \"{variable_name}\" has {data_ndim} dimensions." )
+
             long_name = variable.attrs["long_name"].capitalize()
             units = variable.attrs["units"]
 
@@ -267,15 +281,13 @@ class VisualizationManager:
             if grid_sources[domain_idx] == "icontools":
                 domain_config = self.domains_config[domain_idx]
                 icontools_config = domain_config["icontools"]
-                extpar_plots = domain_config.get("extpar_plots", [])
+                extpar_plots_config = domain_config.get("extpar_plots", [])
 
-                if len(extpar_plots) > 0:
+                if len(extpar_plots_config) > 0:
                     grid_filepath = os.path.join(grid_dirs[domain_idx], grid_filenames[domain_idx])
                     extpar_filepath = os.path.join(extpar_dirs[domain_idx], "external_parameter.nc")
 
-                    variable_names = extpar_plots
-
-                    self.visualize_extpar_variable(variable_names, icontools_config, grid_filepath, extpar_filepath, extpar_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
+                    self.visualize_extpar_variable(extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, extpar_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
                 else:
                     logging.warning(f"No EXTPAR variable was requested for visualization for domain {domain_id}. Skipping visualization of EXTPAR variables!")
             else:
