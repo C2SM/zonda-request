@@ -46,7 +46,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
         logging.warning(f"Apptainer is being used, the extpar_tag and icontools_tag entries in the config file {config_filename} are ignored!")
 
     output_manager = OutputManager(config, workspace_path, config_filename, zonda_log_filename)
-    grid_manager = GridManager(config, workspace_path, output_manager, use_apptainer=use_apptainer)
+    grid_manager = GridManager(config, workspace_path, use_apptainer=use_apptainer)
     extpar_manager = ExtparManager(config, workspace_path, extpar_raw_data_path, use_apptainer=use_apptainer)
     visualization_manager = VisualizationManager(config, workspace_path)
 
@@ -83,7 +83,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
 
         ### LAT-LON GRID GENERATION ###
         try:
-            grid_manager.generate_latlon_grids(nesting_group, logging_indentation_level=2)
+            grid_manager.generate_latlon_grids(nesting_group, output_manager.data_dir, logging_indentation_level=2)
         except Exception as e:
             logging.warning( f"An error occurred during the generation of the lat-lon grids for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"

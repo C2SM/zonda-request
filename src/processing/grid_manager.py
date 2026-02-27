@@ -7,14 +7,13 @@ from utilities.utilities import shell_command, convert_to_fortran_bool, domain_l
 
 class GridManager:
 
-    def __init__( self, config, workspace_path, output_manager,
+    def __init__( self, config, workspace_path,
                   institution_input_grids_dir="/net/co2/c2sm-data/icon-grids/",
                   namelist_filename="nml_gridgen",
                   use_apptainer=False ):
 
         self.config = config
         self.workspace_path = workspace_path
-        self.output_manager = output_manager
 
         self.institution_input_grids_dir = institution_input_grids_dir
         self.namelist_filename = namelist_filename
@@ -23,6 +22,8 @@ class GridManager:
         self.zonda_config = self.config["zonda"]
         self.basegrid_config = self.config["basegrid"]
         self.domains_config = self.config["domains"]
+
+        self.outfile = self.basegrid_config["outfile"]
 
         n_domains = len(self.domains_config)
 
@@ -134,7 +135,7 @@ class GridManager:
         if start_from_input_grid:
             lwrite_parent = (primary_domain_id == 1)
 
-            namelist.append(f"  dom(1)%outfile             = \"{self.basegrid_config['outfile']}\" ")
+            namelist.append(f"  dom(1)%outfile             = \"{self.outfile}\" ")
             namelist.append(f"  dom(1)%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
             namelist.append("")
 
@@ -146,7 +147,7 @@ class GridManager:
 
             local_domain_id = domain_id - primary_domain_id + 1
 
-            namelist.append(f"  dom({local_domain_id})%outfile             = \"{self.basegrid_config['outfile']}\" ")
+            namelist.append(f"  dom({local_domain_id})%outfile             = \"{self.outfile}\" ")
             namelist.append(f"  dom({local_domain_id})%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
             namelist.append(f"  dom({local_domain_id})%region_type         = {icontools_config['region_type']}")
             namelist.append(f"  dom({local_domain_id})%number_of_grid_used = {icontools_config.get('number_of_grid_used', 0)}")
@@ -271,7 +272,7 @@ class GridManager:
                     domain_idx = domain_id - 1
 
                     self.grid_dirs[domain_idx] = icontools_dir
-                    self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
+                    self.grid_filenames[domain_idx] = f"{self.outfile}_{domain_label(domain_id)}.nc"
 
             case "input_grid":
                 input_grid_path = self.get_input_grid_path(primary_domain_id, logging_indentation_level=logging_indentation_level+1)
@@ -311,9 +312,9 @@ class GridManager:
                         domain_idx = domain_id - 1
 
                         self.grid_dirs[domain_idx] = icontools_dir
-                        self.grid_filenames[domain_idx] = f"{self.output_manager.outfile}_{domain_label(domain_id)}.nc"
+                        self.grid_filenames[domain_idx] = f"{self.outfile}_{domain_label(domain_id)}.nc"
 
-                        current_local_grid_filestem = f"{self.output_manager.outfile}_{domain_label(local_domain_id)}"
+                        current_local_grid_filestem = f"{self.outfile}_{domain_label(local_domain_id)}"
 
                         # Rename grid files output from ICON Tools, because the domain label refers to the local_domain_id
                         os.rename( os.path.join(self.grid_dirs[domain_idx], current_local_grid_filestem + ".nc"),
@@ -329,7 +330,7 @@ class GridManager:
                 logging.error("No valid grid generation method could be selected!")
 
 
-    def generate_latlon_grids(self, nesting_group, logging_indentation_level=0):
+    def generate_latlon_grids(self, nesting_group, output_data_dir, logging_indentation_level=0):
 
         for domain_id in nesting_group:
             domain_idx = domain_id - 1
@@ -353,10 +354,10 @@ class GridManager:
                     k = self.basegrid_config["grid_level"] - 1 + domain_id  # Subtract 1 from grid_level because initial_refinement is always on
                     grid_spacing = compute_resolution_from_rnbk(n, k)
 
-                    data_domain_dir = os.path.join(self.output_manager.data_dir, domain_label(domain_id))
+                    output_data_domain_dir = os.path.join(output_data_dir, domain_label(domain_id))
                     grid_filename_base = self.grid_filenames[domain_idx].removesuffix(".nc")
                     latlon_grid_filename_suffix = "_rotated" if lrotate else ""
-                    latlon_grid_filepath = os.path.join(data_domain_dir, f"{grid_filename_base}_latlon{latlon_grid_filename_suffix}.nc")
+                    latlon_grid_filepath = os.path.join(output_data_domain_dir, f"{grid_filename_base}_latlon{latlon_grid_filename_suffix}.nc")
 
                     if lrotate:
                         pole_lat = icontools_config["pole_lat"]
