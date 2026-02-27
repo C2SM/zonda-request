@@ -88,7 +88,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
             logging.warning( f"An error occurred during the generation of the lat-lon grids for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
                              f"{repr(e)}\n"
-                             f"{LOG_PADDING_WARNING}Skipping generation of lat-lon grids!" )
+                             f"{LOG_PADDING_WARNING}=> Skipping generation of lat-lon grids!" )
 
         ### EXTPAR FIELDS VISUALIZATION ###
         try:
@@ -97,7 +97,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
             logging.warning( f"An error occurred during the visualization of EXTPAR fields for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
                              f"{repr(e)}\n"
-                             f"{LOG_PADDING_WARNING}Skipping the visualization!" )
+                             f"{LOG_PADDING_WARNING}=> Skipping the visualization!" )
 
         ### MOVE OUTPUT ###
         output_manager.move_output(grid_manager, extpar_manager, nesting_group, keep_basegrid_files, logging_indentation_level=2)

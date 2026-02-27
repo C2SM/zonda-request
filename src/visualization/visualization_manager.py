@@ -158,8 +158,8 @@ class VisualizationManager:
                 raise ValueError( f"The visualization of EXTPAR variables only supports 1D data/slices! "
                                   f"The data/slice for variable \"{variable_name}\" has {data_ndim} dimensions." )
 
-            long_name = variable.attrs["long_name"].capitalize()
-            units = variable.attrs["units"]
+            long_name = variable.attrs.get("long_name", variable_name).capitalize()
+            units = variable.attrs.get("units", "")
 
             data_min = data.min()
             data_max = data.max()
@@ -226,7 +226,8 @@ class VisualizationManager:
             colorbar_formatter.set_powerlimits((0, 0))
 
             colorbar = plt.colorbar(collection, shrink=0.3, format=colorbar_formatter)
-            colorbar.set_label(f"{long_name} ({units})", **self.font)
+            units_str = f" ({units})" if units else ""
+            colorbar.set_label(f"{long_name}" + units_str, **self.font)
             colorbar.ax.yaxis.get_offset_text().set_font(self.small_font)
             plt.setp(colorbar.ax.yaxis.get_ticklabels(), **self.font)
 
