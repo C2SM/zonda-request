@@ -36,6 +36,7 @@ jobs:
         if: steps.extract_backend_tag.outcome == 'failure'
         uses: actions/github-script@v3
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs')
             const error = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
