@@ -18,8 +18,11 @@ jobs:
             | sed -n '/^```json$/,${p;/^```$/q}' \
             | sed '1d;$d')
 
-          if [ -z "$json_block" ] || ! echo "$json_block" | jq . > /dev/null 2> jq_error.txt; then
-            echo "invalid_json=true" >> $GITHUB_OUTPUT
+          if [ -z "$json_block" ]; then
+            echo "empty_json=true" >> $GITHUB_OUTPUT
+            exit 1
+          elif ! echo "$json_block" | jq . > /dev/null 2> jq_error.txt; then
+            echo "empty_json=false" >> $GITHUB_OUTPUT
             exit 1
           fi
 
@@ -35,18 +38,25 @@ jobs:
       - name: Report status on invalid JSON
         if: steps.extract_backend_tag.outcome == 'failure'
         uses: actions/github-script@v3
+        env:
+          EMPTY_JSON: ${{ steps.extract_backend_tag.outputs.empty_json }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs')
-            const error = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
+            let error
+            if (process.env.EMPTY_JSON === 'true') {
+              error = 'No JSON block found!'
+            } else {
+              error = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
+            }
 
             const message = `
             The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.
 
             <details>
-
-            <summary>Expand to see the error message from the jq command.</summary>
+            
+            <summary>Expand to see the error message from the GitHub workflow.</summary>
 
             \`\`\`
             ${error}
