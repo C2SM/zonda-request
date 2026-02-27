@@ -1,7 +1,7 @@
 #!/bin/bash
 
 MAX_DAYS=${DAYS}
-PATTERN="request-*"
+PATTERN="request-.*"
 NOW=$(date +%s)
 MAX_AGE=$((MAX_DAYS * 24 * 60 * 60))
 
