@@ -4,8 +4,8 @@ import logging
 from output_manager import OutputManager
 from grid_manager import GridManager
 from extpar_manager import ExtparManager
+from visualization.visualization_manager import VisualizationManager
 from utilities.utilities import load_config, LOG_PADDING_INFO, LOG_PADDING_WARNING, LOG_INDENTATION_STR
-from visualization.visualize_data import visualize_topography
 
 
 
@@ -48,6 +48,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
     output_manager = OutputManager(config, workspace_path, config_filename, zonda_log_filename)
     grid_manager = GridManager(config, workspace_path, output_manager, use_apptainer=use_apptainer)
     extpar_manager = ExtparManager(config, workspace_path, extpar_raw_data_path, use_apptainer=use_apptainer)
+    visualization_manager = VisualizationManager(config, workspace_path)
 
     logging.info(f"{LOG_INDENTATION_STR}Create nesting groups from grid sources: {grid_manager.grid_sources}.")
     nesting_groups = create_nesting_groups(config, grid_manager.grid_sources)
@@ -91,27 +92,9 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
 
         ### EXTPAR FIELDS VISUALIZATION ###
         try:
-            for domain_id in nesting_group:
-                domain_idx = domain_id - 1
-
-                logging.info(f"{LOG_INDENTATION_STR*2}Visualization of EXTPAR fields for domain {domain_id}.")
-                if grid_manager.grid_sources[domain_idx] == "icontools":
-                    domain_config = config["domains"][domain_idx]
-                    icontools_config = domain_config["icontools"]
-                    extpar_plots = domain_config.get("extpar_plots", [])
-
-                    grid_filepath = os.path.join(grid_manager.grid_dirs[domain_idx], grid_manager.grid_filenames[domain_idx])
-                    extpar_filepath = os.path.join(extpar_manager.extpar_dirs[domain_idx], "external_parameter.nc")
-
-                    for variable_name in extpar_plots:
-                        if variable_name == "topography_c":
-                            visualize_topography(icontools_config, workspace_path, grid_filepath, extpar_filepath, extpar_manager.extpar_dirs[domain_idx], logging_indentation_level=3)
-                        else:
-                            visualize_extpar_variable()  # TODO: we probably need a visualization manager now
-                else:
-                    logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR fields!")
+            visualization_manager.visualize_data(nesting_group, grid_manager.grid_sources, grid_manager.grid_dirs, grid_manager.grid_filenames, extpar_manager.extpar_dirs, logging_indentation_level=0)
         except Exception as e:
-            logging.warning( f"An error occurred during the visualization of topography data for domains "
+            logging.warning( f"An error occurred during the visualization of EXTPAR fields for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
                              f"{repr(e)}\n"
                              f"{LOG_PADDING_WARNING}Skipping the visualization!" )
