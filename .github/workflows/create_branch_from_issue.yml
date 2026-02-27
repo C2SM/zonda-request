@@ -44,10 +44,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs')
+            let error
             if (process.env.EMPTY_JSON === 'true') {
-              const error = 'No JSON block found!'
+              error = 'No JSON block found!'
             } else {
-              const error = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
+              error = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
             }
 
             const message = `
