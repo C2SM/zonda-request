@@ -287,7 +287,7 @@ class VisualizationManager:
                     grid_filepath = os.path.join(grid_dirs[domain_idx], grid_filenames[domain_idx])
                     extpar_filepath = os.path.join(extpar_dirs[domain_idx], "external_parameter.nc")
 
-                    self.visualize_extpar_variable(extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, extpar_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
+                    self.visualize_extpar_variables(extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, extpar_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
                 else:
                     logging.warning(f"No EXTPAR variable was requested for visualization for domain {domain_id}. Skipping visualization of EXTPAR variables!")
             else:
