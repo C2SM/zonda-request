@@ -1,0 +1,24 @@
+name: Ping devs on feature requests and bug reports
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  pingDevs:
+    if: |
+      github.event.label.name == 'bug' ||
+      github.event.label.name == 'enhancement'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping devs via comment
+        uses: actions/github-script@v3
+        with:
+          script: |
+            const message = "Pinging devs: @stelliom @mjaehn"
+
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: message
+            })

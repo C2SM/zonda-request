@@ -27,7 +27,7 @@ jobs:
       - name: Close old data request issues
         uses: actions/github-script@v3
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const max_age = Number(process.env.DAYS) * 24 * 60 * 60 * 1000;
             const now = new Date();
