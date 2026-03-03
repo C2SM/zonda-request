@@ -92,7 +92,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
 
         ### EXTPAR FIELDS VISUALIZATION ###
         try:
-            visualization_manager.visualize_data(nesting_group, grid_manager.grid_sources, grid_manager.grid_dirs, grid_manager.grid_filenames, extpar_manager.extpar_dirs, logging_indentation_level=0)
+            visualization_manager.visualize_data(nesting_group, grid_manager.grid_sources, grid_manager.grid_dirs, grid_manager.grid_filenames, extpar_manager.extpar_dirs, logging_indentation_level=2)
         except Exception as e:
             logging.warning( f"An error occurred during the visualization of EXTPAR fields for domains "
                              f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
