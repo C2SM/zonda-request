@@ -93,13 +93,13 @@ if __name__ == "__main__":
     output_url = f"https://data.iac.ethz.ch/zonda/{hash}"
 
     if args.success:
-        outfile = config["basegrid"]["outfile"]
+        request_name = config["zonda"]["request_name"]
         comment = (
             f"Your data is ready for up to 7 days under this [link]({output_url}).\n\n"
             f"You can also download it using the following commands:\n"
             f"```bash\n"
-            f"wget {output_url}/zonda_output_{outfile}.zip\n"
-            f"unzip zonda_output_{outfile}.zip -d zonda_output_{outfile}\n"
+            f"wget {output_url}/zonda_output_{request_name}.zip\n"
+            f"unzip zonda_output_{request_name}.zip -d zonda_output_{request_name}\n"
             f"```"
             f"{config_collapsible}"
         )

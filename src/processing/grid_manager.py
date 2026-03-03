@@ -20,10 +20,10 @@ class GridManager:
         self.use_apptainer = use_apptainer
 
         self.zonda_config = self.config["zonda"]
-        self.basegrid_config = self.config["basegrid"]
+        self.globals_config = self.config["globals"]
         self.domains_config = self.config["domains"]
 
-        self.outfile = self.basegrid_config["outfile"]
+        self.request_name = self.zonda_config["request_name"]
 
         n_domains = len(self.domains_config)
 
@@ -97,9 +97,6 @@ class GridManager:
         maxit = 2000
         beta_spring = 0.9
 
-        # TODO v2.0: Move the Zonda parameters on the frontend to the top and add keep_basegrid_files and outfile there.
-        #            Maybe rename outfile to request_name.
-
         # Create the ICON gridgen namelist content
         namelist = []
 
@@ -113,29 +110,29 @@ class GridManager:
             namelist.append(f"  filename = \"/input_grid/{input_grid_name}\" ")
         else:
             # Base grid settings
-            namelist.append(f"  basegrid%grid_root   = {self.basegrid_config['grid_root']}")
-            namelist.append(f"  basegrid%grid_level  = {self.basegrid_config['grid_level']-1}")  # Subtract 1 because initial_refinement is always on
-            namelist.append(f"  basegrid%icopole_lon = {self.basegrid_config['icopole_lon']}")
-            namelist.append(f"  basegrid%icopole_lat = {self.basegrid_config['icopole_lat']}")
-            namelist.append(f"  basegrid%icorotation = {self.basegrid_config['icorotation']}")
+            namelist.append(f"  basegrid%grid_root   = {self.globals_config['grid_root']}")
+            namelist.append(f"  basegrid%grid_level  = {self.globals_config['grid_level']-1}")  # Subtract 1 because initial_refinement is always on
+            namelist.append(f"  basegrid%icopole_lon = {self.globals_config['icopole_lon']}")
+            namelist.append(f"  basegrid%icopole_lat = {self.globals_config['icopole_lat']}")
+            namelist.append(f"  basegrid%icorotation = {self.globals_config['icorotation']}")
         namelist.append("")
 
         # Tuning parameters
         namelist.append(f"  lspring_dynamics   = {convert_to_fortran_bool(lspring_dynamics)}")
         namelist.append(f"  maxit              = {maxit}")
         namelist.append(f"  beta_spring        = {beta_spring}")
-        namelist.append(f"  bdy_indexing_depth = {self.basegrid_config.get('bdy_indexing_depth', 14)}")
+        namelist.append(f"  bdy_indexing_depth = {self.globals_config.get('bdy_indexing_depth', 14)}")
         namelist.append("")
         
         # Set centre and subcentre
-        namelist.append(f"  centre    = {self.basegrid_config.get('centre', 78)}")
-        namelist.append(f"  subcentre = {self.basegrid_config.get('subcentre', 255)}")
+        namelist.append(f"  centre    = {self.globals_config.get('centre', 78)}")
+        namelist.append(f"  subcentre = {self.globals_config.get('subcentre', 255)}")
         namelist.append("")
 
         if start_from_input_grid:
             lwrite_parent = (primary_domain_id == 1)
 
-            namelist.append(f"  dom(1)%outfile             = \"{self.outfile}\" ")
+            namelist.append(f"  dom(1)%outfile             = \"{self.request_name}\" ")
             namelist.append(f"  dom(1)%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
             namelist.append("")
 
@@ -147,7 +144,7 @@ class GridManager:
 
             local_domain_id = domain_id - primary_domain_id + 1
 
-            namelist.append(f"  dom({local_domain_id})%outfile             = \"{self.outfile}\" ")
+            namelist.append(f"  dom({local_domain_id})%outfile             = \"{self.request_name}\" ")
             namelist.append(f"  dom({local_domain_id})%lwrite_parent       = {convert_to_fortran_bool(lwrite_parent)}")
             namelist.append(f"  dom({local_domain_id})%region_type         = {icontools_config['region_type']}")
             namelist.append(f"  dom({local_domain_id})%number_of_grid_used = {icontools_config.get('number_of_grid_used', 0)}")
@@ -272,7 +269,7 @@ class GridManager:
                     domain_idx = domain_id - 1
 
                     self.grid_dirs[domain_idx] = icontools_dir
-                    self.grid_filenames[domain_idx] = f"{self.outfile}_{domain_label(domain_id)}.nc"
+                    self.grid_filenames[domain_idx] = f"{self.request_name}_{domain_label(domain_id)}.nc"
 
             case "input_grid":
                 input_grid_path = self.get_input_grid_path(primary_domain_id, logging_indentation_level=logging_indentation_level+1)
@@ -291,7 +288,7 @@ class GridManager:
                                   f"An input grid was provided for domain {primary_domain_id} at \"{input_grid_path}\" "
                                   f"and the generation of additional nests was not requested, thus the grid "
                                   f"generation step is skipped for domain {primary_domain_id}! "
-                                  f"For this reason the \"basegrid\" and \"icontools_tag\" entries in the JSON "
+                                  f"For this reason the \"globals\" and \"icontools_tag\" entries in the JSON "
                                   f"config are ignored." )
 
                 # Input grid plus generated nests
@@ -312,9 +309,9 @@ class GridManager:
                         domain_idx = domain_id - 1
 
                         self.grid_dirs[domain_idx] = icontools_dir
-                        self.grid_filenames[domain_idx] = f"{self.outfile}_{domain_label(domain_id)}.nc"
+                        self.grid_filenames[domain_idx] = f"{self.request_name}_{domain_label(domain_id)}.nc"
 
-                        current_local_grid_filestem = f"{self.outfile}_{domain_label(local_domain_id)}"
+                        current_local_grid_filestem = f"{self.request_name}_{domain_label(local_domain_id)}"
 
                         # Rename grid files output from ICON Tools, because the domain label refers to the local_domain_id
                         os.rename( os.path.join(self.grid_dirs[domain_idx], current_local_grid_filestem + ".nc"),
@@ -350,8 +347,8 @@ class GridManager:
                     hwidth_lat = icontools_config["hwidth_lat"]
                     hwidth_lon = icontools_config["hwidth_lon"]
 
-                    n = self.basegrid_config["grid_root"]
-                    k = self.basegrid_config["grid_level"] - 1 + domain_id  # Subtract 1 from grid_level because initial_refinement is always on
+                    n = self.globals_config["grid_root"]
+                    k = self.globals_config["grid_level"] - 1 + domain_id  # Subtract 1 from grid_level because initial_refinement is always on
                     grid_spacing = compute_resolution_from_rnbk(n, k)
 
                     output_data_domain_dir = os.path.join(output_data_dir, domain_label(domain_id))
