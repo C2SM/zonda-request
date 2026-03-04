@@ -7,7 +7,8 @@ def setupCondaEnv() {
     wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh
     bash miniforge.sh -b -p ${WORKSPACE}/miniforge
     source ${WORKSPACE}/miniforge/bin/activate
-    conda env create -f ${commonVars.condaEnvYaml}
+    conda install -n base -c conda-forge conda-lock -y
+    conda-lock install --name ${commonVars.condaEnvName} ${WORKSPACE}/${commonVars.condaEnvYaml}
     echo "source ${WORKSPACE}/miniforge/bin/activate ${commonVars.condaEnvName}" >> ${WORKSPACE}/activate_conda.sh
     """
 }
