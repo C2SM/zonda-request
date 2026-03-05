@@ -2,7 +2,6 @@
 name: ICON External Parameter Request
 about: Use this template to submit a request for an ICON grid and external parameters
 labels: data request
-
 ---
 
 # ICON External Parameter Request

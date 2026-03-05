@@ -1,4 +1,4 @@
-name: Commit on "rerun request" comment
+name: Rerun request
 on:
   issue_comment:
     types: [created]
@@ -13,9 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          # Check out the branch related to the issue number
           ref: request-${{ github.event.issue.number }}
 
       - name: Extract JSON from issue description and commit to re-trigger request
@@ -35,8 +34,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const labelsToRemove = ['completed', 'failed', 'aborted', 'invalid']
-            for (const label of labelsToRemove) {
+            const labels_to_remove = ['completed', 'failed', 'aborted', 'invalid']
+            for (const label of labels_to_remove) {
               try {
                 await github.issues.removeLabel({
                   owner: context.repo.owner,
