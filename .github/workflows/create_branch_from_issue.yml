@@ -31,7 +31,7 @@ jobs:
 
           if [ -z "$backend_tag" ]; then
             backend_tag=$(gh api repos/${{ github.repository }}/tags --jq '.[0].name')
-            echo "::warning title=Backend tag missing::backend_tag not found in JSON code-block, falling back to 'main'."
+            echo "::warning title=Backend tag missing::backend_tag not found in JSON code-block, falling back to latest release (${backend_tag})."
           fi
 
           echo "BACKEND_TAG=$backend_tag" >> $GITHUB_ENV
