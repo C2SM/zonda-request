@@ -13,6 +13,7 @@ jobs:
         continue-on-error: true
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           json_block=$(echo "$ISSUE_BODY" \
             | sed -n '/^```json$/,${p;/^```$/q}' \
@@ -29,7 +30,7 @@ jobs:
           backend_tag=$(echo "$json_block" | jq -r '.zonda.backend_tag // empty')
 
           if [ -z "$backend_tag" ]; then
-            backend_tag="main"
+            backend_tag=$(gh api repos/${{ github.repository }}/tags --jq '.[0].name')
             echo "::warning title=Backend tag missing::backend_tag not found in JSON code-block, falling back to 'main'."
           fi
 
