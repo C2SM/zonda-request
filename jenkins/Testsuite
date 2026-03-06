@@ -1,4 +1,5 @@
 def commonSteps
+def commonVars
 
 
 
@@ -34,6 +35,16 @@ pipeline {
                                 def scm_vars = checkout scm
                                 env.GIT_COMMIT = scm_vars.GIT_COMMIT
                                 commonSteps = load 'jenkins/common/steps.groovy'
+                                commonVars = load 'jenkins/common/variables.groovy'
+                            }
+                        }
+                    }
+                    stage('Create Issue ID File') {
+                        steps {
+                            script {
+                                sh """
+                                echo ${ISSUE_ID} > ${WORKSPACE}/${commonVars.issueIdFilename}
+                                """
                             }
                         }
                     }
