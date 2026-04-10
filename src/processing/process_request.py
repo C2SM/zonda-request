@@ -5,7 +5,7 @@ from output_manager import OutputManager
 from grid_manager import GridManager
 from extpar_manager import ExtparManager
 from visualization.visualization_manager import VisualizationManager
-from utilities.utilities import load_config, LOG_PADDING_INFO, LOG_PADDING_WARNING, LOG_INDENTATION_STR
+from utilities.utilities import load_config, LOG_PADDING_INFO, LOG_PADDING_WARNING, LOG_PADDING_ERROR, LOG_INDENTATION_STR
 
 
 
@@ -75,7 +75,11 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
 
             ### EXTPAR ###
             extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames, logging_indentation_level=2)
-        except Exception:
+        except Exception as e:
+            logging.error( f"An error occurred during the processing of the request for domains "
+                           f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
+                           f"{repr(e)}\n"
+                           f"{LOG_PADDING_ERROR}=> Stopping execution and archiving output data!" )
             output_manager.move_output(grid_manager, extpar_manager, nesting_group, keep_basegrid_files, logging_indentation_level=1)
             output_manager.move_zonda_files(logging_indentation_level=1)
             output_manager.zip_output(logging_indentation_level=1)
