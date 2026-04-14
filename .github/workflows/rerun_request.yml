@@ -6,7 +6,7 @@ on:
 jobs:
   commitOnRerunRequest:
     if: |
-      github.event.comment.body == 'rerun request' &&
+      matches(github.event.comment.body, '^\s*rerun request\s*(\r?\n|$)') &&
       !github.event.issue.pull_request &&
       github.event.issue.state == 'open' &&
       !contains(github.event.issue.labels.*.name, 'submitted')
