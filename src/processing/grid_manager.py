@@ -224,7 +224,7 @@ class GridManager:
 
             namelist = iconsub_namelist + subarea_namelist
 
-            namelist_filepath = os.path.join(self.icontools_dirs[domain_idx], self.iconsub_namelist_filename)
+            namelist_filepath = os.path.join(self.icontools_dirs[domain_idx], f"{self.iconsub_namelist_filename}_{domain_label(domain_id)}")
 
             # Write the namelist content to a file
             with open(namelist_filepath, "w") as file:

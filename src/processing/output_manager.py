@@ -100,7 +100,8 @@ class OutputManager:
             self.move_files(os.path.join(icontools_dir, f"*{current_domain_label}*.html"), visualizations_dir, logging_indentation_level=logging_indentation_level+1)
 
             namelists_domain_dir = os.path.join(self.namelists_dir, current_domain_label)
-            self.move_files(os.path.join(icontools_dir, grid_manager.namelist_filename), namelists_domain_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
+            self.move_files(os.path.join(icontools_dir, grid_manager.icon_gridgen_namelist_filename), namelists_domain_dir, copy=True, logging_indentation_level=logging_indentation_level+1) # TODO: Can the copy be removed here?
+            self.move_files(os.path.join(icontools_dir, f"{grid_manager.iconsub_namelist_filename}_{current_domain_label}"), namelists_domain_dir, copy=True, logging_indentation_level=logging_indentation_level+1) # TODO: Maybe iconsub_namelist_filename should be a list with all the filenames premade.
 
 
     def move_extpar_output(self, extpar_manager, domain_ids, logging_indentation_level=0):
