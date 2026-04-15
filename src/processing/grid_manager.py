@@ -233,9 +233,9 @@ class GridManager:
             logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICONSUB (and subarea) namelist for domain {domain_id} written to \"{namelist_filepath}\".")
 
 
-    def run_icontools_command(self, icontools_command, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
+    def get_icontools_container_command(self, icontools_dir, input_grid_dir=None):
         if self.use_apptainer:
-            container_cmd = [
+            container_command = [
                 "apptainer", "exec",
                 "--pwd", "/work",
                 "--env", "LD_LIBRARY_PATH=/home/dwd/software/lib",
@@ -243,13 +243,13 @@ class GridManager:
             ]
 
             if input_grid_dir is not None:
-                container_cmd.extend([
+                container_command.extend([
                     "--bind", f"{input_grid_dir}:/input_grid"
                 ])
 
-            container_cmd.append(self.icontools_container_image)
+            container_command.append(self.icontools_container_image)
         else:
-            container_cmd = [
+            container_command = [
                 "podman", "run",
                 "-w", "/work",
                 "-u", "0",
@@ -258,32 +258,41 @@ class GridManager:
             ]
 
             if input_grid_dir is not None:
-                container_cmd.extend([
+                container_command.extend([
                     "-v", f"{input_grid_dir}:/input_grid"
                 ])
 
-            container_cmd.extend([
+            container_command.extend([
                 "-t", self.icontools_container_image
             ])
 
-        shell_command(
-            *container_cmd,
-            f"/home/dwd/icontools/{icontools_command}",
-            "--nml", f"/work/{self.icon_gridgen_namelist_filename}",
-            logging_indentation_level=logging_indentation_level+1
-        )
+        return container_command
 
 
     def run_icon_gridgen(self, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICON gridgen.")
 
-        self.run_icontools_command("icongridgen", icontools_dir, input_grid_dir, logging_indentation_level)
+        container_command = self.get_icontools_container_command(icontools_dir, input_grid_dir)
+
+        shell_command(
+            *container_command,
+            f"/home/dwd/icontools/icongridgen",
+            "--nml", f"/work/{self.icon_gridgen_namelist_filename}",
+            logging_indentation_level=logging_indentation_level+1
+        )
 
 
     def run_iconsub(self, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICONSUB.")
 
-        self.run_icontools_command("iconsub", icontools_dir, input_grid_dir, logging_indentation_level)
+        container_command = self.get_icontools_container_command(icontools_dir, input_grid_dir)
+
+        shell_command(
+            *container_command,
+            f"/home/dwd/icontools/iconsub",
+            "--nml", f"/work/{self.iconsub_namelist_filename}",
+            logging_indentation_level=logging_indentation_level+1
+        )
 
 
     def get_input_grid_path(self, domain_id, logging_indentation_level=0):
