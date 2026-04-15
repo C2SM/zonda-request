@@ -85,6 +85,15 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
             output_manager.zip_output(logging_indentation_level=1)
             raise
 
+        ### LATERAL BOUNDARY GENERATION ###
+        try:
+            grid_manager.generate_lateral_boundary(nesting_group, logging_indentation_level=2)
+        except Exception as e:
+            logging.warning( f"An error occurred during the generation of the lateral boundary for domains "
+                             f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"
+                             f"{repr(e)}\n"
+                             f"{LOG_PADDING_WARNING}=> Skipping generation of lateral boundary!" )
+
         ### LAT-LON GRID GENERATION ###
         try:
             grid_manager.generate_latlon_grids(nesting_group, output_manager.data_dir, logging_indentation_level=2)
