@@ -10,7 +10,7 @@ class GridManager:
     def __init__( self, config, workspace_path,
                   institution_input_grids_dir="/net/co2/c2sm-data/icon-grids/",
                   icon_gridgen_namelist_filename="nml_gridgen",
-                  iconsub_namelist_filename="nml_iconsub",
+                  iconsub_namelist_filename_global="nml_iconsub",
                   use_apptainer=False ):
 
         self.config = config
@@ -18,7 +18,7 @@ class GridManager:
 
         self.institution_input_grids_dir = institution_input_grids_dir
         self.icon_gridgen_namelist_filename = icon_gridgen_namelist_filename
-        self.iconsub_namelist_filename = iconsub_namelist_filename
+        self.iconsub_namelist_filename_global = iconsub_namelist_filename_global
         self.use_apptainer = use_apptainer
 
         self.zonda_config = self.config["zonda"]
@@ -33,11 +33,16 @@ class GridManager:
         self.grid_dirs = [None] * n_domains
         self.grid_filenames = [None] * n_domains
 
+        self.iconsub_namelist_filenames = [None] * n_domains
+
         self.grid_sources = [None] * n_domains
         self.valid_grid_sources = ["input_grid", "icontools"]
+
         for domain_config in self.domains_config:
             domain_id = domain_config["domain_id"]
             domain_idx = domain_id - 1
+
+            self.iconsub_namelist_filenames[domain_idx] = f"{iconsub_namelist_filename_global}_{domain_label(domain_id)}"
 
             for grid_source in self.valid_grid_sources:
                 if grid_source in domain_config:
@@ -224,7 +229,7 @@ class GridManager:
 
             namelist = iconsub_namelist + subarea_namelist
 
-            namelist_filepath = os.path.join(self.icontools_dirs[domain_idx], f"{self.iconsub_namelist_filename}_{domain_label(domain_id)}")
+            namelist_filepath = os.path.join(self.icontools_dirs[domain_idx], f"{self.iconsub_namelist_filenames[domain_idx]}")
 
             # Write the namelist content to a file
             with open(namelist_filepath, "w") as file:
@@ -282,7 +287,7 @@ class GridManager:
         )
 
 
-    def run_iconsub(self, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
+    def run_iconsub(self, domain_idx, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICONSUB.")
 
         container_command = self.get_icontools_container_command(icontools_dir, input_grid_dir)
@@ -290,7 +295,7 @@ class GridManager:
         shell_command(
             *container_command,
             f"/home/dwd/icontools/iconsub",
-            "--nml", f"/work/{self.iconsub_namelist_filename}",
+            "--nml", f"/work/{self.iconsub_namelist_filenames[domain_idx]}",
             logging_indentation_level=logging_indentation_level+1
         )
 

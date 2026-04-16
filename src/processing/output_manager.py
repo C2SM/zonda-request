@@ -101,8 +101,7 @@ class OutputManager:
 
             namelists_domain_dir = os.path.join(self.namelists_dir, current_domain_label)
             self.move_files(os.path.join(icontools_dir, grid_manager.icon_gridgen_namelist_filename), namelists_domain_dir, copy=True, logging_indentation_level=logging_indentation_level+1) # TODO: Can the copy be removed here?
-            self.move_files(os.path.join(icontools_dir, f"{grid_manager.iconsub_namelist_filename}_{current_domain_label}"), namelists_domain_dir, copy=True, logging_indentation_level=logging_indentation_level+1) # TODO: Maybe iconsub_namelist_filename should be a list with all the filenames premade.
-
+            self.move_files(os.path.join(icontools_dir, f"{grid_manager.iconsub_namelist_filenames[domain_idx]}"), namelists_domain_dir, copy=True, logging_indentation_level=logging_indentation_level+1)
 
     def move_extpar_output(self, extpar_manager, domain_ids, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Move EXTPAR output.")
