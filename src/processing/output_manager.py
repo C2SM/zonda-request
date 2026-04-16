@@ -71,12 +71,12 @@ class OutputManager:
             destination_filepath = os.path.join(destination_dir, destination_filename)
 
             if copy:
-                logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level}Copy {source_file}\n"
-                              f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to {destination_filepath}." )
+                logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level}Copy \"{source_file}\"\n"
+                              f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to \"{destination_filepath}\"." )
                 shutil.copy(source_file, destination_filepath)
             else:
-                logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level}Move {source_file}\n"
-                              f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to {destination_filepath}." )
+                logging.info( f"{LOG_INDENTATION_STR*logging_indentation_level}Move \"{source_file}\"\n"
+                              f"{LOG_PADDING_INFO}{" " * len(LOG_INDENTATION_STR*logging_indentation_level)}  to \"{destination_filepath}\"." )
                 shutil.move(source_file, destination_filepath)
 
 
