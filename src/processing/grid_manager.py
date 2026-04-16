@@ -470,4 +470,4 @@ class GridManager:
         for domain_id in nesting_group:
             domain_idx = domain_id - 1
 
-            self.run_iconsub(self.icontools_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
+            self.run_iconsub(domain_idx, self.icontools_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
