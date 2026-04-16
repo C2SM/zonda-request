@@ -211,7 +211,7 @@ class GridManager:
             iconsub_namelist = []
 
             iconsub_namelist.append("&iconsub_nml")
-            iconsub_namelist.append(f"  grid_filename = {grid_filename}")
+            iconsub_namelist.append(f"  grid_filename = \"{grid_filename}\" ")
             iconsub_namelist.append(f"  output_type   = {output_type}")
             iconsub_namelist.append(f"  lwrite_grid   = {convert_to_fortran_bool(lwrite_grid)}")
             iconsub_namelist.append("/")
@@ -221,7 +221,7 @@ class GridManager:
             subarea_namelist = []
 
             subarea_namelist.append("&subarea_nml")
-            subarea_namelist.append(f"  order            = {output_filename}")
+            subarea_namelist.append(f"  order            = \"{output_filename}\" ")
             subarea_namelist.append(f"  min_refin_c_ctrl = {min_refin_c_ctrl}")  # iconsub_config['min_refin_c_ctrl']
             subarea_namelist.append(f"  max_refin_c_ctrl = {max_refin_c_ctrl}")  # iconsub_config['max_refin_c_ctrl']
             subarea_namelist.append("/")
