@@ -305,7 +305,11 @@ class GridManager:
 
                     self.run_icon_gridgen(icontools_dir, input_grid_dir=input_grid_dir, logging_indentation_level=logging_indentation_level+2)
 
-                    for local_domain_id, domain_id in enumerate(nesting_group[1:], start=2):
+                    # Note that the domains are traversed in reverse to avoid renaming a file to something that already
+                    # exists. E.g., if DOM02 is renamed to DOM03, but DOM03 already exists as a "local domain", then it
+                    # will get replaced and subsequently the new DOM03 (which is not local) will get renamed to DOM04
+                    # and so on.
+                    for local_domain_id, domain_id in reversed(list(enumerate(nesting_group[1:], start=2))):
                         domain_idx = domain_id - 1
 
                         self.grid_dirs[domain_idx] = icontools_dir
