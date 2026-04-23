@@ -200,12 +200,10 @@ class GridManager:
 
         for domain_id in nesting_group:
             domain_idx = domain_id - 1
-            # domain_config = self.domains_config[domain_idx]
-            # iconsub_config = domain_config["iconsub"]
 
             grid_filename = self.grid_filenames[domain_idx]
-            grid_filename_split = grid_filename.split(".", 1)
-            output_filename = f"{grid_filename_split[0]}_latbc.{grid_filename_split[1]}"
+            grid_filestem = grid_filename.split(".", 1)[0]
+            output_filestem = f"{grid_filestem}_latbc"
 
             # Create the ICONSUB namelist content
             iconsub_namelist = []
@@ -221,9 +219,9 @@ class GridManager:
             subarea_namelist = []
 
             subarea_namelist.append("&subarea_nml")
-            subarea_namelist.append(f"  order            = \"{output_filename}\" ")
-            subarea_namelist.append(f"  min_refin_c_ctrl = {min_refin_c_ctrl}")  # iconsub_config['min_refin_c_ctrl']
-            subarea_namelist.append(f"  max_refin_c_ctrl = {max_refin_c_ctrl}")  # iconsub_config['max_refin_c_ctrl']
+            subarea_namelist.append(f"  order            = \"{output_filestem}\" ")
+            subarea_namelist.append(f"  min_refin_c_ctrl = {min_refin_c_ctrl}")
+            subarea_namelist.append(f"  max_refin_c_ctrl = {max_refin_c_ctrl}")
             subarea_namelist.append("/")
             subarea_namelist.append("")
 
