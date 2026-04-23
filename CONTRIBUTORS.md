@@ -24,4 +24,3 @@ We acknowledge Daniel Rieger for his contributions to the design of Zonda and fo
 We also thank Daniel Rieger and Florian Prill (DWD; @fprill) for their support in understanding and integrating 
 [EXTPAR](https://github.com/C2SM/extpar) and [ICON Tools](https://gitlab.dkrz.de/dwd-sw/dwd_icon_tools) into the
 backend of Zonda.
-
