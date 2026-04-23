@@ -238,7 +238,7 @@ class GridManager:
             logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICONSUB (and subarea) namelist for domain {domain_id} written to \"{namelist_filepath}\".")
 
 
-    def get_icontools_container_command(self, icontools_dir, input_grid_dir=None):
+    def get_icontools_container_command(self, icontools_dir, input_grid_dir=None, unlimited_stack=False):
         if self.use_apptainer:
             container_command = [
                 "apptainer", "exec",
@@ -253,11 +253,17 @@ class GridManager:
                 ])
 
             container_command.append(self.icontools_container_image)
+
+            if unlimited_stack:
+                logging.warning( "Unlimited stack size requested for ICON Tools container. However, Apptainer "
+                                 "inherits stack size from the host shell. You should set it manually before "
+                                 "running Zonda with \"ulimit -s ulimited\". You risk segmentation faults otherwise!" )
         else:
             container_command = [
                 "podman", "run",
-                "-w", "/work",
+                "-t",
                 "-u", "0",
+                "-w", "/work",
                 "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib",
                 "-v", f"{icontools_dir}:/work"
             ]
@@ -267,9 +273,12 @@ class GridManager:
                     "-v", f"{input_grid_dir}:/input_grid"
                 ])
 
-            container_command.extend([
-                "-t", self.icontools_container_image
-            ])
+            if unlimited_stack:
+                container_command.extend([
+                    "--ulimit", "stack=-1"
+                ])
+
+            container_command.append(self.icontools_container_image)
 
         return container_command
 
@@ -277,7 +286,7 @@ class GridManager:
     def run_icon_gridgen(self, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICON gridgen.")
 
-        container_command = self.get_icontools_container_command(icontools_dir, input_grid_dir)
+        container_command = self.get_icontools_container_command(icontools_dir, input_grid_dir=input_grid_dir)
 
         shell_command(
             *container_command,
@@ -290,11 +299,12 @@ class GridManager:
     def run_iconsub(self, domain_idx, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICONSUB.")
 
-        container_command = self.get_icontools_container_command(icontools_dir, input_grid_dir)
+        container_command = self.get_icontools_container_command(icontools_dir, input_grid_dir=input_grid_dir, unlimited_stack=True)
 
         shell_command(
             *container_command,
             f"/home/dwd/icontools/iconsub",
+            "-vv",
             "--nml", f"/work/{self.iconsub_namelist_filenames[domain_idx]}",
             logging_indentation_level=logging_indentation_level+1
         )
