@@ -13,6 +13,7 @@
 
 - Sascha Brand (DWD; @sbrand-dwd)
 - Daniel Rieger (DWD; @drieg)
+- Matthias Zacharuk (DWD; @MatthiasZacharuk)
 
 ## Acknowledgements
 
