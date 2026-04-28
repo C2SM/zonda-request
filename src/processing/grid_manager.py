@@ -189,8 +189,10 @@ class GridManager:
         logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICON gridgen namelist written to \"{namelist_filepath}\".")
 
 
-    def write_iconsub_namelists(self, nesting_group, logging_indentation_level=0):
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Write ICONSUB namelists.")
+    def write_iconsub_namelist(self, domain_id, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Write ICONSUB namelist for domain {domain_id}.")
+
+        domain_idx = domain_id - 1
 
         # Set hardcoded entries
         output_type = 5
@@ -198,42 +200,39 @@ class GridManager:
         min_refin_c_ctrl = 1
         max_refin_c_ctrl = 14
 
-        for domain_id in nesting_group:
-            domain_idx = domain_id - 1
+        grid_filename = self.grid_filenames[domain_idx]
+        grid_filestem = grid_filename.split(".", 1)[0]
+        output_filestem = f"{grid_filestem}_latbc"
 
-            grid_filename = self.grid_filenames[domain_idx]
-            grid_filestem = grid_filename.split(".", 1)[0]
-            output_filestem = f"{grid_filestem}_latbc"
+        # Create the ICONSUB namelist content
+        iconsub_namelist = []
 
-            # Create the ICONSUB namelist content
-            iconsub_namelist = []
+        iconsub_namelist.append("&iconsub_nml")
+        iconsub_namelist.append(f"  grid_filename = \"{grid_filename}\" ")
+        iconsub_namelist.append(f"  output_type   = {output_type}")
+        iconsub_namelist.append(f"  lwrite_grid   = {convert_to_fortran_bool(lwrite_grid)}")
+        iconsub_namelist.append("/")
+        iconsub_namelist.append("")
 
-            iconsub_namelist.append("&iconsub_nml")
-            iconsub_namelist.append(f"  grid_filename = \"{grid_filename}\" ")
-            iconsub_namelist.append(f"  output_type   = {output_type}")
-            iconsub_namelist.append(f"  lwrite_grid   = {convert_to_fortran_bool(lwrite_grid)}")
-            iconsub_namelist.append("/")
-            iconsub_namelist.append("")
+        # Create the subarea namelist content
+        subarea_namelist = []
 
-            # Create the subarea namelist content
-            subarea_namelist = []
+        subarea_namelist.append("&subarea_nml")
+        subarea_namelist.append(f"  order            = \"{output_filestem}\" ")
+        subarea_namelist.append(f"  min_refin_c_ctrl = {min_refin_c_ctrl}")
+        subarea_namelist.append(f"  max_refin_c_ctrl = {max_refin_c_ctrl}")
+        subarea_namelist.append("/")
+        subarea_namelist.append("")
 
-            subarea_namelist.append("&subarea_nml")
-            subarea_namelist.append(f"  order            = \"{output_filestem}\" ")
-            subarea_namelist.append(f"  min_refin_c_ctrl = {min_refin_c_ctrl}")
-            subarea_namelist.append(f"  max_refin_c_ctrl = {max_refin_c_ctrl}")
-            subarea_namelist.append("/")
-            subarea_namelist.append("")
+        namelist = iconsub_namelist + subarea_namelist
 
-            namelist = iconsub_namelist + subarea_namelist
+        namelist_filepath = os.path.join(self.icontools_dirs[domain_idx], self.iconsub_namelist_filenames[domain_idx])
 
-            namelist_filepath = os.path.join(self.icontools_dirs[domain_idx], self.iconsub_namelist_filenames[domain_idx])
+        # Write the namelist content to a file
+        with open(namelist_filepath, "w") as file:
+            file.write("\n".join(namelist))
 
-            # Write the namelist content to a file
-            with open(namelist_filepath, "w") as file:
-                file.write("\n".join(namelist))
-
-            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICONSUB (and subarea) namelist for domain {domain_id} written to \"{namelist_filepath}\".")
+        logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICONSUB (and subarea) namelist written to \"{namelist_filepath}\".")
 
 
     def get_icontools_container_command(self, icontools_dir, input_grid_dir=None, unlimited_stack=False):
@@ -477,9 +476,15 @@ class GridManager:
     def generate_lateral_boundary(self, nesting_group, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Generate lateral boundary for ICON grids.")
 
-        self.write_iconsub_namelists(nesting_group, logging_indentation_level=logging_indentation_level+1)
-
         for domain_id in nesting_group:
             domain_idx = domain_id - 1
 
-            self.run_iconsub(domain_idx, self.icontools_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
+            if self.grid_sources[domain_idx] == "icontools":
+                if self.domains_config[domain_idx]["icontools"]["region_type"] != 1:
+                    self.write_iconsub_namelist(domain_id, logging_indentation_level=logging_indentation_level+1)
+
+                    self.run_iconsub(domain_idx, self.icontools_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
+                else:
+                    logging.warning(f"Domain {domain_id} is global (i.e., region_type = 1). Skipping generation of lateral boundary!")
+            else:
+                logging.warning(f"An input grid was provided for domain {domain_id}. Skipping generation of lateral boundary!")
