@@ -9,14 +9,16 @@ class GridManager:
 
     def __init__( self, config, workspace_path,
                   institution_input_grids_dir="/net/co2/c2sm-data/icon-grids/",
-                  namelist_filename="nml_gridgen",
+                  icon_gridgen_namelist_filename="nml_gridgen",
+                  iconsub_namelist_filename_global="nml_iconsub",
                   use_apptainer=False ):
 
         self.config = config
         self.workspace_path = workspace_path
 
         self.institution_input_grids_dir = institution_input_grids_dir
-        self.namelist_filename = namelist_filename
+        self.icon_gridgen_namelist_filename = icon_gridgen_namelist_filename
+        self.iconsub_namelist_filename_global = iconsub_namelist_filename_global
         self.use_apptainer = use_apptainer
 
         self.zonda_config = self.config["zonda"]
@@ -31,11 +33,16 @@ class GridManager:
         self.grid_dirs = [None] * n_domains
         self.grid_filenames = [None] * n_domains
 
+        self.iconsub_namelist_filenames = [None] * n_domains
+
         self.grid_sources = [None] * n_domains
         self.valid_grid_sources = ["input_grid", "icontools"]
+
         for domain_config in self.domains_config:
             domain_id = domain_config["domain_id"]
             domain_idx = domain_id - 1
+
+            self.iconsub_namelist_filenames[domain_idx] = f"{iconsub_namelist_filename_global}_{domain_label(domain_id)}"
 
             for grid_source in self.valid_grid_sources:
                 if grid_source in domain_config:
@@ -173,7 +180,7 @@ class GridManager:
         namelist.append("/")
         namelist.append("")
 
-        namelist_filepath = os.path.join(self.icontools_dirs[primary_domain_idx], self.namelist_filename)
+        namelist_filepath = os.path.join(self.icontools_dirs[primary_domain_idx], self.icon_gridgen_namelist_filename)
 
         # Write the namelist content to a file
         with open(namelist_filepath, "w") as file:
@@ -182,11 +189,55 @@ class GridManager:
         logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICON gridgen namelist written to \"{namelist_filepath}\".")
 
 
-    def run_icon_gridgen(self, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
-        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICON gridgen.")
+    def write_iconsub_namelist(self, domain_id, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Write ICONSUB namelist for domain {domain_id}.")
 
+        domain_idx = domain_id - 1
+
+        # Set hardcoded entries
+        output_type = 5
+        lwrite_grid = True
+        min_refin_c_ctrl = 1
+        max_refin_c_ctrl = 14
+
+        grid_filename = self.grid_filenames[domain_idx]
+        grid_filestem = grid_filename.split(".", 1)[0]
+        output_filestem = f"{grid_filestem}_latbc"
+
+        # Create the ICONSUB namelist content
+        iconsub_namelist = []
+
+        iconsub_namelist.append("&iconsub_nml")
+        iconsub_namelist.append(f"  grid_filename = \"{grid_filename}\" ")
+        iconsub_namelist.append(f"  output_type   = {output_type}")
+        iconsub_namelist.append(f"  lwrite_grid   = {convert_to_fortran_bool(lwrite_grid)}")
+        iconsub_namelist.append("/")
+        iconsub_namelist.append("")
+
+        # Create the subarea namelist content
+        subarea_namelist = []
+
+        subarea_namelist.append("&subarea_nml")
+        subarea_namelist.append(f"  order            = \"{output_filestem}\" ")
+        subarea_namelist.append(f"  min_refin_c_ctrl = {min_refin_c_ctrl}")
+        subarea_namelist.append(f"  max_refin_c_ctrl = {max_refin_c_ctrl}")
+        subarea_namelist.append("/")
+        subarea_namelist.append("")
+
+        namelist = iconsub_namelist + subarea_namelist
+
+        namelist_filepath = os.path.join(self.icontools_dirs[domain_idx], self.iconsub_namelist_filenames[domain_idx])
+
+        # Write the namelist content to a file
+        with open(namelist_filepath, "w") as file:
+            file.write("\n".join(namelist))
+
+        logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}ICONSUB (and subarea) namelist written to \"{namelist_filepath}\".")
+
+
+    def get_icontools_container_command(self, icontools_dir, input_grid_dir=None, unlimited_stack=False):
         if self.use_apptainer:
-            container_cmd = [
+            container_command = [
                 "apptainer", "exec",
                 "--pwd", "/work",
                 "--env", "LD_LIBRARY_PATH=/home/dwd/software/lib",
@@ -194,33 +245,64 @@ class GridManager:
             ]
 
             if input_grid_dir is not None:
-                container_cmd.extend([
+                container_command.extend([
                     "--bind", f"{input_grid_dir}:/input_grid"
                 ])
 
-            container_cmd.append(self.icontools_container_image)
+            container_command.append(self.icontools_container_image)
+
+            if unlimited_stack:
+                logging.warning( "Unlimited stack size requested for ICON Tools container. However, Apptainer "
+                                 "inherits stack size from the host shell. You should set it manually before "
+                                 "running Zonda with \"ulimit -s ulimited\". You risk segmentation faults otherwise!" )
         else:
-            container_cmd = [
+            container_command = [
                 "podman", "run",
-                "-w", "/work",
+                "-t",
                 "-u", "0",
+                "-w", "/work",
                 "-e", "LD_LIBRARY_PATH=/home/dwd/software/lib",
                 "-v", f"{icontools_dir}:/work"
             ]
 
             if input_grid_dir is not None:
-                container_cmd.extend([
+                container_command.extend([
                     "-v", f"{input_grid_dir}:/input_grid"
                 ])
 
-            container_cmd.extend([
-                "-t", self.icontools_container_image
-            ])
+            if unlimited_stack:
+                container_command.extend([
+                    "--ulimit", "stack=-1"
+                ])
+
+            container_command.append(self.icontools_container_image)
+
+        return container_command
+
+
+    def run_icon_gridgen(self, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICON gridgen.")
+
+        container_command = self.get_icontools_container_command(icontools_dir, input_grid_dir=input_grid_dir)
 
         shell_command(
-            *container_cmd,
-            "/home/dwd/icontools/icongridgen",
-            "--nml", f"/work/{self.namelist_filename}",
+            *container_command,
+            f"/home/dwd/icontools/icongridgen",
+            "--nml", f"/work/{self.icon_gridgen_namelist_filename}",
+            logging_indentation_level=logging_indentation_level+1
+        )
+
+
+    def run_iconsub(self, domain_idx, icontools_dir, input_grid_dir=None, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Run ICONSUB.")
+
+        container_command = self.get_icontools_container_command(icontools_dir, input_grid_dir=input_grid_dir, unlimited_stack=True)
+
+        shell_command(
+            *container_command,
+            f"/home/dwd/icontools/iconsub",
+            "-vv",
+            "--nml", f"/work/{self.iconsub_namelist_filenames[domain_idx]}",
             logging_indentation_level=logging_indentation_level+1
         )
 
@@ -389,3 +471,20 @@ class GridManager:
                     logging.warning(f"Domain {domain_id} is not rectangular (i.e., region_type = 3). Skipping generation of lat-lon grid!")
             else:
                 logging.warning(f"An input grid was provided for domain {domain_id}. Skipping generation of lat-lon grid!")
+
+
+    def generate_lateral_boundary(self, nesting_group, logging_indentation_level=0):
+        logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Generate lateral boundary for ICON grids.")
+
+        for domain_id in nesting_group:
+            domain_idx = domain_id - 1
+
+            if self.grid_sources[domain_idx] == "icontools":
+                if self.domains_config[domain_idx]["icontools"]["region_type"] != 1:
+                    self.write_iconsub_namelist(domain_id, logging_indentation_level=logging_indentation_level+1)
+
+                    self.run_iconsub(domain_idx, self.icontools_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
+                else:
+                    logging.warning(f"Domain {domain_id} is global (i.e., region_type = 1). Skipping generation of lateral boundary!")
+            else:
+                logging.warning(f"An input grid was provided for domain {domain_id}. Skipping generation of lateral boundary!")
