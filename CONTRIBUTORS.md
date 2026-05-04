@@ -2,7 +2,7 @@
 
 ## Core developers
 
-- Jonas Jucker (C2SM; @jonasjucker)
+- Jonas Jucker (previously C2SM; @jonasjucker)
 - Mikael Stellio (C2SM; @stelliom)
 
 ## Deputies
