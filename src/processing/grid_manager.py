@@ -172,7 +172,7 @@ class GridManager:
                 namelist.append(f"  dom({local_domain_id})%hwidth_lat = {icontools_config['hwidth_lat']}")
                 namelist.append("")
 
-                namelist.append(f"  dom({local_domain_id})%lrotate  = {convert_to_fortran_bool(icontools_config['lrotate'])}")
+                namelist.append(f"  dom({local_domain_id})%lrotate  = {convert_to_fortran_bool(icontools_config.get('lrotate', False))}")
                 namelist.append(f"  dom({local_domain_id})%pole_lon = {icontools_config.get('pole_lon', -180.0)}")
                 namelist.append(f"  dom({local_domain_id})%pole_lat = {icontools_config.get('pole_lat', 90.0)}")
                 namelist.append("")
