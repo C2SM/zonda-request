@@ -100,9 +100,6 @@ class GridManager:
 
         # Set hardcoded entries
         initial_refinement = not start_from_input_grid
-        lspring_dynamics = True
-        maxit = 2000
-        beta_spring = 0.9
 
         # Create the ICON gridgen namelist content
         namelist = []
@@ -125,9 +122,9 @@ class GridManager:
         namelist.append("")
 
         # Tuning parameters
-        namelist.append(f"  lspring_dynamics   = {convert_to_fortran_bool(lspring_dynamics)}")
-        namelist.append(f"  maxit              = {maxit}")
-        namelist.append(f"  beta_spring        = {beta_spring}")
+        namelist.append(f"  lspring_dynamics   = {convert_to_fortran_bool(self.globals_config.get('lspring_dynamics', True))}")
+        namelist.append(f"  maxit              = {self.globals_config.get('maxit', 2000)}")
+        namelist.append(f"  beta_spring        = {self.globals_config.get('beta_spring', 0.9)}")
         namelist.append(f"  bdy_indexing_depth = {self.globals_config.get('bdy_indexing_depth', 14)}")
         namelist.append("")
         
