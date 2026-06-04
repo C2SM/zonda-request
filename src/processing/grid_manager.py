@@ -1,7 +1,7 @@
 import os
 import logging
 from zonda_rotgrid.core import create_rotated_grid, create_latlon_grid
-from utilities.utilities import shell_command, convert_to_fortran_bool, domain_label, nesting_group_label, compute_resolution_from_rnbk, LOG_PADDING_INFO, LOG_PADDING_ERROR, LOG_INDENTATION_STR
+from utilities.utilities import shell_command, convert_to_fortran_bool, domain_label, nesting_group_label, compute_resolution_from_rnbk, is_version_greater_equal, LOG_PADDING_ERROR, LOG_INDENTATION_STR
 
 
 
@@ -26,6 +26,8 @@ class GridManager:
         self.domains_config = self.config["domains"]
 
         self.request_name = self.zonda_config["request_name"]
+
+        self.icontools_tag = self.zonda_config.get("icontools_tag", "latest")
 
         n_domains = len(self.domains_config)
 
@@ -56,8 +58,7 @@ class GridManager:
         if self.use_apptainer:
             self.icontools_container_image = os.path.join(self.workspace_path, "icon_tools.sif")
         else:
-            icontools_tag = self.zonda_config.get("icontools_tag", "latest")
-            self.icontools_container_image = f"execute:{icontools_tag}"
+            self.icontools_container_image = f"execute:{self.icontools_tag}"
 
 
     def make_icontools_dirs(self, nesting_groups, logging_indentation_level=0):
@@ -126,7 +127,10 @@ class GridManager:
         namelist.append(f"  beta_spring        = {self.globals_config.get('beta_spring', 0.9)}")
         namelist.append(f"  maxit              = {self.globals_config.get('maxit', 2000)}")
         namelist.append(f"  lfixed_boundary    = {convert_to_fortran_bool(self.globals_config.get('lfixed_boundary', True))}")
-        namelist.append(f"  ncells_localize    = {self.globals_config.get('ncells_localize', 350000000)}")
+
+        if is_version_greater_equal(self.icontools_tag, "icontools-2.8.1"):
+            namelist.append(f"  ncells_localize    = {self.globals_config.get('ncells_localize', 350000000)}")
+
         namelist.append(f"  bdy_indexing_depth = {self.globals_config.get('bdy_indexing_depth', 14)}")
         namelist.append("")
         
