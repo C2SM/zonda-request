@@ -123,8 +123,10 @@ class GridManager:
 
         # Tuning parameters
         namelist.append(f"  lspring_dynamics   = {convert_to_fortran_bool(self.globals_config.get('lspring_dynamics', True))}")
-        namelist.append(f"  maxit              = {self.globals_config.get('maxit', 2000)}")
         namelist.append(f"  beta_spring        = {self.globals_config.get('beta_spring', 0.9)}")
+        namelist.append(f"  maxit              = {self.globals_config.get('maxit', 2000)}")
+        namelist.append(f"  lfixed_boundary    = {convert_to_fortran_bool(self.globals_config.get('lfixed_boundary', True))}")
+        namelist.append(f"  ncells_localize    = {self.globals_config.get('ncells_localize', 350000000)}")
         namelist.append(f"  bdy_indexing_depth = {self.globals_config.get('bdy_indexing_depth', 14)}")
         namelist.append("")
         
