@@ -129,7 +129,7 @@ class OutputManager:
                 self.move_files(os.path.join(extpar_dir, "namelist.py"), namelists_domain_dir, logging_indentation_level=logging_indentation_level+1)
                 self.move_files(os.path.join(extpar_dir, extpar_manager.extpar_config_filename), namelists_domain_dir, logging_indentation_level=logging_indentation_level+1)
             else:
-                logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level+1}Nothing to be done for domain {domain_id}.")
+                logging.warning(f"No EXTPAR directory was found for domain {domain_id}, likely because the EXTPAR step was skipped. No output data to be moved!")
 
 
     def move_zonda_files(self, logging_indentation_level=0):
