@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import json
+import re
 from math import sqrt, pow, pi
 
 
@@ -76,3 +77,33 @@ def nesting_group_label(nesting_group_id):
 def compute_resolution_from_rnbk(n, k):
     earth_radius = 6371.0
     return earth_radius * sqrt(pi / 5) / (n * pow(2, k))
+
+
+def normalize_version(version):
+    if not version:
+        return [0, 0, 0]
+
+    # Find something like 1.2.3 anywhere in the string
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", version)
+
+    if not match:
+        return [0, 0, 0]
+
+    return [int(match.group(1)), int(match.group(2)), int(match.group(3))]
+
+
+def is_version_greater_equal(version, target_version):
+    if version == "latest":
+        return True
+    elif target_version == "latest":
+        return False
+
+    normalized_version = normalize_version(version)
+    normalized_target_version = normalize_version(target_version)
+
+    for v, target_v in zip(normalized_version, normalized_target_version):
+        if v > target_v:
+            return True
+        if v < target_v:
+            return False
+    return True
