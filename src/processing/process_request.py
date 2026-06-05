@@ -29,6 +29,7 @@ def create_nesting_groups(config, grid_sources):
 
     return nesting_groups
 
+
 def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, use_apptainer):
 
     logging.info( f"Start main process with\n"
@@ -49,8 +50,6 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
     grid_manager = GridManager(config, workspace_path, use_apptainer=use_apptainer)
     extpar_manager = ExtparManager(config, workspace_path, extpar_raw_data_path, use_apptainer=use_apptainer)
     visualization_manager = VisualizationManager(config, workspace_path)
-
-    skip_extpar = config["zonda"].get("skip_extpar", False)
 
     logging.info(f"{LOG_INDENTATION_STR}Create nesting groups from grid sources: {grid_manager.grid_sources}.")
     nesting_groups = create_nesting_groups(config, grid_manager.grid_sources)
@@ -76,10 +75,7 @@ def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, 
             grid_manager.generate_icon_grids(nesting_group, logging_indentation_level=2)
 
             ### EXTPAR ###
-            if not skip_extpar:
-                extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames, logging_indentation_level=2)
-            else:
-                logging.warning(f"Skipping EXTPAR step as requested (i.e. skip_extpar = true)!")
+            extpar_manager.run_extpar(nesting_group, grid_manager.grid_dirs, grid_manager.grid_filenames, logging_indentation_level=2)
         except Exception as e:
             logging.error( f"An error occurred during the processing of the request for domains "
                            f"{', '.join([str(domain_id) for domain_id in nesting_group])}.\n"

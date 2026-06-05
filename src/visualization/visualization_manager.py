@@ -279,17 +279,22 @@ class VisualizationManager:
 
             logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Visualization of data for domain {domain_id}.")
 
-            if grid_sources[domain_idx] == "icontools":
-                domain_config = self.domains_config[domain_idx]
-                icontools_config = domain_config["icontools"]
-                extpar_plots_config = domain_config.get("extpar_plots", [])
+            extpar_dir = extpar_dirs[domain_idx]
 
-                if len(extpar_plots_config) > 0:
-                    grid_filepath = os.path.join(grid_dirs[domain_idx], grid_filenames[domain_idx])
-                    extpar_filepath = os.path.join(extpar_dirs[domain_idx], "external_parameter.nc")
+            if extpar_dir is not None:
+                if grid_sources[domain_idx] == "icontools":
+                    domain_config = self.domains_config[domain_idx]
+                    icontools_config = domain_config["icontools"]
+                    extpar_plots_config = domain_config.get("extpar_plots", [])
 
-                    self.visualize_extpar_variables(extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, extpar_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
+                    if len(extpar_plots_config) > 0:
+                        grid_filepath = os.path.join(grid_dirs[domain_idx], grid_filenames[domain_idx])
+                        extpar_filepath = os.path.join(extpar_dir, "external_parameter.nc")
+
+                        self.visualize_extpar_variables(extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, extpar_dir, logging_indentation_level=logging_indentation_level+1)
+                    else:
+                        logging.warning(f"No EXTPAR variable was requested for visualization for domain {domain_id}. Skipping visualization of EXTPAR variables!")
                 else:
-                    logging.warning(f"No EXTPAR variable was requested for visualization for domain {domain_id}. Skipping visualization of EXTPAR variables!")
+                    logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR variables!")
             else:
-                logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR variables!")
+                logging.warning(f"No EXTPAR directory was found for domain {domain_id}, likely because the EXTPAR step was skipped. Skipping visualization of EXTPAR variables!")
