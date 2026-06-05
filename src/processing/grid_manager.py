@@ -182,7 +182,7 @@ class GridManager:
 
             # Custom domain defined by expression
             elif icontools_config["region_type"] == 4:
-                namelist.append(f"  dom({local_domain_id})%expression = {icontools_config['expression']}")
+                namelist.append(f"  dom({local_domain_id})%expression = \"{icontools_config['expression']}\" ")
                 namelist.append(f"  dom({local_domain_id})%expression_var = {icontools_config['expression_var']}")
                 namelist.append("")
 
