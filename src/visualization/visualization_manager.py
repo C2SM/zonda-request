@@ -185,7 +185,11 @@ class VisualizationManager:
             else:
                 ax = plt.axes(projection=ccrs.PlateCarree())
 
-            figure_title = f"{long_name} ({variable_name} with {", ".join(f"{key}={value}" for key, value in indices_per_dim.items())})"
+            indices_str = ""
+            if indices_per_dim:
+                indices_str = " with " + ", ".join(f"{key}={value}" for key, value in indices_per_dim.items())
+
+            figure_title = f"{long_name} ({variable_name}{indices_str})"
             ax.set_title(figure_title, **self.font)
 
             # Draw custom map on axis and lines delimiting coasts
@@ -227,7 +231,7 @@ class VisualizationManager:
 
             colorbar = plt.colorbar(collection, shrink=0.3, format=colorbar_formatter)
             units_str = f" ({units})" if units else ""
-            colorbar.set_label(f"{long_name}" + units_str, **self.font)
+            colorbar.set_label(f"{long_name}" + units_str, **self.small_font)
             colorbar.ax.yaxis.get_offset_text().set_font(self.small_font)
             plt.setp(colorbar.ax.yaxis.get_ticklabels(), **self.font)
 
