@@ -471,7 +471,7 @@ class GridManager:
 
                         logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Lat-lon grid for domain {domain_id} stored in \"{latlon_grid_filepath}\".")
                 else:
-                    logging.warning(f"Domain {domain_id} is not rectangular (i.e. region_type = 3). Skipping generation of lat-lon grid!")
+                    logging.warning(f"Domain {domain_id} is not rectangular (i.e., region_type = 3). Skipping generation of lat-lon grid!")
             else:
                 logging.warning(f"An input grid was provided for domain {domain_id}. Skipping generation of lat-lon grid!")
 
@@ -488,6 +488,6 @@ class GridManager:
 
                     self.run_iconsub(domain_idx, self.icontools_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
                 else:
-                    logging.warning(f"Domain {domain_id} is global (i.e. region_type = 1). Skipping generation of lateral boundary!")
+                    logging.warning(f"Domain {domain_id} is global (i.e., region_type = 1). Skipping generation of lateral boundary!")
             else:
                 logging.warning(f"An input grid was provided for domain {domain_id}. Skipping generation of lateral boundary!")

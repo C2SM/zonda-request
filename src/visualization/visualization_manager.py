@@ -151,7 +151,7 @@ class VisualizationManager:
             data = variable.values[:]
             data_ndim = data.ndim
             if data_ndim != 1:
-                logging.error( f"The visualization of EXTPAR variables only supports 1D data/slices (i.e. only the cells dimension)! "
+                logging.error( f"The visualization of EXTPAR variables only supports 1D data/slices (i.e., only the cells dimension)! "
                                f"The data/slice for variable \"{variable_name}\" has {data_ndim} dimensions. "
                                f"Please select a specific index for each additional dimension via the "
                                f"\"extpar_plots\" entry in the JSON config." )
@@ -256,7 +256,7 @@ class VisualizationManager:
 
             zonda_logo = zonda_logo.resize((zonda_logo_width, zonda_logo_height))
 
-            # Convert to RGBA if needed (i.e. add alpha channel)
+            # Convert to RGBA if needed (i.e., add alpha channel)
             if zonda_logo.mode != "RGBA":
                 zonda_logo = zonda_logo.convert("RGBA")
 
