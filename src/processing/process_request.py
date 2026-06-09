@@ -29,6 +29,7 @@ def create_nesting_groups(config, grid_sources):
 
     return nesting_groups
 
+
 def main(config_path, workspace_path, extpar_raw_data_path, zonda_log_filename, use_apptainer):
 
     logging.info( f"Start main process with\n"
