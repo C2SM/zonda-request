@@ -151,7 +151,7 @@ class VisualizationManager:
             data = variable.values[:]
             data_ndim = data.ndim
             if data_ndim != 1:
-                logging.error( f"The visualization of EXTPAR variables only supports 1D data/slices (i.e. only the cells dimension)! "
+                logging.error( f"The visualization of EXTPAR variables only supports 1D data/slices (i.e., only the cells dimension)! "
                                f"The data/slice for variable \"{variable_name}\" has {data_ndim} dimensions. "
                                f"Please select a specific index for each additional dimension via the "
                                f"\"extpar_plots\" entry in the JSON config." )
@@ -256,7 +256,7 @@ class VisualizationManager:
 
             zonda_logo = zonda_logo.resize((zonda_logo_width, zonda_logo_height))
 
-            # Convert to RGBA if needed (i.e. add alpha channel)
+            # Convert to RGBA if needed (i.e., add alpha channel)
             if zonda_logo.mode != "RGBA":
                 zonda_logo = zonda_logo.convert("RGBA")
 
@@ -279,17 +279,22 @@ class VisualizationManager:
 
             logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Visualization of data for domain {domain_id}.")
 
-            if grid_sources[domain_idx] == "icontools":
-                domain_config = self.domains_config[domain_idx]
-                icontools_config = domain_config["icontools"]
-                extpar_plots_config = domain_config.get("extpar_plots", [])
+            extpar_dir = extpar_dirs[domain_idx]
 
-                if len(extpar_plots_config) > 0:
-                    grid_filepath = os.path.join(grid_dirs[domain_idx], grid_filenames[domain_idx])
-                    extpar_filepath = os.path.join(extpar_dirs[domain_idx], "external_parameter.nc")
+            if extpar_dir is not None:
+                if grid_sources[domain_idx] == "icontools":
+                    domain_config = self.domains_config[domain_idx]
+                    icontools_config = domain_config["icontools"]
+                    extpar_plots_config = domain_config.get("extpar_plots", [])
 
-                    self.visualize_extpar_variables(extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, extpar_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
+                    if len(extpar_plots_config) > 0:
+                        grid_filepath = os.path.join(grid_dirs[domain_idx], grid_filenames[domain_idx])
+                        extpar_filepath = os.path.join(extpar_dir, "external_parameter.nc")
+
+                        self.visualize_extpar_variables(extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, extpar_dir, logging_indentation_level=logging_indentation_level+1)
+                    else:
+                        logging.warning(f"No EXTPAR variable was requested for visualization for domain {domain_id}. Skipping visualization of EXTPAR variables!")
                 else:
-                    logging.warning(f"No EXTPAR variable was requested for visualization for domain {domain_id}. Skipping visualization of EXTPAR variables!")
+                    logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR variables!")
             else:
-                logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR variables!")
+                logging.warning(f"No EXTPAR directory was found for domain {domain_id}, likely because the EXTPAR step was skipped. Skipping visualization of EXTPAR variables!")

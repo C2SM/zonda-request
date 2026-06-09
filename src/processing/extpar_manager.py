@@ -18,10 +18,17 @@ class ExtparManager:
 
         self.extpar_config_filename = "extpar_config.json"
 
-        self.extpar_dirs = []
+        n_domains = len(self.domains_config)
+
+        self.skip_extpar_step = [None] * n_domains
+        self.extpar_dirs = [None] * n_domains
         for domain_config in self.domains_config:
-            extpar_dir = self.setup_extpar_dir(domain_config, logging_indentation_level=1)
-            self.extpar_dirs.append(extpar_dir)
+            domain_idx = domain_config["domain_id"] - 1
+
+            self.skip_extpar_step[domain_idx] = "extpar" not in domain_config
+
+            if not self.skip_extpar_step[domain_idx]:
+                self.extpar_dirs[domain_idx] = self.setup_extpar_dir(domain_config, logging_indentation_level=1)
 
         if self.use_apptainer:
             self.extpar_container_image = os.path.join(self.workspace_path, "extpar.sif")
@@ -76,40 +83,43 @@ class ExtparManager:
         for domain_id in nesting_group:
             domain_idx = domain_id - 1
 
-            extpar_dir = self.extpar_dirs[domain_idx]
+            if not self.skip_extpar_step[domain_idx]:
+                extpar_dir = self.extpar_dirs[domain_idx]
 
-            logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Running {'apptainer' if self.use_apptainer else 'podman'} command for EXTPAR in {extpar_dir}.")
+                logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Running {'apptainer' if self.use_apptainer else 'podman'} command for EXTPAR in {extpar_dir}.")
 
-            if self.use_apptainer:
-                container_cmd = [
-                    "apptainer", "exec",
-                    "--env", f"OMP_NUM_THREADS={num_threads}",
-                    "--env", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
-                    "--bind", f"{self.extpar_raw_data_path}:/data",
-                    "--bind", f"{grid_dirs[domain_idx]}:/grid",
-                    "--bind", f"{extpar_dir}:/work",
-                    self.extpar_container_image
-                ]
+                if self.use_apptainer:
+                    container_cmd = [
+                        "apptainer", "exec",
+                        "--env", f"OMP_NUM_THREADS={num_threads}",
+                        "--env", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
+                        "--bind", f"{self.extpar_raw_data_path}:/data",
+                        "--bind", f"{grid_dirs[domain_idx]}:/grid",
+                        "--bind", f"{extpar_dir}:/work",
+                        self.extpar_container_image
+                    ]
+                else:
+                    container_cmd = [
+                        "podman", "run",
+                        "-e", f"OMP_NUM_THREADS={num_threads}",
+                        "-e", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
+                        "-v", f"{self.extpar_raw_data_path}:/data",
+                        "-v", f"{grid_dirs[domain_idx]}:/grid",
+                        "-v", f"{extpar_dir}:/work",
+                        self.extpar_container_image
+                    ]
+
+                shell_command(
+                    *container_cmd,
+                    "python3", "-m", "extpar.WrapExtpar",
+                    "--run-dir", "/work",
+                    "--raw-data-path", "/data/linked_data",
+                    "--account", "none",
+                    "--no-batch-job",
+                    "--host", "docker",
+                    "--input-grid", f"/grid/{grid_filenames[domain_idx]}",
+                    "--extpar-config", f"/work/{self.extpar_config_filename}",
+                    logging_indentation_level=logging_indentation_level+2
+                )
             else:
-                container_cmd = [
-                    "podman", "run",
-                    "-e", f"OMP_NUM_THREADS={num_threads}",
-                    "-e", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
-                    "-v", f"{self.extpar_raw_data_path}:/data",
-                    "-v", f"{grid_dirs[domain_idx]}:/grid",
-                    "-v", f"{extpar_dir}:/work",
-                    self.extpar_container_image
-                ]
-
-            shell_command(
-                *container_cmd,
-                "python3", "-m", "extpar.WrapExtpar",
-                "--run-dir", "/work",
-                "--raw-data-path", "/data/linked_data",
-                "--account", "none",
-                "--no-batch-job",
-                "--host", "docker",
-                "--input-grid", f"/grid/{grid_filenames[domain_idx]}",
-                "--extpar-config", f"/work/{self.extpar_config_filename}",
-                logging_indentation_level=logging_indentation_level+2
-            )
+                logging.warning(f"Skipping EXTPAR step for domain {domain_id} because no \"extpar\" entry was found in the JSON config!")

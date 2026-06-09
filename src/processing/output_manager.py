@@ -110,23 +110,26 @@ class OutputManager:
         for domain_id in domain_ids:
             domain_idx = domain_id - 1
 
-            current_domain_label = domain_label(domain_idx+1)
-
             extpar_dir = extpar_manager.extpar_dirs[domain_idx]
 
-            data_domain_dir = os.path.join(self.data_dir, current_domain_label)
-            self.move_files(os.path.join(extpar_dir, "external_parameter.nc"), data_domain_dir, prefix=f"{self.request_name}_{current_domain_label}_", logging_indentation_level=logging_indentation_level+1)
+            if extpar_dir is not None:
+                current_domain_label = domain_label(domain_idx+1)
 
-            visualizations_dir = os.path.join(data_domain_dir, self.visualizations_dirname)
-            self.move_files(os.path.join(extpar_dir, "*.png"), visualizations_dir, prefix=f"{self.request_name}_{current_domain_label}_", logging_indentation_level=logging_indentation_level+1)
+                data_domain_dir = os.path.join(self.data_dir, current_domain_label)
+                self.move_files(os.path.join(extpar_dir, "external_parameter.nc"), data_domain_dir, prefix=f"{self.request_name}_{current_domain_label}_", logging_indentation_level=logging_indentation_level+1)
 
-            logs_domain_dir = os.path.join(self.logs_dir, current_domain_label)
-            self.move_files(os.path.join(extpar_dir, "*.log"), logs_domain_dir, logging_indentation_level=logging_indentation_level+1)
+                visualizations_dir = os.path.join(data_domain_dir, self.visualizations_dirname)
+                self.move_files(os.path.join(extpar_dir, "*.png"), visualizations_dir, prefix=f"{self.request_name}_{current_domain_label}_", logging_indentation_level=logging_indentation_level+1)
 
-            namelists_domain_dir = os.path.join(self.namelists_dir, current_domain_label)
-            self.move_files(os.path.join(extpar_dir, "INPUT_*"), namelists_domain_dir, logging_indentation_level=logging_indentation_level+1)
-            self.move_files(os.path.join(extpar_dir, "namelist.py"), namelists_domain_dir, logging_indentation_level=logging_indentation_level+1)
-            self.move_files(os.path.join(extpar_dir, extpar_manager.extpar_config_filename), namelists_domain_dir, logging_indentation_level=logging_indentation_level+1)
+                logs_domain_dir = os.path.join(self.logs_dir, current_domain_label)
+                self.move_files(os.path.join(extpar_dir, "*.log"), logs_domain_dir, logging_indentation_level=logging_indentation_level+1)
+
+                namelists_domain_dir = os.path.join(self.namelists_dir, current_domain_label)
+                self.move_files(os.path.join(extpar_dir, "INPUT_*"), namelists_domain_dir, logging_indentation_level=logging_indentation_level+1)
+                self.move_files(os.path.join(extpar_dir, "namelist.py"), namelists_domain_dir, logging_indentation_level=logging_indentation_level+1)
+                self.move_files(os.path.join(extpar_dir, extpar_manager.extpar_config_filename), namelists_domain_dir, logging_indentation_level=logging_indentation_level+1)
+            else:
+                logging.warning(f"No EXTPAR directory was found for domain {domain_id}, likely because the EXTPAR step was skipped. No output data to be moved!")
 
 
     def move_zonda_files(self, logging_indentation_level=0):
