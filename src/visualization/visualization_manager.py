@@ -253,7 +253,7 @@ class VisualizationManager:
             zonda_logo_width, zonda_logo_height = zonda_logo.size
 
             # Resize the logo
-            scaling_factor = 3.5
+            scaling_factor = 4.0
 
             zonda_logo_width = int(zonda_logo_width / scaling_factor)
             zonda_logo_height = int(zonda_logo_height / scaling_factor)
@@ -267,8 +267,7 @@ class VisualizationManager:
             # Add the logo
             border_offset = 15
             plot_image.paste( zonda_logo,
-                              ( plot_image_width  - zonda_logo_width  - border_offset,
-                                plot_image_height - zonda_logo_height - border_offset ),
+                              (border_offset, border_offset),
                               zonda_logo
             )
 
