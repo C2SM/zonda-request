@@ -42,7 +42,6 @@ jobs:
               }
             );
             for (const issue of issues) {
-              // Skip pull requests
               if (issue.pull_request) continue;
               const created_at = new Date(issue.created_at);
               if (now - created_at > max_age) {
@@ -51,7 +50,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issue.number,
-                  state: 'closed',
+                  state: 'closed'
                 });
               }
             }
