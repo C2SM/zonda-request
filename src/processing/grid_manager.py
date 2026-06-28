@@ -175,7 +175,10 @@ class GridManager:
                 namelist.append(f"  dom({local_domain_id})%hwidth_lat = {icontools_config['hwidth_lat']}")
                 namelist.append("")
 
+                logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Before access to lrotate")
+                logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} Value {icontools_config.get('lrotate', False)}")
                 namelist.append(f"  dom({local_domain_id})%lrotate  = {convert_to_fortran_bool(icontools_config.get('lrotate', False))}")
+                logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level} After access to lrotate")
                 namelist.append(f"  dom({local_domain_id})%pole_lon = {icontools_config.get('pole_lon', -180.0)}")
                 namelist.append(f"  dom({local_domain_id})%pole_lat = {icontools_config.get('pole_lat', 90.0)}")
                 namelist.append("")
