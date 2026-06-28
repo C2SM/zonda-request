@@ -1,7 +1,7 @@
 name: Cleanup branches and issues
 on:
   schedule:
-    - cron: '0 0 * * *'  # Run this workflow every day at midnight
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 env:
@@ -9,12 +9,12 @@ env:
 jobs:
   deleteOldBranches:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Fetch all branches
-        run: git fetch --all
+        run: git fetch --prune --all
 
       - name: Delete old branches
         env:
@@ -23,29 +23,43 @@ jobs:
 
   closeOldIssues:
     runs-on: ubuntu-latest
+
     steps:
       - name: Close old data request issues
-        uses: actions/github-script@v3
+        uses: actions/github-script@v7
+        env:
+          DAYS: ${{ env.DAYS }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const max_age = Number(process.env.DAYS) * 24 * 60 * 60 * 1000;
-            const now = new Date();
-            const issues = await github.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: 'data request',
-              state: 'open',
-              per_page: 100
-            });
-            for (const issue of issues.data) {
-              const created_at = new Date(issue.created_at);
-              if (now - created_at > max_age) {
-                await github.issues.update({
+            const maxAge = Number(process.env.DAYS) * 24 * 60 * 60 * 1000;
+            const now = Date.now();
+
+            const issues = await github.paginate(
+              github.rest.issues.listForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: "data request",
+                state: "open",
+                per_page: 100,
+              }
+            );
+
+            for (const issue of issues) {
+              // Skip pull requests
+              if (issue.pull_request) continue;
+
+              const created = new Date(issue.created_at).getTime();
+
+              if (now - created > maxAge) {
+                core.info(`Closing #${issue.number}: ${issue.title}`);
+
+                await github.rest.issues.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issue.number,
-                  state: 'closed'
+                  state: "closed",
                 });
               }
             }
