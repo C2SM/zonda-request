@@ -204,7 +204,7 @@ class GridManager:
         max_refin_c_ctrl = 14
 
         grid_filename = self.grid_filenames[domain_idx]
-        grid_filestem = grid_filename.split(".", 1)[0]
+        grid_filestem, _ = os.path.splitext(grid_filename)
         output_filestem = f"{grid_filestem}_latbc"
 
         # Create the ICONSUB namelist content
@@ -407,7 +407,7 @@ class GridManager:
                                    os.path.join(self.grid_dirs[domain_idx], self.grid_filenames[domain_idx]) )
 
                         # Remove extension from current grid filename
-                        current_grid_filestem = self.grid_filenames[domain_idx].split(".", 1)[0]
+                        current_grid_filestem, _ = os.path.splitext(self.grid_filenames[domain_idx])
 
                         os.rename( os.path.join(self.grid_dirs[domain_idx], current_local_grid_filestem + ".html"),
                                    os.path.join(self.grid_dirs[domain_idx], current_grid_filestem + ".html") )
