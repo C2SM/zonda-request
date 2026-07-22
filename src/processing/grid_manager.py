@@ -422,6 +422,7 @@ class GridManager:
 
             case _:
                 logging.error("No valid grid generation method could be selected!")
+                raise ValueError(f"Invalid grid generation method: \"primary_grid_source\"!")
 
 
     def generate_latlon_grids(self, nesting_group, output_data_dir, logging_indentation_level=0):
@@ -445,7 +446,7 @@ class GridManager:
                     hwidth_lon = icontools_config["hwidth_lon"]
 
                     n = self.globals_config["grid_root"]
-                    k = self.globals_config["grid_level"] - 1 + domain_id  # Subtract 1 from grid_level because initial_refinement is always on
+                    k = self.globals_config["grid_level"] + domain_idx
                     grid_spacing = compute_resolution_from_rnbk(n, k)
 
                     output_data_domain_dir = os.path.join(output_data_dir, domain_label(domain_id))
