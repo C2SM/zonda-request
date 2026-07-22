@@ -213,8 +213,8 @@ class VisualizationManager:
             colorbar_formatter.set_powerlimits((0, 0))
 
             colorbar = plt.colorbar(collection, shrink=0.3, format=colorbar_formatter)
-            units_str = f" ({units})" if units else ""
-            colorbar.set_label(f"{long_name}" + units_str, **self.small_font)
+            units_str = f"({units})" if units else ""
+            colorbar.set_label(f"{units_str}", **self.small_font)
             colorbar.ax.yaxis.get_offset_text().set_font(self.small_font)
             plt.setp(colorbar.ax.yaxis.get_ticklabels(), **self.font)
 
@@ -236,7 +236,7 @@ class VisualizationManager:
             zonda_logo_width, zonda_logo_height = zonda_logo.size
 
             # Resize the logo
-            scaling_factor = 4.0
+            scaling_factor = 3.5
 
             zonda_logo_width = int(zonda_logo_width / scaling_factor)
             zonda_logo_height = int(zonda_logo_height / scaling_factor)
@@ -250,7 +250,8 @@ class VisualizationManager:
             # Add the logo
             border_offset = 15
             plot_image.paste( zonda_logo,
-                              (border_offset, border_offset),
+                              ( plot_image_width  - zonda_logo_width  - border_offset,
+                                plot_image_height - zonda_logo_height - border_offset ),
                               zonda_logo
             )
 
