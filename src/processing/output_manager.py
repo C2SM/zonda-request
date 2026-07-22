@@ -59,14 +59,12 @@ class OutputManager:
                 continue
 
             filename = os.path.basename(source_file)
-            is_hidden_file = filename.startswith(".")
-            tmp = filename.split(".", 2 if is_hidden_file else 1)
-            if is_hidden_file:
-                tmp.pop(0)
+            filestem, file_extension = os.path.splitext(filename)
 
-            destination_filename = f"{"." if is_hidden_file else ""}{prefix}{tmp[0]}{suffix}"
-            if len(tmp) >= 2:
-                destination_filename += f".{tmp[1]}"
+            if filename.startswith("."):
+                destination_filename = f".{prefix}{filestem[1:]}{suffix}{file_extension}"
+            else:
+                destination_filename = f"{prefix}{filestem}{suffix}{file_extension}"
 
             destination_filepath = os.path.join(destination_dir, destination_filename)
 
