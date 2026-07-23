@@ -68,7 +68,7 @@ class VisualizationManager:
         vertices_of_cells = grid_data_vars["vertex_of_cell"].T.values - 1 
         cells_of_vertices = grid_data_vars["cells_of_vertex"].T.values - 1
 
-        n_vertices = len(cells_of_vertices)
+        n_vertices = len(longitude_vertices)
 
         data_crossing_dateline = False
 
@@ -81,7 +81,7 @@ class VisualizationManager:
             logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Create new vertices at the boundaries to account for periodicity.")
 
             cells_at_boundary = np.unique(cells_of_vertices[vertices_at_boundary_mask].flatten())
-            index_to_delete = np.argwhere(cells_at_boundary == -1)
+            index_to_delete = np.argwhere(cells_at_boundary == -2)  # "No cell" is now represented by -2 instead of -1, because we subtract 1 from cells_of_vertex
             cells_at_boundary = np.delete(cells_at_boundary, index_to_delete)
 
             tmp_longitudes = []
