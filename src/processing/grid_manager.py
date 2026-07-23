@@ -167,7 +167,7 @@ class GridManager:
                 namelist.append(f"  dom({local_domain_id})%radius     = {icontools_config['radius']}")
                 namelist.append("")
 
-            # Regional domain
+            # Rectangular domain
             elif icontools_config["region_type"] == 3:
                 namelist.append(f"  dom({local_domain_id})%center_lon = {icontools_config['center_lon']}")
                 namelist.append(f"  dom({local_domain_id})%center_lat = {icontools_config['center_lat']}")
@@ -178,6 +178,14 @@ class GridManager:
                 namelist.append(f"  dom({local_domain_id})%lrotate  = {convert_to_fortran_bool(icontools_config.get('lrotate', False))}")
                 namelist.append(f"  dom({local_domain_id})%pole_lon = {icontools_config.get('pole_lon', -180.0)}")
                 namelist.append(f"  dom({local_domain_id})%pole_lat = {icontools_config.get('pole_lat', 90.0)}")
+                namelist.append("")
+
+            # Custom domain defined by expression
+            elif icontools_config["region_type"] == 4:
+                expression_var_list = icontools_config.get('expression_var', ['', ''])
+
+                namelist.append(f"  dom({local_domain_id})%expression = \"{icontools_config.get('expression', '')}\" ")
+                namelist.append(f"  dom({local_domain_id})%expression_var = \"{expression_var_list[0]}\", \"{expression_var_list[1]}\" ")
                 namelist.append("")
 
         namelist.append("/")
@@ -414,6 +422,7 @@ class GridManager:
 
             case _:
                 logging.error("No valid grid generation method could be selected!")
+                raise ValueError(f"Invalid grid generation method: \"primary_grid_source\"!")
 
 
     def generate_latlon_grids(self, nesting_group, output_data_dir, logging_indentation_level=0):
@@ -437,7 +446,7 @@ class GridManager:
                     hwidth_lon = icontools_config["hwidth_lon"]
 
                     n = self.globals_config["grid_root"]
-                    k = self.globals_config["grid_level"] - 1 + domain_id  # Subtract 1 from grid_level because initial_refinement is always on
+                    k = self.globals_config["grid_level"] + domain_idx
                     grid_spacing = compute_resolution_from_rnbk(n, k)
 
                     output_data_domain_dir = os.path.join(output_data_dir, domain_label(domain_id))
@@ -483,11 +492,13 @@ class GridManager:
             domain_idx = domain_id - 1
 
             if self.grid_sources[domain_idx] == "icontools":
-                if self.domains_config[domain_idx]["icontools"]["region_type"] != 1:
+                region_type = self.domains_config[domain_idx]["icontools"]["region_type"]
+
+                if region_type != 1 and region_type != 4:
                     self.write_iconsub_namelist(domain_id, logging_indentation_level=logging_indentation_level+1)
 
                     self.run_iconsub(domain_idx, self.icontools_dirs[domain_idx], logging_indentation_level=logging_indentation_level+1)
                 else:
-                    logging.warning(f"Domain {domain_id} is global (i.e., region_type = 1). Skipping generation of lateral boundary!")
+                    logging.warning(f"Domain {domain_id} is either global (i.e. region_type = 1) or custom (i.e. region_type = 4). Skipping generation of lateral boundary!")
             else:
                 logging.warning(f"An input grid was provided for domain {domain_id}. Skipping generation of lateral boundary!")

@@ -14,7 +14,7 @@ from PIL import Image
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from cartopy.io import DownloadWarning
 
-from utilities.utilities import LOG_INDENTATION_STR
+from utilities.utilities import LOG_INDENTATION_STR, compute_resolution_from_rnbk
 
 warnings.filterwarnings("ignore", category=DownloadWarning)
 
@@ -44,7 +44,7 @@ class VisualizationManager:
         ]
 
 
-    def visualize_extpar_variables(self, extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, output_dir, logging_indentation_level=0):
+    def visualize_extpar_variables(self, extpar_plots_config, grid_filepath, extpar_filepath, grid_resolution, output_dir, logging_indentation_level=0):
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Visualization of EXTPAR variables.")
 
         ##################################
@@ -59,81 +59,51 @@ class VisualizationManager:
         grid_dataset = xr.open_dataset(grid_filepath)
 
         # Get the necessary data
-        grid_coords = grid_dataset.coords
         grid_data_vars = grid_dataset.data_vars
 
-        vertex_longitudes = np.rad2deg(grid_coords["vlon"].values)
-        vertex_latitudes = np.rad2deg(grid_coords["vlat"].values)
+        longitude_vertices = np.rad2deg(grid_data_vars["longitude_vertices"].values)
+        latitude_vertices = np.rad2deg(grid_data_vars["latitude_vertices"].values)
+        longitude_centers = np.rad2deg(grid_data_vars["lon_cell_centre"].values)
 
         vertices_of_cells = grid_data_vars["vertex_of_cell"].T.values - 1 
         cells_of_vertices = grid_data_vars["cells_of_vertex"].T.values - 1
 
-        n_vertices = len(cells_of_vertices)
+        n_vertices = len(longitude_vertices)
 
-        region_type = icontools_config["region_type"]
         data_crossing_dateline = False
-        if (region_type == 2):
-            center_lon = icontools_config.get("center_lon", 0.0)
-            radius = icontools_config.get("radius", 0.0)
-
-            if (abs(center_lon) + radius > 180.0):
-                data_crossing_dateline = True
-
-                offset_percentage = 0.1
-                x_offset = 2.0 * radius * offset_percentage
-                y_offset = x_offset
-
-        elif (region_type == 3):
-            center_lon = icontools_config.get("center_lon", 0.0)
-            hwidth_lon = icontools_config.get("hwidth_lon", 0.0)
-            hwidth_lat = icontools_config.get("hwidth_lat", 0.0)
-
-            if (abs(center_lon) + hwidth_lon > 180.0):
-                data_crossing_dateline = True
-
-                offset_percentage = 0.1
-                x_offset = 2.0 * hwidth_lon * offset_percentage
-                y_offset = 2.0 * hwidth_lat * offset_percentage
-
-        if (data_crossing_dateline):
-            vertex_longitudes_360 = np.where(vertex_longitudes < 0.0, vertex_longitudes + 360.0, vertex_longitudes)
-            vertex_longitudes_360_min = np.min(vertex_longitudes_360)
-            vertex_longitudes_360_max = np.max(vertex_longitudes_360)
-
-            vertex_latitudes_min = np.min(vertex_latitudes)
-            vertex_latitudes_max = np.max(vertex_latitudes)
 
         # Add vertices at boundaries to allow for correct wrapping of triangular mesh around (periodic) boundaries
         boundary_degrees = 180.0
-        delta_degrees = 0.1
-        vertex_longitudes_abs = np.abs(vertex_longitudes)
-        vertices_at_boundary_mask = (vertex_longitudes_abs >= boundary_degrees - delta_degrees) & (vertex_longitudes_abs <= boundary_degrees)
+        delta_degrees = 3.0 * grid_resolution
+        longitude_vertices_abs = np.abs(longitude_vertices)
+        vertices_at_boundary_mask = (longitude_vertices_abs >= boundary_degrees - delta_degrees)
         if any(vertices_at_boundary_mask):
-
             logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+1)}Create new vertices at the boundaries to account for periodicity.")
 
             cells_at_boundary = np.unique(cells_of_vertices[vertices_at_boundary_mask].flatten())
-            index_to_delete = np.argwhere(cells_at_boundary == -1)
+            index_to_delete = np.argwhere(cells_at_boundary == -2)  # "No cell" is now represented by -2 instead of -1, because we subtract 1 from cells_of_vertex
             cells_at_boundary = np.delete(cells_at_boundary, index_to_delete)
 
             tmp_longitudes = []
             tmp_latitudes = []
             new_vertex = n_vertices
             for cell in cells_at_boundary:
-                vertices = vertices_of_cells[cell].copy()
+                vertices_of_current_cell = vertices_of_cells[cell].copy()
 
-                for i, vertex in enumerate(vertices):
-
-                    if vertex_longitudes[vertex] < 0.0:
-                        tmp_longitudes.append(vertex_longitudes[vertex] + 360.0)
-                        tmp_latitudes.append(vertex_latitudes[vertex])
+                for i, vertex in enumerate(vertices_of_current_cell):
+                    if abs(longitude_vertices[vertex] - longitude_centers[cell]) > 180.0:
+                        tmp_longitudes.append(longitude_vertices[vertex] + np.sign(longitude_centers[cell]) * 360.0)
+                        tmp_latitudes.append(latitude_vertices[vertex])
 
                         vertices_of_cells[cell][i] = new_vertex
 
                         new_vertex += 1
 
-            vertex_longitudes = np.append(vertex_longitudes, np.asarray(tmp_longitudes))
-            vertex_latitudes = np.append(vertex_latitudes, np.asarray(tmp_latitudes))
+                        if not data_crossing_dateline:
+                            data_crossing_dateline = True
+
+            longitude_vertices = np.append(longitude_vertices, np.asarray(tmp_longitudes))
+            latitude_vertices = np.append(latitude_vertices, np.asarray(tmp_latitudes))
 
         ################################
         ### Plot the requested field ###
@@ -174,18 +144,35 @@ class VisualizationManager:
             # Create figure and axis
             fig = plt.figure(figsize=(16, 9), dpi=self.dpi)
 
-            if (data_crossing_dateline):
+            if data_crossing_dateline:
                 ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
 
-                x_min = max(vertex_longitudes_360_min - x_offset, 0.0)
-                x_max = min(vertex_longitudes_360_max + x_offset, 360.0)
-                y_min = max(vertex_latitudes_min - y_offset, -90.0)
-                y_max = min(vertex_latitudes_max + y_offset, 90.0)
+                longitude_vertices_360 = np.where(longitude_vertices < 0.0, longitude_vertices + 360.0, longitude_vertices)
+
+                longitude_vertices_360_min = np.min(longitude_vertices_360)
+                longitude_vertices_360_max = np.max(longitude_vertices_360)
+                domain_width = abs(longitude_vertices_360_max - longitude_vertices_360_min)
+                x_offset = 0.1 * domain_width
+
+                latitude_vertices_min = np.min(latitude_vertices)
+                latitude_vertices_max = np.max(latitude_vertices)
+                domain_height = abs(latitude_vertices_max - latitude_vertices_min)
+                y_offset = 0.1 * domain_height
+
+                x_min = max(longitude_vertices_360_min - x_offset, 0.0)
+                x_max = min(longitude_vertices_360_max + x_offset, 360.0)
+                y_min = max(latitude_vertices_min - y_offset, -90.0)
+                y_max = min(latitude_vertices_max + y_offset, 90.0)
+
                 ax.set_extent([x_min, x_max, y_min, y_max], crs=ccrs.PlateCarree())
             else:
                 ax = plt.axes(projection=ccrs.PlateCarree())
 
-            figure_title = f"{long_name} ({variable_name} with {", ".join(f"{key}={value}" for key, value in indices_per_dim.items())})"
+            indices_str = ""
+            if indices_per_dim:
+                indices_str = " with " + ", ".join(f"{key}={value}" for key, value in indices_per_dim.items())
+
+            figure_title = f"{long_name} ({variable_name}{indices_str})"
             ax.set_title(figure_title, **self.font)
 
             # Draw custom map on axis and lines delimiting coasts
@@ -203,7 +190,7 @@ class VisualizationManager:
             }
 
             # Plot the triangular mesh with the faces colored according to the requested field
-            collection = ax.tripcolor( vertex_longitudes, vertex_latitudes, data,
+            collection = ax.tripcolor( longitude_vertices, latitude_vertices, data,
                                        triangles = vertices_of_cells,
                                        cmap = colormap,
                                        vmin = data_min,
@@ -226,8 +213,8 @@ class VisualizationManager:
             colorbar_formatter.set_powerlimits((0, 0))
 
             colorbar = plt.colorbar(collection, shrink=0.3, format=colorbar_formatter)
-            units_str = f" ({units})" if units else ""
-            colorbar.set_label(f"{long_name}" + units_str, **self.font)
+            units_str = f"({units})" if units else ""
+            colorbar.set_label(f"{units_str}", **self.small_font)
             colorbar.ax.yaxis.get_offset_text().set_font(self.small_font)
             plt.setp(colorbar.ax.yaxis.get_ticklabels(), **self.font)
 
@@ -273,7 +260,7 @@ class VisualizationManager:
             logging.info(f"{LOG_INDENTATION_STR*(logging_indentation_level+2)}Plot completed.")
 
 
-    def visualize_data(self, nesting_group, grid_sources, grid_dirs, grid_filenames, extpar_dirs, logging_indentation_level=0):
+    def visualize_data(self, nesting_group, grid_dirs, grid_filenames, extpar_dirs, logging_indentation_level=0):
         for domain_id in nesting_group:
             domain_idx = domain_id - 1
 
@@ -282,19 +269,20 @@ class VisualizationManager:
             extpar_dir = extpar_dirs[domain_idx]
 
             if extpar_dir is not None:
-                if grid_sources[domain_idx] == "icontools":
-                    domain_config = self.domains_config[domain_idx]
-                    icontools_config = domain_config["icontools"]
-                    extpar_plots_config = domain_config.get("extpar_plots", [])
+                domain_config = self.domains_config[domain_idx]
+                extpar_plots_config = domain_config.get("extpar_plots", [])
 
-                    if len(extpar_plots_config) > 0:
-                        grid_filepath = os.path.join(grid_dirs[domain_idx], grid_filenames[domain_idx])
-                        extpar_filepath = os.path.join(extpar_dir, "external_parameter.nc")
+                if len(extpar_plots_config) > 0:
+                    grid_filepath = os.path.join(grid_dirs[domain_idx], grid_filenames[domain_idx])
+                    extpar_filepath = os.path.join(extpar_dir, "external_parameter.nc")
 
-                        self.visualize_extpar_variables(extpar_plots_config, icontools_config, grid_filepath, extpar_filepath, extpar_dir, logging_indentation_level=logging_indentation_level+1)
-                    else:
-                        logging.warning(f"No EXTPAR variable was requested for visualization for domain {domain_id}. Skipping visualization of EXTPAR variables!")
+                    globals_config = self.config["globals"]
+                    n = globals_config["grid_root"]
+                    k = globals_config["grid_level"] + domain_idx
+                    grid_resolution = compute_resolution_from_rnbk(n, k, units="deg")
+
+                    self.visualize_extpar_variables(extpar_plots_config, grid_filepath, extpar_filepath, grid_resolution, extpar_dir, logging_indentation_level=logging_indentation_level+1)
                 else:
-                    logging.warning(f"An input grid was provided for domain {domain_id}. Skipping visualization of EXTPAR variables!")
+                    logging.warning(f"No EXTPAR variable was requested for visualization for domain {domain_id}. Skipping visualization of EXTPAR variables!")
             else:
                 logging.warning(f"No EXTPAR directory was found for domain {domain_id}, likely because the EXTPAR step was skipped. Skipping visualization of EXTPAR variables!")

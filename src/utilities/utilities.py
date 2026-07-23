@@ -2,7 +2,7 @@ import logging
 import subprocess
 import json
 import re
-from math import sqrt, pow, pi
+from math import sqrt, pi, degrees
 
 
 
@@ -74,9 +74,21 @@ def nesting_group_label(nesting_group_id):
     return f"NEG{nesting_group_id:02d}"
 
 
-def compute_resolution_from_rnbk(n, k):
-    earth_radius = 6371.0
-    return earth_radius * sqrt(pi / 5) / (n * pow(2, k))
+def compute_resolution_from_rnbk(n, k, units="km"):
+    resolution_radians = sqrt(pi / 5.0) / (n * 2.0**k)
+
+    match units:
+        case "km":
+            earth_radius = 6371.0
+            return earth_radius * resolution_radians
+        case "deg":
+            return degrees(resolution_radians)
+        case "rad":
+            return resolution_radians
+        case _:
+            logging.error( f"Argument units=\"{units}\" is not valid for compute_resolution_from_rnbk!"
+                           f"Please select between \"km\", \"deg\", or \"rad\".")
+            raise ValueError(f"Invalid units=\"{units}\"!")
 
 
 def normalize_version(version):
