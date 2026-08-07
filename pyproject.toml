@@ -1,0 +1,22 @@
+[project]
+name = "zonda-request"
+# Placeholder: nothing reads this. The authoritative version is the git tag, which
+# requests pin via "backend_tag" in their JSON. Keeping a real number here would
+# only create a second source of truth that drifts.
+version = "0"
+requires-python = "==3.12.*"
+dependencies = [
+    "cartopy",
+    "matplotlib",
+    "netcdf4",
+    "numpy",
+    "pillow",
+    "requests",
+    "xarray",
+    "zonda-rotgrid",
+]
+
+# Virtual project: uv builds the environment from the dependencies above but does
+# not install src/ itself, which keeps the existing PYTHONPATH=src invocation working.
+[tool.uv]
+package = false
