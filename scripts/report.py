@@ -37,6 +37,7 @@ class GitHubRepo:
 
         requests.post(url, headers=self.headers, json={"body": text})
 
+    # Jenkins-only, retires with #2922: needs the Commit statuses permission the C2SM CI App is not granted
     def update_commit_status(self, commit_sha, status, context, message, build_url):
         url = f"{self.repo_api_url}/statuses/{commit_sha}"
 
