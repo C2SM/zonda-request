@@ -1,7 +1,25 @@
 import os
+import time
 import requests
 import argparse
 import json
+import jwt
+
+
+def installation_token(app_id, key_path, installation_id):
+    with open(os.path.expanduser(key_path), "r") as file:
+        key = file.read()
+
+    # iat backdated against clock skew, exp below GitHub's 10-minute ceiling for App JWTs
+    now = int(time.time())
+    assertion = jwt.encode({"iat": now - 60, "exp": now + 540, "iss": app_id}, key, algorithm="RS256")
+
+    url = f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+    response = requests.post(url, headers={"Authorization": f"Bearer {assertion}", "Accept": "application/vnd.github+json"})
+    response.raise_for_status()
+
+    return response.json()["token"]
+
 
 class GitHubRepo:
 
@@ -48,6 +66,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
     parser.add_argument("--auth-token", type=str, required=False)
+    parser.add_argument("--app-id", type=str, required=False, default=os.environ.get("ZONDA_APP_ID"))
+    parser.add_argument("--app-key", type=str, required=False, default=os.environ.get("ZONDA_APP_KEY", "~/.config/zonda/c2sm-ci.pem"))
+    parser.add_argument("--installation-id", type=str, required=False, default=os.environ.get("ZONDA_APP_INSTALLATION_ID"))
     parser.add_argument("--issue-id-file", type=str, required=True)
     parser.add_argument("--hash-file", type=str, required=True)
     parser.add_argument("--jenkins-job-name", type=str, required=True)
@@ -146,9 +167,16 @@ if __name__ == "__main__":
     else:
         raise ValueError("No valid report status was selected!")
 
+    # Minted here rather than passed in, so the token is only an hour old when the detached report runs
+    auth_token = args.auth_token
+    if not auth_token:
+        if not (args.app_id and args.installation_id):
+            parser.error("either --auth-token, or --app-id and --installation-id (also settable via ZONDA_APP_ID and ZONDA_APP_INSTALLATION_ID) is required")
+        auth_token = installation_token(args.app_id, args.app_key, args.installation_id)
+
     repository = GitHubRepo( group = "c2sm",
                              repo = "zonda-request",
-                             auth_token = args.auth_token )
+                             auth_token = auth_token )
 
     repository.comment(issue_id=issue_id, text=comment)
 

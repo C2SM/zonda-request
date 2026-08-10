@@ -6,6 +6,7 @@ dependencies:
   - pip
   - pip:
     - requests
+    - pyjwt[crypto]
     - cartopy
     - netcdf4
     - xarray
