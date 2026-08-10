@@ -37,7 +37,7 @@ class GitHubRepo:
 
         requests.post(url, headers=self.headers, json={"body": text})
 
-    # Jenkins-only, retires with #2922: needs the Commit statuses permission the C2SM CI App is not granted
+    # Jenkins-only, retires with #2922: needs the Commit statuses permission the Zonda-Bot App is not granted
     def update_commit_status(self, commit_sha, status, context, message, build_url):
         url = f"{self.repo_api_url}/statuses/{commit_sha}"
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
     parser.add_argument("--auth-token", type=str, required=False)
     parser.add_argument("--app-id", type=str, required=False, default=os.environ.get("ZONDA_APP_ID"))
-    parser.add_argument("--app-key", type=str, required=False, default=os.environ.get("ZONDA_APP_KEY", "~/.config/zonda/c2sm-ci.pem"))
+    parser.add_argument("--app-key", type=str, required=False, default=os.environ.get("ZONDA_APP_KEY", "~/.config/zonda/bot.pem"))
     parser.add_argument("--installation-id", type=str, required=False, default=os.environ.get("ZONDA_APP_INSTALLATION_ID"))
     parser.add_argument("--issue-id-file", type=str, required=True)
     parser.add_argument("--hash-file", type=str, required=True)
