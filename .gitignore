@@ -1,5 +1,6 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 
-# uv writes .venv/.gitignore itself, but list it so a differently-named venv is covered too
+# Environments
 .venv/
