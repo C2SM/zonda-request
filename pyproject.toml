@@ -1,9 +1,6 @@
 [project]
 name = "zonda-request"
-# Placeholder: nothing reads this. The authoritative version is the git tag, which
-# requests pin via "backend_tag" in their JSON. Keeping a real number here would
-# only create a second source of truth that drifts.
-version = "0"
+version = "2.2"
 requires-python = "==3.12.*"
 dependencies = [
     "cartopy",
