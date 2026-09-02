@@ -60,7 +60,6 @@ class GitHubRepo:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
-    parser.add_argument("--auth-token", type=str, required=False)
     parser.add_argument("--app-id", type=str, required=False, default=os.environ.get("ZONDA_APP_ID"))
     parser.add_argument("--app-key", type=str, required=False, default=os.environ.get("ZONDA_APP_KEY", "~/.config/zonda/bot.pem"))
     parser.add_argument("--installation-id", type=str, required=False, default=os.environ.get("ZONDA_APP_INSTALLATION_ID"))
@@ -145,12 +144,11 @@ if __name__ == "__main__":
     else:
         raise ValueError("No valid report status was selected!")
 
-    # Generated here rather than passed in, so the token is no more than an hour old when the detached report runs.
-    auth_token = args.auth_token
-    if not auth_token:
-        if not (args.app_id and args.installation_id):
-            parser.error("either --auth-token, or --app-id and --installation-id (also settable via ZONDA_APP_ID and ZONDA_APP_INSTALLATION_ID) is required")
-        auth_token = installation_token(args.app_id, args.app_key, args.installation_id)
+    if not (args.app_id and args.installation_id):
+        parser.error("--app-id and --installation-id (also settable via ZONDA_APP_ID and ZONDA_APP_INSTALLATION_ID) are required")
+
+    # Generated here rather than at argument-parsing time, so the token is no more than an hour old when the detached report runs.
+    auth_token = installation_token(args.app_id, args.app_key, args.installation_id)
 
     repository = GitHubRepo( group = "c2sm",
                              repo = "zonda-request",
