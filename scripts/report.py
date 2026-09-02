@@ -147,7 +147,6 @@ if __name__ == "__main__":
     if not (args.app_id and args.installation_id):
         parser.error("--app-id and --installation-id (also settable via ZONDA_APP_ID and ZONDA_APP_INSTALLATION_ID) are required")
 
-    # Generated here rather than at argument-parsing time, so the token is no more than an hour old when the detached report runs.
     auth_token = installation_token(args.app_id, args.app_key, args.installation_id)
 
     repository = GitHubRepo( group = "c2sm",
