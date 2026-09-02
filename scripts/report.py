@@ -10,7 +10,7 @@ def installation_token(app_id, key_path, installation_id):
     with open(os.path.expanduser(key_path), "r") as file:
         key = file.read()
 
-    # iat backdated against clock skew, exp below GitHub's 10-minute ceiling for App JWTs
+    # The issued-at time is backdated to tolerate clock skew; the expiration stays below GitHub's 10-minute limit for App JWTs.
     now = int(time.time())
     assertion = jwt.encode({"iat": now - 60, "exp": now + 540, "iss": app_id}, key, algorithm="RS256")
 
@@ -36,12 +36,6 @@ class GitHubRepo:
         url = f"{self.repo_api_url}/issues/{issue_id}/comments"
 
         requests.post(url, headers=self.headers, json={"body": text})
-
-    # Jenkins-only, retires with #2922: needs the Commit statuses permission the Zonda-Bot App is not granted
-    def update_commit_status(self, commit_sha, status, context, message, build_url):
-        url = f"{self.repo_api_url}/statuses/{commit_sha}"
-
-        requests.post(url, headers=self.headers, json={"state": status, "context": context, "description": message, "target_url": build_url})
 
     def remove_labels(self, issue_id, labels):
         for label in labels:
@@ -72,9 +66,6 @@ if __name__ == "__main__":
     parser.add_argument("--installation-id", type=str, required=False, default=os.environ.get("ZONDA_APP_INSTALLATION_ID"))
     parser.add_argument("--issue-id-file", type=str, required=True)
     parser.add_argument("--hash-file", type=str, required=True)
-    parser.add_argument("--jenkins-job-name", type=str, required=True)
-    parser.add_argument("--commit-sha", type=str, required=False)
-    parser.add_argument("--build-url", type=str, required=False)
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--success", action="store_true")
@@ -106,12 +97,6 @@ if __name__ == "__main__":
     with open(args.hash_file, "r") as file:
         hash = file.read()
 
-    is_daily_testsuite = "zonda-main" in args.jenkins_job_name
-    commit_sha = args.commit_sha
-    build_url = args.build_url
-    if is_daily_testsuite and (commit_sha is None or build_url is None):
-        parser.error("--jenkins-job-name=\"zonda-main\" requires --commit-sha and --build-url for the status report to GitHub.")
-
     output_url = f"https://data.iac.ethz.ch/zonda/{hash}"
 
     if args.success:
@@ -125,9 +110,7 @@ if __name__ == "__main__":
             f"```"
             f"{config_collapsible}"
         )
-        status_message = "Testsuite completed successfully!"
         label = "completed"
-        status = "success"
 
     elif args.failure:
         comment = (
@@ -136,9 +119,7 @@ if __name__ == "__main__":
             f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
             f"{config_collapsible}"
         )
-        status_message = "Testsuite failed!"
         label = "failed"
-        status = "failure"
 
     elif args.aborted:
         comment = (
@@ -147,9 +128,7 @@ if __name__ == "__main__":
             f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
             f"{config_collapsible}"
         )
-        status_message = "Testsuite aborted!"
         label = "aborted"
-        status = "failure"
 
     elif args.invalid:
         comment = (
@@ -161,14 +140,12 @@ if __name__ == "__main__":
             f"Note that you can edit the JSON snippet in the description to fix the errors and then rerun the request by commenting "
             f"\"**rerun request**\"."
         )
-        status_message = "Invalid JSON config!"
         label = "invalid"
-        status = "failure"
 
     else:
         raise ValueError("No valid report status was selected!")
 
-    # Minted here rather than passed in, so the token is only an hour old when the detached report runs
+    # Generated here rather than passed in, so the token is no more than an hour old when the detached report runs.
     auth_token = args.auth_token
     if not auth_token:
         if not (args.app_id and args.installation_id):
@@ -180,15 +157,6 @@ if __name__ == "__main__":
                              auth_token = auth_token )
 
     repository.comment(issue_id=issue_id, text=comment)
-
-    if is_daily_testsuite:
-        daily_testsuite_context = "Daily Testsuite of main on Jenkins"
-
-        repository.update_commit_status( commit_sha = commit_sha,
-                                         status = status,
-                                         context = daily_testsuite_context,
-                                         message = status_message,
-                                         build_url = build_url )
 
     repository.remove_labels(issue_id=issue_id, labels=["submitted"])
     repository.add_labels(issue_id=issue_id, labels=[label])
