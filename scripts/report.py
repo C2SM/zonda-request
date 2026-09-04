@@ -1,7 +1,25 @@
 import os
+import time
 import requests
 import argparse
 import json
+import jwt
+
+
+def installation_token(app_id, key_path, installation_id):
+    with open(os.path.expanduser(key_path), "r") as file:
+        key = file.read()
+
+    # The issued-at time is backdated to tolerate clock skew; the expiration stays below GitHub's 10-minute limit for App JWTs.
+    now = int(time.time())
+    assertion = jwt.encode({"iat": now - 60, "exp": now + 540, "iss": app_id}, key, algorithm="RS256")
+
+    url = f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+    response = requests.post(url, headers={"Authorization": f"Bearer {assertion}", "Accept": "application/vnd.github+json"})
+    response.raise_for_status()
+
+    return response.json()["token"]
+
 
 class GitHubRepo:
 
@@ -18,11 +36,6 @@ class GitHubRepo:
         url = f"{self.repo_api_url}/issues/{issue_id}/comments"
 
         requests.post(url, headers=self.headers, json={"body": text})
-
-    def update_commit_status(self, commit_sha, status, context, message, build_url):
-        url = f"{self.repo_api_url}/statuses/{commit_sha}"
-
-        requests.post(url, headers=self.headers, json={"state": status, "context": context, "description": message, "target_url": build_url})
 
     def remove_labels(self, issue_id, labels):
         for label in labels:
@@ -47,48 +60,39 @@ class GitHubRepo:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
-    parser.add_argument("--auth-token", type=str, required=False)
+    parser.add_argument("--app-id", type=str, required=False, default=os.environ.get("ZONDA_APP_ID"))
+    parser.add_argument("--app-key", type=str, required=False, default=os.environ.get("ZONDA_APP_KEY", "~/.config/zonda/bot.pem"))
+    parser.add_argument("--installation-id", type=str, required=False, default=os.environ.get("ZONDA_APP_INSTALLATION_ID"))
     parser.add_argument("--issue-id-file", type=str, required=True)
     parser.add_argument("--hash-file", type=str, required=True)
-    parser.add_argument("--jenkins-job-name", type=str, required=True)
-    parser.add_argument("--commit-sha", type=str, required=False)
-    parser.add_argument("--build-url", type=str, required=False)
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--success", action="store_true")
     group.add_argument("--failure", action="store_true")
     group.add_argument("--aborted", action="store_true")
-    group.add_argument("--invalid", action="store_true")
 
     args = parser.parse_args()
 
-    if not args.invalid:
-        config_path = os.path.abspath(args.config)
-        with open(config_path, "r") as file:
-            config = json.load(file)
+    config_path = os.path.abspath(args.config)
+    with open(config_path, "r") as file:
+        config = json.load(file)
 
-        config_str = json.dumps(config, indent=2)
-        config_collapsible = (
-            f"\n\n"
-            f"<details>\n\n"
-            f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
-            f"```json\n"
-            f"{config_str}\n"
-            f"```\n\n"
-            f"</details>"
-        )
+    config_str = json.dumps(config, indent=2)
+    config_collapsible = (
+        f"\n\n"
+        f"<details>\n\n"
+        f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
+        f"```json\n"
+        f"{config_str}\n"
+        f"```\n\n"
+        f"</details>"
+    )
 
     with open(args.issue_id_file, "r") as file:
         issue_id = file.read()
 
     with open(args.hash_file, "r") as file:
         hash = file.read()
-
-    is_daily_testsuite = "zonda-main" in args.jenkins_job_name
-    commit_sha = args.commit_sha
-    build_url = args.build_url
-    if is_daily_testsuite and (commit_sha is None or build_url is None):
-        parser.error("--jenkins-job-name=\"zonda-main\" requires --commit-sha and --build-url for the status report to GitHub.")
 
     output_url = f"https://data.iac.ethz.ch/zonda/{hash}"
 
@@ -103,9 +107,7 @@ if __name__ == "__main__":
             f"```"
             f"{config_collapsible}"
         )
-        status_message = "Testsuite completed successfully!"
         label = "completed"
-        status = "success"
 
     elif args.failure:
         comment = (
@@ -114,9 +116,7 @@ if __name__ == "__main__":
             f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
             f"{config_collapsible}"
         )
-        status_message = "Testsuite failed!"
         label = "failed"
-        status = "failure"
 
     elif args.aborted:
         comment = (
@@ -125,41 +125,21 @@ if __name__ == "__main__":
             f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
             f"{config_collapsible}"
         )
-        status_message = "Testsuite aborted!"
         label = "aborted"
-        status = "failure"
-
-    elif args.invalid:
-        comment = (
-            f"The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.\n\n"
-            f"Common problems are:\n\n"
-            f"- The string `PASTE_YOUR_REQUEST_HERE` was not replaced correctly with the JSON snippet. Note that the "
-            f"JSON code-block (\\`\\`\\`json ... \\`\\`\\`) must not be removed.\n"
-            f"- Syntax errors in the JSON snippet. E.g., commas after the last entry of a JSON object ({{...}}) or array ([...]).\n\n"
-            f"Note that you can edit the JSON snippet in the description to fix the errors and then rerun the request by commenting "
-            f"\"**rerun request**\"."
-        )
-        status_message = "Invalid JSON config!"
-        label = "invalid"
-        status = "failure"
 
     else:
         raise ValueError("No valid report status was selected!")
 
+    if not (args.app_id and args.installation_id):
+        parser.error("--app-id and --installation-id (also settable via ZONDA_APP_ID and ZONDA_APP_INSTALLATION_ID) are required")
+
+    auth_token = installation_token(args.app_id, args.app_key, args.installation_id)
+
     repository = GitHubRepo( group = "c2sm",
                              repo = "zonda-request",
-                             auth_token = args.auth_token )
+                             auth_token = auth_token )
 
     repository.comment(issue_id=issue_id, text=comment)
-
-    if is_daily_testsuite:
-        daily_testsuite_context = "Daily Testsuite of main on Jenkins"
-
-        repository.update_commit_status( commit_sha = commit_sha,
-                                         status = status,
-                                         context = daily_testsuite_context,
-                                         message = status_message,
-                                         build_url = build_url )
 
     repository.remove_labels(issue_id=issue_id, labels=["submitted"])
     repository.add_labels(issue_id=issue_id, labels=[label])
