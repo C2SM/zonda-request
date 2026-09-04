@@ -70,6 +70,7 @@ if __name__ == "__main__":
     group.add_argument("--success", action="store_true")
     group.add_argument("--failure", action="store_true")
     group.add_argument("--aborted", action="store_true")
+    group.add_argument("--publish-failure", action="store_true", help="Processing succeeded, but publishing the result failed")
 
     args = parser.parse_args()
 
@@ -126,6 +127,16 @@ if __name__ == "__main__":
             f"{config_collapsible}"
         )
         label = "aborted"
+
+    elif args.publish_failure:
+        comment = (
+            f"Your request was processed, but the result could not be published for download. "
+            f"This is a temporary infrastructure issue on our side, not a problem with your request. "
+            f"Please try again later by writing a comment containing (only) the string **rerun request**, "
+            f"or reach out if this keeps happening."
+            f"{config_collapsible}"
+        )
+        label = "failed"
 
     else:
         raise ValueError("No valid report status was selected!")
