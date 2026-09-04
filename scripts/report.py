@@ -70,25 +70,23 @@ if __name__ == "__main__":
     group.add_argument("--success", action="store_true")
     group.add_argument("--failure", action="store_true")
     group.add_argument("--aborted", action="store_true")
-    group.add_argument("--invalid", action="store_true")
 
     args = parser.parse_args()
 
-    if not args.invalid:
-        config_path = os.path.abspath(args.config)
-        with open(config_path, "r") as file:
-            config = json.load(file)
+    config_path = os.path.abspath(args.config)
+    with open(config_path, "r") as file:
+        config = json.load(file)
 
-        config_str = json.dumps(config, indent=2)
-        config_collapsible = (
-            f"\n\n"
-            f"<details>\n\n"
-            f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
-            f"```json\n"
-            f"{config_str}\n"
-            f"```\n\n"
-            f"</details>"
-        )
+    config_str = json.dumps(config, indent=2)
+    config_collapsible = (
+        f"\n\n"
+        f"<details>\n\n"
+        f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
+        f"```json\n"
+        f"{config_str}\n"
+        f"```\n\n"
+        f"</details>"
+    )
 
     with open(args.issue_id_file, "r") as file:
         issue_id = file.read()
@@ -128,18 +126,6 @@ if __name__ == "__main__":
             f"{config_collapsible}"
         )
         label = "aborted"
-
-    elif args.invalid:
-        comment = (
-            f"The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.\n\n"
-            f"Common problems are:\n\n"
-            f"- The string `PASTE_YOUR_REQUEST_HERE` was not replaced correctly with the JSON snippet. Note that the "
-            f"JSON code-block (\\`\\`\\`json ... \\`\\`\\`) must not be removed.\n"
-            f"- Syntax errors in the JSON snippet. E.g., commas after the last entry of a JSON object ({{...}}) or array ([...]).\n\n"
-            f"Note that you can edit the JSON snippet in the description to fix the errors and then rerun the request by commenting "
-            f"\"**rerun request**\"."
-        )
-        label = "invalid"
 
     else:
         raise ValueError("No valid report status was selected!")
