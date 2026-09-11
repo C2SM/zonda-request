@@ -53,19 +53,24 @@ trap cleanup_workspace EXIT
 
 archive_and_report() {
     local flag="$1" # '--success', '--failure', or '--aborted'
+    local status=0
 
-    if "$uv" run --frozen python scripts/archive_output.py --config "$config_filename" --workspace "$workspace_dir" \
+    if ! "$uv" run --frozen python scripts/archive_output.py --config "$config_filename" --workspace "$workspace_dir" \
         --destination "$https_public_root" --logfile "$log_filename" --hash-file "$hash_filename"; then
-        "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
-            --issue-id-file <(printf '%s' "$ISSUE_ID") "$flag"
-    else
-        # The pipeline itself may have succeeded, but the result never made
-        # it to $https_public_root (e.g. a permissions problem) - report
-        # that distinctly instead of a dead download link.
-        "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
-            --issue-id-file <(printf '%s' "$ISSUE_ID") --publish-failure
-        return 1
+        status=1
+
+        # Only a successful run needs its outcome rewritten, since its
+        # download link would be dead. A failure or an abort stays reported
+        # as such, even when the logfiles did not reach $https_public_root.
+        if [ "$flag" = '--success' ]; then
+            flag='--publish-failure'
+        fi
     fi
+
+    "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
+        --issue-id-file <(printf '%s' "$ISSUE_ID") "$flag" || status=1
+
+    return "$status"
 }
 
 acquire_slot

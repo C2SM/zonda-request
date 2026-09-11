@@ -35,24 +35,33 @@ class GitHubRepo:
     def comment(self, issue_id, text):
         url = f"{self.repo_api_url}/issues/{issue_id}/comments"
 
-        requests.post(url, headers=self.headers, json={"body": text})
+        response = requests.post(url, headers=self.headers, json={"body": text})
+        response.raise_for_status()
 
     def remove_labels(self, issue_id, labels):
         for label in labels:
             url = f"{self.repo_api_url}/issues/{issue_id}/labels/{label}"
 
-            requests.delete(url, headers=self.headers)
+            response = requests.delete(url, headers=self.headers)
+
+            # A label that is not set on the issue answers 404, which is the
+            # normal case for a request that was never labeled "submitted".
+            if response.status_code != 404:
+                response.raise_for_status()
 
     def add_labels(self, issue_id, labels):
         if labels:
             url = f"{self.repo_api_url}/issues/{issue_id}/labels"
 
-            requests.post(url, headers=self.headers, json={"labels": labels})
+            response = requests.post(url, headers=self.headers, json={"labels": labels})
+            response.raise_for_status()
 
     def get_issue(self, issue_id):
         url = f"{self.repo_api_url}/issues/{issue_id}"
 
         issue = requests.get(url, headers=self.headers)
+        issue.raise_for_status()
+
         return issue.json()["body"]
 
 
