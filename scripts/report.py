@@ -35,24 +35,33 @@ class GitHubRepo:
     def comment(self, issue_id, text):
         url = f"{self.repo_api_url}/issues/{issue_id}/comments"
 
-        requests.post(url, headers=self.headers, json={"body": text})
+        response = requests.post(url, headers=self.headers, json={"body": text})
+        response.raise_for_status()
 
     def remove_labels(self, issue_id, labels):
         for label in labels:
             url = f"{self.repo_api_url}/issues/{issue_id}/labels/{label}"
 
-            requests.delete(url, headers=self.headers)
+            response = requests.delete(url, headers=self.headers)
+
+            # A label that is not set on the issue answers 404, which is the
+            # normal case for a request that was never labeled "submitted".
+            if response.status_code != 404:
+                response.raise_for_status()
 
     def add_labels(self, issue_id, labels):
         if labels:
             url = f"{self.repo_api_url}/issues/{issue_id}/labels"
 
-            requests.post(url, headers=self.headers, json={"labels": labels})
+            response = requests.post(url, headers=self.headers, json={"labels": labels})
+            response.raise_for_status()
 
     def get_issue(self, issue_id):
         url = f"{self.repo_api_url}/issues/{issue_id}"
 
         issue = requests.get(url, headers=self.headers)
+        issue.raise_for_status()
+
         return issue.json()["body"]
 
 
@@ -70,6 +79,7 @@ if __name__ == "__main__":
     group.add_argument("--success", action="store_true")
     group.add_argument("--failure", action="store_true")
     group.add_argument("--aborted", action="store_true")
+    group.add_argument("--publish-failure", action="store_true", help="Processing succeeded, but publishing the result failed")
 
     args = parser.parse_args()
 
@@ -126,6 +136,16 @@ if __name__ == "__main__":
             f"{config_collapsible}"
         )
         label = "aborted"
+
+    elif args.publish_failure:
+        comment = (
+            f"Your request was processed, but the result could not be published for download. "
+            f"This is a temporary infrastructure issue on our side, not a problem with your request. "
+            f"Please try again later by writing a comment containing (only) the string **rerun request**, "
+            f"or reach out if this keeps happening."
+            f"{config_collapsible}"
+        )
+        label = "failed"
 
     else:
         raise ValueError("No valid report status was selected!")
