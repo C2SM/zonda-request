@@ -77,8 +77,10 @@ acquire_slot
 
 # Run under setsid so the whole subtree (timeout, the pipeline, uv, the
 # processing steps) lands in its own process group, killable as a unit
-# below without depending on this script's own job control.
-setsid timeout 24h bash -c run_pipeline &
+# below without depending on this script's own job control. The slot
+# descriptor is closed in the child, otherwise a process that outlives the
+# pipeline (a container, for instance) would keep the slot locked.
+setsid timeout 24h bash -c run_pipeline {lock_fd}>&- &
 pipeline_pid=$!
 
 # shellcheck disable=SC2329 # invoked indirectly via the trap below
