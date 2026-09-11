@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# The detached entrypoint launched over ssh by process_request.yml via
-# `setsid nohup scripts/process_request.sh &`. Once the launching Actions
-# job exits (seconds later), there is no GitHub-side timeout and no
-# `if: always()` step, so this script enforces its own 24h timeout
-# (matching the old Jenkins timeout) and cleans up its own workspace.
+# Detached entrypoint launched over ssh by process_request.yml. No GitHub-side
+# timeout applies once the launching job exits, so it enforces its own 24h one.
 #
-# Deliberately does not use `set -e`: the failure branch below has to run
-# and report even when a command in it fails.
+# No `set -e`: the failure branch must report even when a command in it fails.
 #
 # Required environment variables: see run_pipeline.sh.
 
@@ -21,13 +17,8 @@ readonly n_slots=6
 slots_dir="$HOME/.zonda/slots"
 mkdir -p "$slots_dir"
 
-# Waits for a free slot among $n_slots, matching the 6-concurrent-build
-# cap Jenkins used to enforce on this host. Cheap to do here - unlike in
-# the launching workflow, which exits within seconds - because runs are
-# now detached and no longer bound by any job timeout. This must happen
-# after the caller has applied the "submitted" label, so a queued
-# request still looks "in progress"; this script never touches labels
-# itself before archive_and_report, so that ordering is automatic.
+# Waits for a free slot among $n_slots, the 6-concurrent-build cap Jenkins
+# enforced here. Must run after the caller applied the "submitted" label.
 acquire_slot() {
     while :; do
         for slot in $(seq 0 $((n_slots - 1))); do
@@ -59,9 +50,8 @@ archive_and_report() {
         --destination "$https_public_root" --logfile "$log_filename" --hash-file "$hash_filename"; then
         status=1
 
-        # Only a successful run needs its outcome rewritten, since its
-        # download link would be dead. A failure or an abort stays reported
-        # as such, even when the logfiles did not reach $https_public_root.
+        # Only a successful run needs its outcome rewritten: its download
+        # link would be dead. A failure or an abort stays reported as such.
         if [ "$flag" = '--success' ]; then
             flag='--publish-failure'
         fi
@@ -75,11 +65,8 @@ archive_and_report() {
 
 acquire_slot
 
-# Run under setsid so the whole subtree (timeout, the pipeline, uv, the
-# processing steps) lands in its own process group, killable as a unit
-# below without depending on this script's own job control. The slot
-# descriptor is closed in the child, otherwise a process that outlives the
-# pipeline (a container, for instance) would keep the slot locked.
+# setsid puts the whole subtree in its own process group, killable as a unit.
+# The slot descriptor is closed so no process outliving the pipeline holds it.
 setsid timeout 24h bash -c run_pipeline {lock_fd}>&- &
 pipeline_pid=$!
 

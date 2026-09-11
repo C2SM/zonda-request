@@ -1,8 +1,7 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2034 # consumed by whichever script sources this file
-# Single source of truth for constants shared by run_pipeline.sh,
-# process_request.sh and run_testsuite_request.sh. Sourced, not executed.
-# Mirrors jenkins/common/variables.groovy.
+# Constants shared by the run scripts, mirroring
+# jenkins/common/variables.groovy. Sourced, not executed.
 
 extpar_input_data=/net/co2/c2sm-data/extpar-input-data/
 https_public_root=/net/co2/c2sm-services/zonda-request/

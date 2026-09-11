@@ -1,19 +1,13 @@
 # shellcheck shell=bash
-# Shared by process_request.sh and run_testsuite_request.sh - not
-# executable on its own, meant to be `source`d for its run_pipeline()
-# function. Fetches the request JSON from the issue and runs the
-# extraction. Does not archive, publish or report anything; callers
-# decide what to do with the result.
+# Sourced by process_request.sh and run_testsuite_request.sh for its
+# run_pipeline() function; archiving and reporting are left to the caller.
 #
 # Required environment variables:
 #   ISSUE_ID          number of the GitHub issue the request was submitted in
 #   RUN_ID            unique-ish value hashed into the download path
 #   GITHUB_AUTH_TOKEN token used to fetch the issue body
 #
-# Expects to be run from a directory that already contains this repo's
-# checkout (src/, scripts/, pyproject.toml, uv.lock), and that uv is
-# already installed for this account (~/.local/bin/uv) - non-interactive
-# ssh sessions do not source ~/.bashrc, so it will not be on PATH.
+# Run from a checkout of this repo, with uv installed at ~/.local/bin/uv.
 
 set -a
 # shellcheck source=scripts/env.sh
@@ -21,9 +15,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 set +a
 
 run_pipeline() {
-    # The hash is created before the config, deliberately: the reporting
-    # path always reads hash.txt, so it must exist even when config
-    # creation fails.
+    # The hash is created before the config deliberately: the reporting path
+    # always reads hash.txt, so it must exist even when config creation fails.
     "$uv" sync --frozen &&
     "$uv" run --frozen python scripts/hash.py --build-id "$RUN_ID" --hash-file "$hash_filename" &&
     "$uv" run --frozen python scripts/create_config_file.py --config "$config_filename" \
