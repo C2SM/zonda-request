@@ -54,15 +54,15 @@ trap cleanup_workspace EXIT
 archive_and_report() {
     local flag="$1" # '--success', '--failure', or '--aborted'
 
-    if python3 scripts/archive_output.py --config "$config_filename" --workspace "$workspace_dir" \
+    if "$uv" run --frozen python scripts/archive_output.py --config "$config_filename" --workspace "$workspace_dir" \
         --destination "$https_public_root" --logfile "$log_filename" --hash-file "$hash_filename"; then
-        python3 scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
+        "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
             --issue-id-file <(printf '%s' "$ISSUE_ID") "$flag"
     else
         # The pipeline itself may have succeeded, but the result never made
         # it to $https_public_root (e.g. a permissions problem) - report
         # that distinctly instead of a dead download link.
-        python3 scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
+        "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
             --issue-id-file <(printf '%s' "$ISSUE_ID") --publish-failure
         return 1
     fi

@@ -11,3 +11,7 @@ netcdf_format=NETCDF4
 config_filename=config.json
 hash_filename=hash.txt
 log_filename=zonda_request.log
+
+# Absolute path: non-interactive ssh sessions do not source ~/.bashrc, so
+# uv is not on PATH. All Python runs through it to use the synced venv.
+uv="$HOME/.local/bin/uv"

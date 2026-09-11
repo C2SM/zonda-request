@@ -21,16 +21,14 @@ source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 set +a
 
 run_pipeline() {
-    uv="$HOME/.local/bin/uv"
-
     # The hash is created before the config, deliberately: the reporting
     # path always reads hash.txt, so it must exist even when config
     # creation fails.
     "$uv" sync --frozen &&
-    python3 scripts/hash.py --build-id "$RUN_ID" --hash-file "$hash_filename" &&
-    python3 scripts/create_config_file.py --config "$config_filename" \
+    "$uv" run --frozen python scripts/hash.py --build-id "$RUN_ID" --hash-file "$hash_filename" &&
+    "$uv" run --frozen python scripts/create_config_file.py --config "$config_filename" \
         --auth-token "$GITHUB_AUTH_TOKEN" --issue-id-file <(printf '%s' "$ISSUE_ID") &&
     PYTHONPATH=src OMP_NUM_THREADS="$n_threads" NETCDF_OUTPUT_FILETYPE="$netcdf_format" \
-        python3 src/processing/process_request.py --config "$config_filename" \
+        "$uv" run --frozen python src/processing/process_request.py --config "$config_filename" \
             --workspace "$(pwd)" --extpar-raw-data "$extpar_input_data" --logfile "$log_filename"
 }
