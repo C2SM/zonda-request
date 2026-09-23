@@ -70,10 +70,13 @@ finish() {
     archive_and_report "$1"
 }
 
+# The pipeline is not running yet when the signal arrives during the slot wait.
 # shellcheck disable=SC2329 # invoked indirectly via the signal trap
 on_terminate() {
-    kill -TERM -"$pipeline_pid" 2>/dev/null
-    wait "$pipeline_pid" 2>/dev/null
+    if [ -n "$pipeline_pid" ]; then
+        kill -TERM -"$pipeline_pid" 2>/dev/null
+        wait "$pipeline_pid" 2>/dev/null
+    fi
     finish '--aborted'
     exit 143
 }

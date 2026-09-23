@@ -36,13 +36,15 @@ if [ "$debug" = false ]; then
     trap cleanup_workspace EXIT
 fi
 
+pipeline_pid=''
+trap on_terminate TERM HUP INT
+
 acquire_slot
 
 # setsid puts the whole subtree in its own process group, killable as a unit.
 # The slot descriptor is closed so no process outliving the pipeline holds it.
 setsid timeout 24h bash -c extract {lock_fd}>&- &
 pipeline_pid=$!
-trap on_terminate TERM HUP INT
 
 wait "$pipeline_pid"
 status=$?
