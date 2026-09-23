@@ -9,10 +9,8 @@
 #
 # Run from a checkout of this repo, with uv installed at ~/.local/bin/uv.
 
-set -a
 # shellcheck source=scripts/env.sh
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
-set +a
 
 run_pipeline() {
     # The hash is created before the config deliberately: the reporting path
