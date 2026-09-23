@@ -35,24 +35,33 @@ class GitHubRepo:
     def comment(self, issue_id, text):
         url = f"{self.repo_api_url}/issues/{issue_id}/comments"
 
-        requests.post(url, headers=self.headers, json={"body": text})
+        response = requests.post(url, headers=self.headers, json={"body": text})
+        response.raise_for_status()
 
     def remove_labels(self, issue_id, labels):
         for label in labels:
             url = f"{self.repo_api_url}/issues/{issue_id}/labels/{label}"
 
-            requests.delete(url, headers=self.headers)
+            response = requests.delete(url, headers=self.headers)
+
+            # A label that is not set on the issue answers 404, which is the
+            # normal case for a request that was never labeled "submitted".
+            if response.status_code != 404:
+                response.raise_for_status()
 
     def add_labels(self, issue_id, labels):
         if labels:
             url = f"{self.repo_api_url}/issues/{issue_id}/labels"
 
-            requests.post(url, headers=self.headers, json={"labels": labels})
+            response = requests.post(url, headers=self.headers, json={"labels": labels})
+            response.raise_for_status()
 
     def get_issue(self, issue_id):
         url = f"{self.repo_api_url}/issues/{issue_id}"
 
         issue = requests.get(url, headers=self.headers)
+        issue.raise_for_status()
+
         return issue.json()["body"]
 
 
@@ -65,36 +74,44 @@ if __name__ == "__main__":
     parser.add_argument("--installation-id", type=str, required=False, default=os.environ.get("ZONDA_APP_INSTALLATION_ID"))
     parser.add_argument("--issue-id-file", type=str, required=True)
     parser.add_argument("--hash-file", type=str, required=True)
+    parser.add_argument("--no-logs", action="store_true", help="The log files were not published, so no link to them is given")
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--success", action="store_true")
     group.add_argument("--failure", action="store_true")
     group.add_argument("--aborted", action="store_true")
+    group.add_argument("--publish-failure", action="store_true", help="Processing succeeded, but publishing the result failed")
 
     args = parser.parse_args()
 
+    # The config is missing when its creation failed or the run was aborted before it.
     config_path = os.path.abspath(args.config)
-    with open(config_path, "r") as file:
-        config = json.load(file)
+    config_collapsible = ""
+    if os.path.exists(config_path):
+        with open(config_path, "r") as file:
+            config = json.load(file)
 
-    config_str = json.dumps(config, indent=2)
-    config_collapsible = (
-        f"\n\n"
-        f"<details>\n\n"
-        f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
-        f"```json\n"
-        f"{config_str}\n"
-        f"```\n\n"
-        f"</details>"
-    )
+        config_str = json.dumps(config, indent=2)
+        config_collapsible = (
+            f"\n\n"
+            f"<details>\n\n"
+            f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
+            f"```json\n"
+            f"{config_str}\n"
+            f"```\n\n"
+            f"</details>"
+        )
 
     with open(args.issue_id_file, "r") as file:
         issue_id = file.read()
 
-    with open(args.hash_file, "r") as file:
-        hash = file.read()
+    hash = ""
+    if os.path.exists(args.hash_file):
+        with open(args.hash_file, "r") as file:
+            hash = file.read()
 
     output_url = f"https://data.iac.ethz.ch/zonda/{hash}"
+    logs_hint = "" if args.no_logs else f"Please check the [logfiles]({output_url}) for more information.\n\n"
 
     if args.success:
         request_name = config["zonda"]["request_name"]
@@ -111,7 +128,7 @@ if __name__ == "__main__":
 
     elif args.failure:
         comment = (
-            f"Something went wrong. Please check the [logfiles]({output_url}) for more information.\n\n"
+            f"Something went wrong. {logs_hint}"
             f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**. "
             f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
             f"{config_collapsible}"
@@ -120,12 +137,22 @@ if __name__ == "__main__":
 
     elif args.aborted:
         comment = (
-            f"Your request has been aborted. Please check the [logfiles]({output_url}) for more information.\n\n"
+            f"Your request has been aborted. {logs_hint}"
             f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**. "
             f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
             f"{config_collapsible}"
         )
         label = "aborted"
+
+    elif args.publish_failure:
+        comment = (
+            f"Your request was processed, but the result could not be published for download. "
+            f"This is a temporary infrastructure issue on our side, not a problem with your request. "
+            f"Please try again later by writing a comment containing (only) the string **rerun request**, "
+            f"or reach out if this keeps happening."
+            f"{config_collapsible}"
+        )
+        label = "failed"
 
     else:
         raise ValueError("No valid report status was selected!")
