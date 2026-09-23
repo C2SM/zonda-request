@@ -17,8 +17,8 @@ readonly n_slots=6
 slots_dir="$HOME/.zonda/slots"
 mkdir -p "$slots_dir"
 
-# Waits for a free slot among $n_slots, the 6-concurrent-build cap Jenkins
-# enforced here. Must run after the caller applied the "submitted" label.
+# Waits for a free slot among $n_slots.
+# Must run after the caller applied the "submitted" label.
 acquire_slot() {
     while :; do
         for slot in $(seq 0 $((n_slots - 1))); do
