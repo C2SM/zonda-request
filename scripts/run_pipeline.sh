@@ -18,7 +18,7 @@ run_pipeline() {
     # The hash is created before the config deliberately: the reporting path
     # always reads hash.txt, so it must exist even when config creation fails.
     "$uv" sync --frozen &&
-    "$uv" run --frozen python scripts/hash.py --build-id "$RUN_ID" --hash-file "$hash_filename" &&
+    "$uv" run --frozen python scripts/hash.py --run-id "$RUN_ID" --hash-file "$hash_filename" &&
     "$uv" run --frozen python scripts/create_config_file.py --config "$config_filename" \
         --auth-token "$GITHUB_AUTH_TOKEN" --issue-id-file <(printf '%s' "$ISSUE_ID") &&
     PYTHONPATH=src OMP_NUM_THREADS="$n_threads" NETCDF_OUTPUT_FILETYPE="$netcdf_format" \
