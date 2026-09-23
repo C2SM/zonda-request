@@ -27,7 +27,7 @@ for arg in "$@"; do
     esac
 done
 
-# shellcheck source=scripts/pipeline_functions.sh
+# shellcheck source=SCRIPTDIR/pipeline_functions.sh
 source "$(dirname "${BASH_SOURCE[0]}")/pipeline_functions.sh"
 export -f extract
 

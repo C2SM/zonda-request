@@ -2,7 +2,7 @@
 # shellcheck disable=SC2154 # testsuite, pipeline_pid, workspace_dir are set by run_pipeline.sh
 # Function definitions for run_pipeline.sh. Sourced, not executed.
 
-# shellcheck source=scripts/env.sh
+# shellcheck source=SCRIPTDIR/env.sh
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
 extract() {
