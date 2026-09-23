@@ -13,3 +13,7 @@ export log_filename=zonda_request.log
 # Absolute path: non-interactive ssh sessions do not source ~/.bashrc, so
 # uv is not on PATH. All Python runs through it to use the synced venv.
 export uv="$HOME/.local/bin/uv"
+
+# Concurrency cap shared by all runs on this machine, as enforced by Jenkins.
+export n_slots=6
+export slots_dir="$HOME/.zonda/slots"
