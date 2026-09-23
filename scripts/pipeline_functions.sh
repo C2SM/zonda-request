@@ -44,10 +44,12 @@ cleanup_workspace() {
 archive_and_report() {
     local flag="$1" # '--success', '--failure', or '--aborted'
     local status=0
+    local logs_flag=()
 
     if ! "$uv" run --frozen python scripts/archive_output.py --config "$config_filename" --workspace "$workspace_dir" \
         --destination "$https_public_root" --logfile "$log_filename" --hash-file "$hash_filename"; then
         status=1
+        logs_flag=('--no-logs')
 
         # Only a successful run needs its outcome rewritten: its download
         # link would be dead. A failure or an abort stays reported as such.
@@ -57,7 +59,7 @@ archive_and_report() {
     fi
 
     "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
-        --issue-id-file <(printf '%s' "$ISSUE_ID") "$flag" || status=1
+        --issue-id-file <(printf '%s' "$ISSUE_ID") "${logs_flag[@]}" "$flag" || status=1
 
     return "$status"
 }

@@ -74,6 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("--installation-id", type=str, required=False, default=os.environ.get("ZONDA_APP_INSTALLATION_ID"))
     parser.add_argument("--issue-id-file", type=str, required=True)
     parser.add_argument("--hash-file", type=str, required=True)
+    parser.add_argument("--no-logs", action="store_true", help="The log files were not published, so no link to them is given")
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--success", action="store_true")
@@ -83,28 +84,34 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # The config is missing when its creation failed or the run was aborted before it.
     config_path = os.path.abspath(args.config)
-    with open(config_path, "r") as file:
-        config = json.load(file)
+    config_collapsible = ""
+    if os.path.exists(config_path):
+        with open(config_path, "r") as file:
+            config = json.load(file)
 
-    config_str = json.dumps(config, indent=2)
-    config_collapsible = (
-        f"\n\n"
-        f"<details>\n\n"
-        f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
-        f"```json\n"
-        f"{config_str}\n"
-        f"```\n\n"
-        f"</details>"
-    )
+        config_str = json.dumps(config, indent=2)
+        config_collapsible = (
+            f"\n\n"
+            f"<details>\n\n"
+            f"<summary>Expand to see the JSON config for this request.</summary>\n\n"
+            f"```json\n"
+            f"{config_str}\n"
+            f"```\n\n"
+            f"</details>"
+        )
 
     with open(args.issue_id_file, "r") as file:
         issue_id = file.read()
 
-    with open(args.hash_file, "r") as file:
-        hash = file.read()
+    hash = ""
+    if os.path.exists(args.hash_file):
+        with open(args.hash_file, "r") as file:
+            hash = file.read()
 
     output_url = f"https://data.iac.ethz.ch/zonda/{hash}"
+    logs_hint = "" if args.no_logs else f"Please check the [logfiles]({output_url}) for more information.\n\n"
 
     if args.success:
         request_name = config["zonda"]["request_name"]
@@ -121,7 +128,7 @@ if __name__ == "__main__":
 
     elif args.failure:
         comment = (
-            f"Something went wrong. Please check the [logfiles]({output_url}) for more information.\n\n"
+            f"Something went wrong. {logs_hint}"
             f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**. "
             f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
             f"{config_collapsible}"
@@ -130,7 +137,7 @@ if __name__ == "__main__":
 
     elif args.aborted:
         comment = (
-            f"Your request has been aborted. Please check the [logfiles]({output_url}) for more information.\n\n"
+            f"Your request has been aborted. {logs_hint}"
             f"If desired, you can rerun this request by writing a comment containing (only) the string **rerun request**. "
             f"Note that you can edit the JSON snippet in the description before rerunning if you want to apply changes/correct errors."
             f"{config_collapsible}"
