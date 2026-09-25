@@ -1,4 +1,4 @@
-name: Cleanup branches and issues
+name: Close old data request issues
 on:
   schedule:
     - cron: '0 0 * * *'  # Run this workflow every day at midnight
