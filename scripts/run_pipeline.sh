@@ -11,11 +11,12 @@ set -uo pipefail
 # No `set -e`: the failure branch must report even when a command in it fails.
 #
 # Required environment variables:
-#   ISSUE_ID          number of the GitHub issue the request was submitted in
-#   RUN_ID            unique-ish value hashed into the download path
-#   GITHUB_AUTH_TOKEN token used to fetch the issue body
+#   ISSUE_ID  number of the GitHub issue the request was submitted in
+#   RUN_ID    unique-ish value hashed into the download path
 #
-# Run from a checkout of this repo, with uv installed at ~/.local/bin/uv.
+# GitHub is accessed as the Zonda-Bot App, whose private key is expected at
+# ~/.config/zonda/bot.pem. Run from a checkout of this repo, with uv installed
+# at ~/.local/bin/uv.
 
 testsuite=false
 debug=false

@@ -21,6 +21,21 @@ def installation_token(app_id, key_path, installation_id):
     return response.json()["token"]
 
 
+def add_app_arguments(parser):
+    parser.add_argument("--app-id", type=str, required=False, default=os.environ.get("ZONDA_APP_ID"))
+    parser.add_argument("--app-key", type=str, required=False, default=os.environ.get("ZONDA_APP_KEY", "~/.config/zonda/bot.pem"))
+    parser.add_argument("--installation-id", type=str, required=False, default=os.environ.get("ZONDA_APP_INSTALLATION_ID"))
+
+
+def app_repository(parser, args):
+    if not (args.app_id and args.installation_id):
+        parser.error("--app-id and --installation-id (also settable via ZONDA_APP_ID and ZONDA_APP_INSTALLATION_ID) are required")
+
+    return GitHubRepo( group = "c2sm",
+                       repo = "zonda-request",
+                       auth_token = installation_token(args.app_id, args.app_key, args.installation_id) )
+
+
 class GitHubRepo:
 
     def __init__(self, group, repo, auth_token=None):
@@ -69,10 +84,8 @@ class GitHubRepo:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
-    parser.add_argument("--app-id", type=str, required=False, default=os.environ.get("ZONDA_APP_ID"))
-    parser.add_argument("--app-key", type=str, required=False, default=os.environ.get("ZONDA_APP_KEY", "~/.config/zonda/bot.pem"))
-    parser.add_argument("--installation-id", type=str, required=False, default=os.environ.get("ZONDA_APP_INSTALLATION_ID"))
-    parser.add_argument("--issue-id-file", type=str, required=True)
+    add_app_arguments(parser)
+    parser.add_argument("--issue-id", type=int, required=True, help="Number of the GitHub issue to report to")
     parser.add_argument("--hash-file", type=str, required=True)
     parser.add_argument("--no-logs", action="store_true", help="The log files were not published, so no link to them is given")
 
@@ -102,13 +115,10 @@ if __name__ == "__main__":
             f"</details>"
         )
 
-    with open(args.issue_id_file, "r") as file:
-        issue_id = file.read()
-
     hash = ""
     if os.path.exists(args.hash_file):
         with open(args.hash_file, "r") as file:
-            hash = file.read()
+            hash = file.read().strip()
 
     output_url = f"https://data.iac.ethz.ch/zonda/{hash}"
     logs_hint = "" if args.no_logs else f"Please check the [logfiles]({output_url}) for more information.\n\n"
@@ -157,16 +167,9 @@ if __name__ == "__main__":
     else:
         raise ValueError("No valid report status was selected!")
 
-    if not (args.app_id and args.installation_id):
-        parser.error("--app-id and --installation-id (also settable via ZONDA_APP_ID and ZONDA_APP_INSTALLATION_ID) are required")
+    repository = app_repository(parser, args)
 
-    auth_token = installation_token(args.app_id, args.app_key, args.installation_id)
+    repository.comment(issue_id=args.issue_id, text=comment)
 
-    repository = GitHubRepo( group = "c2sm",
-                             repo = "zonda-request",
-                             auth_token = auth_token )
-
-    repository.comment(issue_id=issue_id, text=comment)
-
-    repository.remove_labels(issue_id=issue_id, labels=["submitted"])
-    repository.add_labels(issue_id=issue_id, labels=[label])
+    repository.remove_labels(issue_id=args.issue_id, labels=["submitted"])
+    repository.add_labels(issue_id=args.issue_id, labels=[label])

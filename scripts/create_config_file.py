@@ -1,7 +1,7 @@
 import argparse
 import json
 import re
-from report import GitHubRepo
+from report import add_app_arguments, app_repository
 
 
 
@@ -31,19 +31,14 @@ def write_config_file(config_filename, json_config_str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create config file and validate JSON input")
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
-    parser.add_argument("--auth-token", type=str, required=True)
-    parser.add_argument("--issue-id-file", type=str, required=True)
+    add_app_arguments(parser)
+    parser.add_argument("--issue-id", type=int, required=True, help="Number of the GitHub issue holding the request")
 
     args = parser.parse_args()
     config_filename = args.config
 
-    with open(args.issue_id_file, "r") as file:
-        issue_id = file.read()
+    repository = app_repository(parser, args)
 
-    repository = GitHubRepo( group = "c2sm",
-                             repo = "zonda-request",
-                             auth_token = args.auth_token )
-
-    json_config_str = extract_json_from_issue(repository.get_issue(issue_id)).strip()
+    json_config_str = extract_json_from_issue(repository.get_issue(args.issue_id)).strip()
 
     write_config_file(config_filename, json_config_str)

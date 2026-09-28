@@ -1,6 +1,5 @@
 # shellcheck shell=bash
-# Constants shared by the run scripts, mirroring
-# jenkins/common/variables.groovy. Sourced, not executed.
+# Constants shared by the run scripts. Sourced, not executed.
 
 export extpar_input_data=/net/co2/c2sm-data/extpar-input-data/
 export https_public_root=/net/co2/c2sm-services/zonda-request/
@@ -14,6 +13,10 @@ export log_filename=zonda_request.log
 # uv is not on PATH. All Python runs through it to use the synced venv.
 export uv="$HOME/.local/bin/uv"
 
-# Concurrency cap shared by all runs on this machine, as enforced by Jenkins.
+# Concurrency cap shared by all runs on this machine.
 export n_slots=6
 export slots_dir="$HOME/.zonda/slots"
+
+# Identity of the Zonda-Bot GitHub App. Not secret; only its private key is.
+export ZONDA_APP_ID=4546985
+export ZONDA_APP_INSTALLATION_ID=152656376
