@@ -1,0 +1,103 @@
+# Yunnan nested ICON-LAM grids and external parameters (R03B08/R03B09)
+
+Please generate a two-domain grid and EXTPAR package for a Yunnan regional NWP experiment, including the reduced radiation/parent grids and lateral boundary grid. Approximate resolutions: 6.6 km and 3.3 km. The inner domain is intended to retain generous space around the entire Yunnan province.
+
+Only geometric configuration and static-data choices are included in this request. No station metadata, private forecasts, credentials, or historical power data are attached.
+
+```json
+{
+  "zonda": {
+    "request_name": "yunnan_R03B08_B09_20260930"
+  },
+  "globals": {
+    "grid_root": 3,
+    "grid_level": 8,
+    "icopole_lon": 0,
+    "icopole_lat": 90,
+    "icorotation": 0,
+    "bdy_indexing_depth": 14,
+    "keep_basegrid_files": false
+  },
+  "domains": [
+    {
+      "domain_id": 1,
+      "icontools": {
+        "parent_id": 0,
+        "region_type": 3,
+        "center_lon": 102.2,
+        "center_lat": 25,
+        "hwidth_lon": 15,
+        "hwidth_lat": 13,
+        "lrotate": false
+      },
+      "extpar": {
+        "igrid_type": 1,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 3,
+        "it_cl_type": 1,
+        "iera_type": 1,
+        "iemiss_type": 1,
+        "icdnc_type": 1,
+        "ilookup_table_lu": 1,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "use_array_cache": false,
+        "lsgsl": false,
+        "lfilter_oro": false,
+        "lurban": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "lradtopo": false,
+        "radtopo_radius": 40000
+      }
+    },
+    {
+      "domain_id": 2,
+      "icontools": {
+        "parent_id": 1,
+        "region_type": 3,
+        "center_lon": 102.2,
+        "center_lat": 25,
+        "hwidth_lon": 7,
+        "hwidth_lat": 6.5,
+        "lrotate": false
+      },
+      "extpar": {
+        "igrid_type": 1,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 3,
+        "it_cl_type": 1,
+        "iera_type": 1,
+        "iemiss_type": 1,
+        "icdnc_type": 1,
+        "ilookup_table_lu": 1,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "use_array_cache": false,
+        "lsgsl": false,
+        "lfilter_oro": false,
+        "lurban": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "lradtopo": false,
+        "radtopo_radius": 40000
+      }
+    }
+  ]
+}
+```
+
+This request uses the official issue template. It supersedes API-created issue #3209, which has not received the processing label and has not started. The approved grid and static-data configuration is unchanged.
+
+Runtime compatibility correction after the first attempt: EXTPAR stopped at `Cannot read in namelist radtopo`. Its generated `INPUT_RADTOPO` contains `radius=40000.0`, while `radius` is declared INTEGER in EXTPAR v5.21. A minimal gfortran reproduction failed with IOSTAT=5010 for that file and passed when only the literal was changed to `40000`. Both domains now explicitly set `radtopo_radius: 40000` as a JSON integer. `lradtopo` remains false; domain geometry, resolution, and all dataset choices are unchanged.
+
