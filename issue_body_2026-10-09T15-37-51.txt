@@ -1,0 +1,101 @@
+# ICON External Parameter Request
+
+Coastal strip test: DOM01 R19B07 (~2 km) and DOM02 R19B08 (~1 km), both expression domains (region_type 4). Rerun with expressions shortened below the 1024-character limit of icongridgen.
+
+```json
+{
+  "zonda": {
+    "request_name": "adriatic_coast_r19b07_r19b08",
+    "backend_tag": "v2.2",
+    "icontools_tag": "latest",
+    "extpar_tag": "latest"
+  },
+  "globals": {
+    "keep_basegrid_files": false,
+    "grid_root": 19,
+    "grid_level": 7,
+    "icorotation": 0,
+    "icopole_lat": 90,
+    "icopole_lon": 0,
+    "centre": 78,
+    "subcentre": 255
+  },
+  "domains": [
+    {
+      "domain_id": 1,
+      "icontools": {
+        "parent_id": 0,
+        "region_type": 4,
+        "expression": "if(0.652*[lon]+37.69>[lat],1,0)*if([lon]+0.523*[lat]>36.07,1,0)*if([lat]>0.568*[lon]+37.08,1,0)*if(57.33>0.753*[lon]+[lat],1,0)+if(0.568*[lon]+37.08>[lat],1,0)*if(0.566*[lon]+[lat]>51.67,1,0)*if([lat]>0.718*[lon]+33.05,1,0)*if(60.29>[lon]+0.982*[lat],1,0)+if(0.718*[lon]+33.05>[lat],1,0)*if(0.651*[lon]+[lat]>52.91,1,0)*if(0.975*[lat]>[lon]+25.09,1,0)*if(54.86>0.618*[lon]+[lat],1,0)+if([lon]+25.09>0.975*[lat],1,0)*if(0.325*[lon]+[lat]>47.63,1,0)*if(0.906*[lat]>[lon]+18.82,1,0)*if(52.28>0.472*[lon]+[lat],1,0)"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 2,
+        "it_cl_type": 2,
+        "iera_type": 2,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 2,
+      "icontools": {
+        "parent_id": 1,
+        "region_type": 4,
+        "expression": "if(0.622*[lon]+37.49>[lat],1,0)*if([lon]+0.454*[lat]>33.82,1,0)*if([lat]>0.648*[lon]+36.57,1,0)*if(57.55>0.834*[lon]+[lat],1,0)+if(0.648*[lon]+36.57>[lat],1,0)*if([lon]+0.361*[lat]>29.63,1,0)*if([lat]>0.838*[lon]+33.22,1,0)*if(54.78>0.638*[lon]+[lat],1,0)+if(0.838*[lon]+33.22>[lat],1,0)*if(0.274*[lon]+[lat]>48.27,1,0)*if([lat]>0.519*[lon]+37.17,1,0)*if(52.16>0.458*[lon]+[lat],1,0)+if(0.519*[lon]+37.17>[lat],1,0)*if(0.654*[lon]+[lat]>53.59,1,0)*if([lat]>0.566*[lon]+35.38,1,0)*if(39.54>[lon]+0.536*[lat],1,0)+if(0.566*[lon]+35.38>[lat],1,0)*if(0.77*[lon]+[lat]>55.33,1,0)*if([lat]>0.951*[lon]+27.84,1,0)*if(54.45>0.643*[lon]+[lat],1,0)+if(0.951*[lon]+27.84>[lat],1,0)*if(0.469*[lon]+[lat]>50.52,1,0)*if(0.908*[lat]>[lon]+22.19,1,0)*if(53.14>0.564*[lon]+[lat],1,0)+if([lon]+22.19>0.908*[lat],1,0)*if(0.283*[lon]+[lat]>47.42,1,0)*if(0.911*[lat]>[lon]+19.81,1,0)*if(51.56>0.473*[lon]+[lat],1,0)"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 2,
+        "it_cl_type": 2,
+        "iera_type": 2,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    }
+  ]
+}
+```
+
