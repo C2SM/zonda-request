@@ -1,0 +1,24 @@
+name: Process data request
+
+# Dispatch-only stub. It exists on the default branch so that the full
+# workflow can be dispatched from a feature branch with --ref for testing.
+# It is replaced by the real workflow when jenkins-migration-epic is merged.
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'GitHub issue number to (re-)process'
+        required: true
+      ref:
+        description: 'Run this ref instead of the backend_tag from the issue (testing only)'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Stub. Dispatch with --ref gha-process-workflow."
