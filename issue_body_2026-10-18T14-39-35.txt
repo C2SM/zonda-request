@@ -1,0 +1,284 @@
+# ICON External Parameter Request
+
+```{
+  "zonda": {
+    "request_name": "adriatic_coast_r19b07_r19b08_r19b09",
+    "backend_tag": "v2.2",
+    "icontools_tag": "latest",
+    "extpar_tag": "latest"
+  },
+  "globals": {
+    "keep_basegrid_files": false,
+    "grid_root": 19,
+    "grid_level": 7,
+    "icorotation": 0,
+    "icopole_lat": 90,
+    "icopole_lon": 0,
+    "centre": 78,
+    "subcentre": 255
+  },
+  "domains": [
+    {
+      "domain_id": 1,
+      "icontools": {
+        "parent_id": 0,
+        "region_type": 4,
+        "expression": "min(if([lon]+0.6606*[lat]>41.844,1,0)*if(0.7676*[lon]+[lat]>53.862,1,0)*if(0.7408*[lat]>[lon]+15.691,1,0)*if(56.424>0.6831*[lon]+[lat],1,0)*if(0.5901*[lon]+38.676>[lat],1,0)+if([lat]>0.9388*[lon]+23.962,1,0)*if(53.134>0.4934*[lon]+[lat],1,0)*if([lon]+15.691>0.7408*[lat],1,0)*if(0.2814*[lon]+[lat]>46.358,1,0),1)"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 2,
+        "it_cl_type": 2,
+        "iera_type": 2,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 2,
+      "icontools": {
+        "parent_id": 1,
+        "region_type": 4,
+        "expression": "min(if(0.4477*[lat]>[lon]+4.777,1,0)*if(21.543>[lon]+0.1408*[lat],1,0)*if(50.692>0.3512*[lon]+[lat],1,0)*if([lon]>0.1098*[lat]+9.089,1,0)*if(0.9146*[lon]+[lat]>57.4,1,0)+if([lon]+0.4814*[lat]>35.11,1,0)*if([lat]>0.0231*[lon]+44.284,1,0)*if(0.1098*[lat]+9.089>[lon],1,0)*if(53.903>0.5787*[lon]+[lat],1,0)*if(0.5711*[lon]+38.263>[lat],1,0)+if(52.612>0.5309*[lon]+[lat],1,0)*if(48.827>0.3044*[lon]+[lat],1,0)*if([lon]>0.152*[lat]+9.348,1,0)*if(0.7891*[lon]+[lat]>55.844,1,0)*if(0.1151*[lon]+[lat]>44.484,1,0)*if([lat]>0.9166*[lon]+25.749,1,0)+if([lon]+4.059>0.4618*[lat],1,0)*if(0.3454*[lon]+[lat]>48.367,1,0)*if(55.844>0.7891*[lon]+[lat],1,0)+if(40.797>[lon]+0.5636*[lat],1,0)*if(54.656>0.6512*[lon]+[lat],1,0)*if([lon]+4.777>0.4477*[lat],1,0)*if(0.505*[lon]+[lat]>51.321,1,0)*if(0.152*[lat]+9.348>[lon],1,0),1)"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 2,
+        "it_cl_type": 2,
+        "iera_type": 2,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 3,
+      "icontools": {
+        "parent_id": 2,
+        "region_type": 4,
+        "expression": "min(if(46.511>0.191*[lon]+[lat],1,0)*if(0.3368*[lon]+37.739>[lat],1,0)*if([lon]+0.1439*[lat]>22.703,1,0)*if(0.0943*[lon]+[lat]>44.718,1,0)*if([lat]>0.5789*[lon]+33.492,1,0)*if(0.0938*[lat]+12.728>[lon],1,0)+if(55.006>0.6818*[lon]+[lat],1,0)*if(0.3246*[lon]+37.451>[lat],1,0)*if([lon]+0.8755*[lat]>54.943,1,0)*if([lat]>0.3924*[lon]+36.097,1,0)+if(54.943>[lon]+0.8755*[lat],1,0)*if(45.273>0.1288*[lon]+[lat],1,0)*if(0.7855*[lon]+29.717>[lat],1,0)*if([lon]+0.9199*[lat]>56.476,1,0)*if([lat]>0.1118*[lon]+40.972,1,0)+if(59.87>0.9867*[lon]+[lat],1,0)*if([lon]>0.0938*[lat]+12.728,1,0)*if([lon]+0.6685*[lat]>45.662,1,0)*if([lat]>0.7855*[lon]+29.717,1,0),1)"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 2,
+        "it_cl_type": 2,
+        "iera_type": 2,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 4,
+      "icontools": {
+        "parent_id": 2,
+        "region_type": 4,
+        "expression": "min(if(52.283>0.5235*[lon]+[lat],1,0)*if(0.6176*[lon]+34.984>[lat],1,0)*if(0.5452*[lon]+[lat]>52.514,1,0)*if(0.338*[lat]+0.312>[lon],1,0)+if([lon]+0.5264*[lat]>38.335,1,0)*if(0.9492*[lon]+[lat]>58.412,1,0)*if(0.443*[lon]+[lat]>50.668,1,0)*if(0.2057*[lat]+6.515>[lon],1,0)*if(54.673>0.6888*[lon]+[lat],1,0)*if(48.29>0.2731*[lon]+[lat],1,0)+if(0.0174*[lon]+[lat]>43.919,1,0)*if([lat]>0.9306*[lon]+28.845,1,0)*if(51.908>0.5111*[lon]+[lat],1,0)*if([lon]>0.2057*[lat]+6.515,1,0)*if([lon]+0.9173*[lat]>55.691,1,0)+if(58.974>[lon]+0.9892*[lat],1,0)*if(52.514>0.5452*[lon]+[lat],1,0)*if([lon]+0.0523*[lat]>17.392,1,0)*if(0.2731*[lon]+[lat]>48.29,1,0),1)"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 2,
+        "it_cl_type": 2,
+        "iera_type": 2,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 5,
+      "icontools": {
+        "parent_id": 2,
+        "region_type": 4,
+        "expression": "if([lat]>0.2093*[lon]+39.969,1,0)*if([lat]>0.4048*[lon]+36.747,1,0)*if(54.639>0.6671*[lon]+[lat],1,0)*if(0.1651*[lon]+40.922>[lat],1,0)*if(0.5243*[lon]+35.128>[lat],1,0)*if(0.9188*[lon]+[lat]>58.116,1,0)"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 2,
+        "it_cl_type": 2,
+        "iera_type": 2,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 6,
+      "icontools": {
+        "parent_id": 2,
+        "region_type": 4,
+        "expression": "min(if([lon]+6.519>0.4508*[lat],1,0)*if([lon]+0.6188*[lat]>41.472,1,0)*if(0.9022*[lon]+[lat]>57.215,1,0)*if(0.3685*[lat]>[lon]+2.62,1,0)*if(51.859>0.5005*[lon]+[lat],1,0)*if(0.2173*[lon]+41.942>[lat],1,0)+if([lon]+2.62>0.3685*[lat],1,0)*if([lat]>0.0229*[lon]+44.396,1,0)*if([lat]>0.5305*[lon]+37.303,1,0)*if(0.0839*[lat]+10.313>[lon],1,0)*if(0.035*[lat]+12.507>[lon],1,0)*if(0.1877*[lon]+42.278>[lat],1,0),1)"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 2,
+        "it_cl_type": 2,
+        "iera_type": 2,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 7,
+      "icontools": {
+        "parent_id": 2,
+        "region_type": 4,
+        "expression": "min(if(0.1605*[lon]+[lat]>47.467,1,0)*if(45.698>[lon]+0.6811*[lat],1,0)*if(54.068>0.5961*[lon]+[lat],1,0)*if(52.803>0.5102*[lon]+[lat],1,0)*if([lon]>0.0894*[lat]+10.401,1,0)*if(0.9962*[lon]+[lat]>59.65,1,0)+if(0.8088*[lon]+[lat]>56.61,1,0)*if(0.4225*[lon]+[lat]>50.936,1,0)*if([lat]>0.6074*[lon]+35.641,1,0)*if(0.3259*[lat]+0.378>[lon],1,0)*if(0.0151*[lat]+14.328>[lon],1,0)*if(0.419*[lon]+38.771>[lat],1,0)*if([lon]+5.752>0.4542*[lat],1,0)+if([lon]+1.675>0.3602*[lat],1,0)*if(0.5625*[lon]+[lat]>53.145,1,0)*if([lat]>0.419*[lon]+38.771,1,0)*if(47.467>0.1605*[lon]+[lat],1,0)+if(0.3951*[lon]+[lat]>50.929,1,0)*if(0.0133*[lon]+[lat]>45.45,1,0)*if(0.0894*[lat]+10.401>[lon],1,0)*if(47.676>0.1557*[lon]+[lat],1,0)*if([lon]+8.446>0.4996*[lat],1,0),1)"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 2,
+        "it_cl_type": 2,
+        "iera_type": 2,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    }
+  ]
+}
+```
+
+
