@@ -10,8 +10,7 @@ extract() {
     # always reads hash.txt, so it must exist even when config creation fails.
     "$uv" sync --frozen &&
     "$uv" run --frozen python scripts/hash.py --run-id "$RUN_ID" --hash-file "$hash_filename" &&
-    "$uv" run --frozen python scripts/create_config_file.py --config "$config_filename" \
-        --auth-token "$GITHUB_AUTH_TOKEN" --issue-id-file <(printf '%s' "$ISSUE_ID") &&
+    "$uv" run --frozen python scripts/create_config_file.py --config "$config_filename" --issue-id "$ISSUE_ID" &&
     PYTHONPATH=src OMP_NUM_THREADS="$n_threads" NETCDF_OUTPUT_FILETYPE="$netcdf_format" \
         "$uv" run --frozen python src/processing/process_request.py --config "$config_filename" \
             --workspace "$(pwd)" --extpar-raw-data "$extpar_input_data" --logfile "$log_filename"
@@ -59,7 +58,7 @@ archive_and_report() {
     fi
 
     "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
-        --issue-id-file <(printf '%s' "$ISSUE_ID") "${logs_flag[@]}" "$flag" || status=1
+        --issue-id "$ISSUE_ID" "${logs_flag[@]}" "$flag" || status=1
 
     return "$status"
 }
