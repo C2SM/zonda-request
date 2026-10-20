@@ -100,8 +100,10 @@ jobs:
             const fs = require('fs')
             const issue_number = ${{ steps.issue.outputs.number }}
             let error
+            let headline = 'The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.'
             if (process.env.EMPTY_JSON === 'true') {
               error = 'No JSON block found!'
+              headline = 'No JSON code-block was found in the issue description.'
             } else if (fs.existsSync('jq_error.txt')) {
               error = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
             } else {
@@ -109,7 +111,7 @@ jobs:
             }
 
             const message = `
-            The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.
+            ${headline}
 
             <details>
 
