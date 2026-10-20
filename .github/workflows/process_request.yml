@@ -143,6 +143,18 @@ jobs:
               labels: ['invalid']
             })
 
+            // A rerun sets 'submitted' before dispatching; left in place, it would block every further rerun.
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                name: 'submitted'
+              })
+            } catch (error) {
+              if (error.status !== 404) throw error
+            }
+
             core.setFailed("Invalid JSON snippet!")
 
       # Checking out the pinned tag replaces the former request-<N> branch.
