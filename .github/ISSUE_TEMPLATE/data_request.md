@@ -31,7 +31,7 @@ Labels reflect the current state of your request:
 
 ![Static Badge](https://img.shields.io/badge/submitted-yellow) - Your request is currently under processing. Please wait for further updates.
 
-![Static Badge](https://img.shields.io/badge/invalid-lightblue) - The JSON snippet in your request is invalid. Please edit the issue description to correct it, then comment "**rerun request**".
+![Static Badge](https://img.shields.io/badge/invalid-lightblue) - The JSON snippet in your request is invalid. Please edit the issue description to correct it, then comment **rerun request**.
 
 ![Static Badge](https://img.shields.io/badge/completed-green) - Your request has been successfully processed. You can download your data using the provided link.
 

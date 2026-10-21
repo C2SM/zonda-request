@@ -25,14 +25,12 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issue_number = context.issue.number
-
             for (const label of ['completed', 'failed', 'aborted', 'invalid']) {
               try {
                 await github.rest.issues.removeLabel({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number,
+                  issue_number: context.issue.number,
                   name: label
                 })
               } catch (error) {
@@ -43,7 +41,7 @@ jobs:
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number,
+              issue_number: context.issue.number,
               labels: ['submitted']
             })
 
@@ -52,5 +50,5 @@ jobs:
               repo: context.repo.repo,
               workflow_id: 'process_request.yml',
               ref: context.payload.repository.default_branch,
-              inputs: { issue_number: String(issue_number) }
+              inputs: { issue_number: String(context.issue.number) }
             })
