@@ -1,0 +1,66 @@
+name: Test continue-on-error
+
+# Compares the two error-handling variants of "Extract backend_tag" in
+# process_request.yml (PR #2920). Nothing is posted to any issue.
+#   exit1: exit 1 + continue-on-error + `if: outcome == 'failure'`
+#   output: json_error output + exit 0, no continue-on-error
+
+on:
+  push:
+    branches: [test-continue-on-error]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [exit1, output]
+        scenario: [invalid_json, later_failure, valid]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract backend_tag
+        id: extract_backend_tag
+        continue-on-error: ${{ matrix.variant == 'exit1' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VARIANT: ${{ matrix.variant }}
+          SCENARIO: ${{ matrix.scenario }}
+        run: |
+          echo "Shell options: $-  (contains 'e' -> bash -e)"
+          case "$SCENARIO" in
+            invalid_json)  json_block='{"zonda": {"backend_tag": "v3.0",}}' ;;
+            later_failure) json_block='{"zonda": {}}' ;;
+            valid)         json_block='{"zonda": {"backend_tag": "v3.0"}}' ;;
+          esac
+
+          if ! echo "$json_block" | jq . > /dev/null 2> jq_error.txt; then
+            echo "MARKER: jq failed"
+            if [ "$VARIANT" = exit1 ]; then exit 1; fi
+            echo "json_error=syntax" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "MARKER: JSON valid, jq_error.txt exists with $(wc -c < jq_error.txt) bytes"
+
+          backend_tag=$(echo "$json_block" | jq -r '.zonda.backend_tag // empty')
+          if [ -z "$backend_tag" ]; then
+            echo "MARKER: before tag lookup (simulated API failure)"
+            backend_tag=$(gh api "repos/${{ github.repository }}/does-not-exist" --jq '.[0].name')
+            echo "MARKER: after tag lookup - only printed if the step survived the failure"
+          fi
+
+          echo "MARKER: end of step reached, backend_tag=$backend_tag"
+          echo "backend_tag=$backend_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Report status on invalid JSON
+        if: >
+          (matrix.variant == 'exit1' && steps.extract_backend_tag.outcome == 'failure') ||
+          (matrix.variant == 'output' && steps.extract_backend_tag.outputs.json_error)
+        run: |
+          echo "::warning title=User would be told::'The provided JSON snippet is invalid', label 'invalid' (${{ matrix.variant }}/${{ matrix.scenario }})"
+          echo "jq error shown to the user: '$(cat jq_error.txt)'"
+
+      - name: Continue with processing
+        run: echo "::notice::Would check out '${{ steps.extract_backend_tag.outputs.backend_tag }}' and launch (${{ matrix.variant }}/${{ matrix.scenario }})"
