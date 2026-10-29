@@ -1,9 +1,8 @@
 name: Process data request
 
-# Triggered by the 'data request' label, or via workflow_dispatch from
-# rerun_request.yml. workflow_dispatch is exempt from the rule that events
-# caused by GITHUB_TOKEN do not trigger further runs, so no extra credential
-# is needed.
+# Triggered by the 'data request' label, by a 'rerun request' comment on an
+# open issue that is not currently processing, or manually via workflow_dispatch.
+# Every run re-reads the issue body, so a rerun picks up an edited issue.
 #
 # The pipeline runs detached on iacdipl-7: this job only launches it and goes
 # green, the request status lives on the issue labels. scripts/run_pipeline.sh
@@ -16,6 +15,8 @@ name: Process data request
 on:
   issues:
     types: [labeled]
+  issue_comment:
+    types: [created]
   workflow_dispatch:
     inputs:
       issue_number:
@@ -34,26 +35,38 @@ jobs:
   process:
     if: >
       github.event_name == 'workflow_dispatch' ||
-      github.event.label.name == 'data request'
+      (github.event_name == 'issues' && github.event.label.name == 'data request') ||
+      (github.event_name == 'issue_comment' &&
+       startsWith(github.event.comment.body, 'rerun request') &&
+       !github.event.issue.pull_request &&
+       github.event.issue.state == 'open' &&
+       !contains(github.event.issue.labels.*.name, 'submitted'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Determine issue number
-        id: issue
+        id: determine_issue_number
         env:
-          NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+          INPUT_ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
         run: |
-          [[ "$NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::issue_number must be a positive integer, got '$NUMBER'."; exit 1; }
-          echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
+          [[ "$INPUT_ISSUE_NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::issue_number must be a positive integer, got '$INPUT_ISSUE_NUMBER'."; exit 1; }
+          echo "issue_number=$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
 
-      # The body is fetched live so that a rerun picks up an edited issue.
+      # 'submitted' is set first, so that it blocks a second rerun as early as possible.
+      - name: Reset status labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ steps.determine_issue_number.outputs.issue_number }}" --repo "${{ github.repository }}" \
+            --remove-label completed,failed,aborted,invalid --add-label submitted
+
       - name: Extract backend_tag
         id: extract_backend_tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE: ${{ steps.issue.outputs.number }}
+          ISSUE_NUMBER: ${{ steps.determine_issue_number.outputs.issue_number }}
         run: |
-          body=$(gh api "repos/${{ github.repository }}/issues/$ISSUE" --jq .body)
+          body=$(gh api "repos/${{ github.repository }}/issues/$ISSUE_NUMBER" --jq .body)
           json_block=$(echo "$body" \
             | tr -d '\r' \
             | sed -n '/^```json$/,${p;/^```$/q}' \
@@ -78,8 +91,8 @@ jobs:
           if [[ "$backend_tag" =~ ^v[0-9] ]] &&
              [ "$(printf '%s\n' "$MIN_BACKEND_TAG" "$backend_tag" | sort -V | head -n1)" != "$MIN_BACKEND_TAG" ]; then
             echo "::warning title=Backend tag too old::${backend_tag} predates ${MIN_BACKEND_TAG}, using ${MIN_BACKEND_TAG} instead."
-            gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body \
-              "Backend version \`${backend_tag}\` is no longer supported. This request is processed with \`${MIN_BACKEND_TAG}\` instead."
+            gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body \
+              "Backend version \`${backend_tag}\` is no longer supported. This request will be processed with \`${MIN_BACKEND_TAG}\` instead."
             backend_tag=$MIN_BACKEND_TAG
           fi
 
@@ -94,19 +107,19 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs')
-            const issue_number = ${{ steps.issue.outputs.number }}
-            const rerun = 'Please edit the issue description to correct the error, then comment **rerun request**.'
+            const issue_number = ${{ steps.determine_issue_number.outputs.issue_number }}
+            const rerun_message = 'Please edit the issue description to correct the error, then comment **rerun request**.'
             let message
             if (process.env.JSON_ERROR === 'missing') {
               message = `
             No JSON code-block was found in the issue description.
 
-            Please make sure that your request is enclosed in a code-block that starts with \\\`\\\`\\\`json and ends with \\\`\\\`\\\`, each on its own line. If you replaced the whole template content, restore the code-block and paste your JSON snippet inside it.
+            Please make sure the JSON snippet for your request is enclosed in a code-block that starts with \\\`\\\`\\\`json and ends with \\\`\\\`\\\`, each on its own line. If you replaced the whole template content, restore the code-block and paste your JSON snippet inside it.
 
-            ${rerun}
+            ${rerun_message}
             `
             } else {
-              const error = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
+              const jq_error_message = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
               message = `
             The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.
 
@@ -115,7 +128,7 @@ jobs:
             <summary>Expand to see the error message from the GitHub workflow.</summary>
 
             \`\`\`
-            ${error}
+            ${jq_error_message}
             \`\`\`
 
             </details>
@@ -125,30 +138,30 @@ jobs:
             - The string \`PASTE_YOUR_REQUEST_HERE\` was not replaced correctly with the JSON snippet. Note that the JSON code-block (\\\`\\\`\\\`json ... \\\`\\\`\\\`) must not be removed.
             - Syntax errors in the JSON snippet. E.g., commas after the last entry of a JSON object ({...}) or array ([...]).
 
-            ${rerun}
+            ${rerun_message}
             `
             }
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number,
+              issue_number: issue_number,
               body: message
             })
 
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number,
+              issue_number: issue_number,
               labels: ['invalid']
             })
 
-            // A rerun sets 'submitted' before dispatching; left in place, it would block every further rerun.
+            // Left in place, 'submitted' would block every further rerun.
             try {
               await github.rest.issues.removeLabel({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number,
+                issue_number: issue_number,
                 name: 'submitted'
               })
             } catch (error) {
@@ -161,11 +174,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.extract_backend_tag.outputs.backend_tag }}
-
-      - name: Add 'submitted' label
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh issue edit "${{ steps.issue.outputs.number }}" --repo "${{ github.repository }}" --add-label submitted
 
       - name: Configure SSH
         env:
@@ -196,27 +204,27 @@ jobs:
           iacdipl-7.ethz.ch ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIZgUr0MuFxJRvEqG/iEZs1QYoG2VvjCPLoRnfW3Ljbv
           EOF
 
+      # The run directory holds the workspace and the pipeline log. The EXIT
+      # trap of run_pipeline.sh removes only the workspace, so the log survives.
       - name: Create remote workspace
-        id: workdir
+        id: create_remote_workspace
         run: |
-          remote_dir=/ssd/c2sm-services/zonda-request-runs/request-${{ steps.issue.outputs.number }}/run-${{ github.run_id }}-${{ github.run_attempt }}
-          # The final mkdir has no -p, so it fails rather than reuse an existing workspace.
-          ssh iacdipl7 "mkdir -p '${remote_dir%/*}' && mkdir '$remote_dir'"
-          echo "path=$remote_dir" >> "$GITHUB_OUTPUT"
+          run_dir=/ssd/c2sm-services/zonda-request-runs/request-${{ steps.determine_issue_number.outputs.issue_number }}/run-${{ github.run_id }}-${{ github.run_attempt }}
+          ssh iacdipl7 "mkdir -p '$run_dir/workspace'"
+          echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
 
       - name: Upload repository to iacdipl-7
-        run: rsync -avh --exclude='.git' ./ "iacdipl7:${{ steps.workdir.outputs.path }}/"
+        run: rsync -avh --exclude='.git' ./ "iacdipl7:${{ steps.create_remote_workspace.outputs.run_dir }}/workspace/"
 
       # The heredoc travels over stdin, so nothing lands in argv on iacdipl-7.
       # setsid and all three redirections let ssh return; do not add `ssh -n`.
-      # The log sits next to the run directory, which the EXIT trap removes.
       - name: Launch pipeline on iacdipl-7 (detached)
         run: |
           ssh iacdipl7 bash -s << REMOTE
-          export ISSUE_ID='${{ steps.issue.outputs.number }}'
+          export ISSUE_ID='${{ steps.determine_issue_number.outputs.issue_number }}'
           export RUN_ID='${{ github.run_id }}-${{ github.run_attempt }}'
-          cd '${{ steps.workdir.outputs.path }}'
-          setsid nohup bash scripts/run_pipeline.sh > '${{ steps.workdir.outputs.path }}.log' 2>&1 < /dev/null &
+          cd '${{ steps.create_remote_workspace.outputs.run_dir }}/workspace'
+          setsid nohup bash scripts/run_pipeline.sh > '${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &
           disown
           REMOTE
-          echo "::notice title=Pipeline launched::Workspace ${{ steps.workdir.outputs.path }}, log ${{ steps.workdir.outputs.path }}.log"
+          echo "::notice title=Pipeline launched::Run directory ${{ steps.create_remote_workspace.outputs.run_dir }}, log ${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log"
