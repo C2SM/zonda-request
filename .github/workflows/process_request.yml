@@ -22,6 +22,10 @@ on:
       issue_number:
         description: 'GitHub issue number to (re-)process'
         required: true
+      debug:
+        description: 'Keep the workspace on iacdipl-7 after the run'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -206,11 +210,27 @@ jobs:
 
       # The run directory holds the workspace and the pipeline log. The EXIT
       # trap of run_pipeline.sh removes only the workspace, so the log survives.
+      # It is named run-<N>-<run_id>, where N counts the runs of the issue. A
+      # re-run from the Actions UI keeps N and appends -<run_attempt>.
       - name: Create remote workspace
         id: create_remote_workspace
         run: |
-          run_dir=/ssd/c2sm-services/zonda-request-runs/request-${{ steps.determine_issue_number.outputs.issue_number }}/run-${{ github.run_id }}-${{ github.run_attempt }}
-          ssh iacdipl7 "mkdir -p '$run_dir/workspace'"
+          request_dir=/ssd/c2sm-services/zonda-request-runs/request-${{ steps.determine_issue_number.outputs.issue_number }}
+          run_dir=$(ssh iacdipl7 bash -s -- "$request_dir" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" << 'REMOTE'
+          shopt -s nullglob
+          mkdir -p "$1" && cd "$1" || exit 1
+          repeated=(run-*-"$2")
+          if [ ${#repeated[@]} -gt 0 ]; then
+            n=$(cut -d- -f2 <<< "${repeated[0]}")
+          else
+            last=$(printf '%s\n' run-* | cut -d- -f2 | sort -n | tail -n1)
+            n=$(( ${last:-0} + 1 ))
+          fi
+          run_dir="$PWD/run-$n-$2"
+          [ "$3" -gt 1 ] && run_dir+="-$3"
+          mkdir -p "$run_dir/workspace" && echo "$run_dir"
+          REMOTE
+          )
           echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
 
       - name: Upload repository to iacdipl-7
@@ -224,7 +244,7 @@ jobs:
           export ISSUE_ID='${{ steps.determine_issue_number.outputs.issue_number }}'
           export RUN_ID='${{ github.run_id }}-${{ github.run_attempt }}'
           cd '${{ steps.create_remote_workspace.outputs.run_dir }}/workspace'
-          setsid nohup bash scripts/run_pipeline.sh > '${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &
+          setsid nohup bash scripts/run_pipeline.sh ${{ inputs.debug && '--debug' || '' }} >'${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &
           disown
           REMOTE
           echo "::notice title=Pipeline launched::Run directory ${{ steps.create_remote_workspace.outputs.run_dir }}, log ${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log"
