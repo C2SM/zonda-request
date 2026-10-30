@@ -1,0 +1,250 @@
+name: Process data request
+
+# Triggered by the 'data request' label, by a 'rerun request' comment on an
+# open issue that is not currently processing, or manually via workflow_dispatch.
+# Every run re-reads the issue body, so a rerun picks up an edited issue.
+#
+# The pipeline runs detached on iacdipl-7: this job only launches it and goes
+# green, the request status lives on the issue labels. scripts/run_pipeline.sh
+# reports back as the Zonda-Bot App, whose key never leaves iacdipl-7.
+#
+# Required repository secrets:
+#   FOG_SSH_KEY      - private key for ti16102 on fog.ethz.ch
+#   IACDIPL7_SSH_KEY - private key for l_c2sm on iacdipl-7.ethz.ch
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'GitHub issue number to (re-)process'
+        required: true
+      debug:
+        description: 'Keep the workspace on iacdipl-7 after the run'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  # Oldest supported release tag. Older release tags are raised to it.
+  MIN_BACKEND_TAG: v3.0
+
+jobs:
+  process:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.label.name == 'data request') ||
+      (github.event_name == 'issue_comment' &&
+       startsWith(github.event.comment.body, 'rerun request') &&
+       !github.event.issue.pull_request &&
+       github.event.issue.state == 'open' &&
+       !contains(github.event.issue.labels.*.name, 'submitted'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Determine issue number
+        id: determine_issue_number
+        env:
+          INPUT_ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+        run: |
+          [[ "$INPUT_ISSUE_NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::issue_number must be a positive integer, got '$INPUT_ISSUE_NUMBER'."; exit 1; }
+          echo "issue_number=$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+
+      # 'submitted' is set first, so that it blocks a second rerun as early as possible.
+      - name: Reset status labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ steps.determine_issue_number.outputs.issue_number }}" --repo "${{ github.repository }}" \
+            --remove-label completed,failed,aborted,invalid --add-label submitted
+
+      - name: Extract backend_tag
+        id: extract_backend_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.determine_issue_number.outputs.issue_number }}
+        run: |
+          body=$(gh api "repos/${{ github.repository }}/issues/$ISSUE_NUMBER" --jq .body)
+          json_block=$(echo "$body" \
+            | tr -d '\r' \
+            | sed -n '/^```json$/,${p;/^```$/q}' \
+            | sed '1d;$d')
+
+          if [ -z "$json_block" ]; then
+            echo "json_error=missing" >> "$GITHUB_OUTPUT"
+            exit 0
+          elif ! echo "$json_block" | jq . > /dev/null 2> jq_error.txt; then
+            echo "json_error=syntax" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          backend_tag=$(echo "$json_block" | jq -r '.zonda.backend_tag // empty')
+
+          if [ -z "$backend_tag" ]; then
+            backend_tag=$(gh api "repos/${{ github.repository }}/tags" --jq '.[0].name')
+            echo "::warning title=Backend tag missing::backend_tag not found in JSON code-block, falling back to latest release (${backend_tag})."
+          fi
+
+          # Only release tags are raised; branch names are used as given, for development and testing.
+          if [[ "$backend_tag" =~ ^v[0-9] ]] &&
+             [ "$(printf '%s\n' "$MIN_BACKEND_TAG" "$backend_tag" | sort -V | head -n1)" != "$MIN_BACKEND_TAG" ]; then
+            echo "::warning title=Backend tag too old::${backend_tag} predates ${MIN_BACKEND_TAG}, using ${MIN_BACKEND_TAG} instead."
+            gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body \
+              "Backend version \`${backend_tag}\` is no longer supported. This request will be processed with \`${MIN_BACKEND_TAG}\` instead."
+            backend_tag=$MIN_BACKEND_TAG
+          fi
+
+          echo "backend_tag=$backend_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Report status on invalid JSON
+        if: steps.extract_backend_tag.outputs.json_error
+        uses: actions/github-script@v7
+        env:
+          JSON_ERROR: ${{ steps.extract_backend_tag.outputs.json_error }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs')
+            const issue_number = ${{ steps.determine_issue_number.outputs.issue_number }}
+            const rerun_message = 'Please edit the issue description to correct the error, then comment **rerun request**.'
+            let message
+            if (process.env.JSON_ERROR === 'missing') {
+              message = `
+            No JSON code-block was found in the issue description.
+
+            Please make sure the JSON snippet for your request is enclosed in a code-block that starts with \\\`\\\`\\\`json and ends with \\\`\\\`\\\`, each on its own line. If you replaced the whole template content, restore the code-block and paste your JSON snippet inside it.
+
+            ${rerun_message}
+            `
+            } else {
+              const jq_error_message = fs.readFileSync('jq_error.txt', 'utf8').trimEnd()
+              message = `
+            The provided JSON snippet is invalid. Please make sure that there is no syntax error in your JSON.
+
+            <details>
+
+            <summary>Expand to see the error message from the GitHub workflow.</summary>
+
+            \`\`\`
+            ${jq_error_message}
+            \`\`\`
+
+            </details>
+
+            Common problems are:
+
+            - The string \`PASTE_YOUR_REQUEST_HERE\` was not replaced correctly with the JSON snippet. Note that the JSON code-block (\\\`\\\`\\\`json ... \\\`\\\`\\\`) must not be removed.
+            - Syntax errors in the JSON snippet. E.g., commas after the last entry of a JSON object ({...}) or array ([...]).
+
+            ${rerun_message}
+            `
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              body: message
+            })
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              labels: ['invalid']
+            })
+
+            // Left in place, 'submitted' would block every further rerun.
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue_number,
+                name: 'submitted'
+              })
+            } catch (error) {
+              if (error.status !== 404) throw error
+            }
+
+            core.setFailed("Invalid JSON snippet!")
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.extract_backend_tag.outputs.backend_tag }}
+
+      - name: Configure SSH
+        env:
+          ID_FOG: ${{ secrets.FOG_SSH_KEY }}
+          ID_TARGET: ${{ secrets.IACDIPL7_SSH_KEY }}
+        run: |
+          umask 077
+          mkdir -p ~/.ssh
+          echo "${ID_FOG}" > ~/.ssh/id_ed25519_fog
+          echo "${ID_TARGET}" > ~/.ssh/id_ed25519_iacdipl7
+
+          cat > ~/.ssh/config << 'EOF'
+          Host fog
+            Hostname fog.ethz.ch
+            User ti16102
+            IdentityFile ~/.ssh/id_ed25519_fog
+            IdentitiesOnly yes
+          Host iacdipl7
+            Hostname iacdipl-7.ethz.ch
+            User l_c2sm
+            IdentityFile ~/.ssh/id_ed25519_iacdipl7
+            IdentitiesOnly yes
+            ProxyJump fog
+          EOF
+
+          cat > ~/.ssh/known_hosts << 'EOF'
+          fog.ethz.ch ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMMGddQwl0gXqcPeL4FFjiyXBrfPXdfDOdX5f+gM+o1F
+          iacdipl-7.ethz.ch ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIZgUr0MuFxJRvEqG/iEZs1QYoG2VvjCPLoRnfW3Ljbv
+          EOF
+
+      # The run directory holds the workspace and the pipeline log. The EXIT
+      # trap of run_pipeline.sh removes only the workspace, so the log survives.
+      # It is named run-<N>-<run_id>, where N counts the runs of the issue. A
+      # re-run from the Actions UI keeps N and appends -<run_attempt>.
+      - name: Create remote workspace
+        id: create_remote_workspace
+        run: |
+          request_dir=/ssd/c2sm-services/zonda-request-runs/request-${{ steps.determine_issue_number.outputs.issue_number }}
+          run_dir=$(ssh iacdipl7 bash -s -- "$request_dir" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" << 'REMOTE'
+          shopt -s nullglob
+          mkdir -p "$1" && cd "$1" || exit 1
+          repeated=(run-*-"$2")
+          if [ ${#repeated[@]} -gt 0 ]; then
+            n=$(cut -d- -f2 <<< "${repeated[0]}")
+          else
+            last=$(printf '%s\n' run-* | cut -d- -f2 | sort -n | tail -n1)
+            n=$(( ${last:-0} + 1 ))
+          fi
+          run_dir="$PWD/run-$n-$2"
+          [ "$3" -gt 1 ] && run_dir+="-$3"
+          mkdir -p "$run_dir/workspace" && echo "$run_dir"
+          REMOTE
+          )
+          echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
+
+      - name: Upload repository to iacdipl-7
+        run: rsync -avh --exclude='.git' ./ "iacdipl7:${{ steps.create_remote_workspace.outputs.run_dir }}/workspace/"
+
+      # The heredoc travels over stdin, so nothing lands in argv on iacdipl-7.
+      # setsid and all three redirections let ssh return; do not add `ssh -n`.
+      - name: Launch pipeline on iacdipl-7 (detached)
+        run: |
+          ssh iacdipl7 bash -s << REMOTE
+          export ISSUE_ID='${{ steps.determine_issue_number.outputs.issue_number }}'
+          export RUN_ID='${{ github.run_id }}-${{ github.run_attempt }}'
+          cd '${{ steps.create_remote_workspace.outputs.run_dir }}/workspace'
+          setsid nohup bash scripts/run_pipeline.sh ${{ inputs.debug && '--debug' || '' }} >'${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &
+          disown
+          REMOTE
+          echo "::notice title=Pipeline launched::Run directory ${{ steps.create_remote_workspace.outputs.run_dir }}, log ${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log"
