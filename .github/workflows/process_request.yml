@@ -59,7 +59,7 @@ jobs:
           [[ "$INPUT_ISSUE_NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::issue_number must be a positive integer, got '$INPUT_ISSUE_NUMBER'."; exit 1; }
           echo "issue_number=$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
           if [ "$RUN_KIND" != none ]; then
-            printf 'run_note<<EOF\n> [!NOTE]\n> Posted by a maintainer %s run ([workflow run](%s)).\nEOF\n' "$RUN_KIND" "$RUN_URL" >> "$GITHUB_OUTPUT"
+            printf "run_note<<EOF\n> [!NOTE]\n> Posted by a maintainer's [%s run](%s).\nEOF\n" "$RUN_KIND" "$RUN_URL" >> "$GITHUB_OUTPUT"
           fi
 
       # 'submitted' is set first, so that it blocks a second rerun as early as possible.
