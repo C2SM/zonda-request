@@ -48,13 +48,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # Manual runs mark their issue comments, as no 'rerun request' comment explains them.
       - name: Determine issue number
         id: determine_issue_number
         env:
           INPUT_ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+          RUN_KIND: ${{ github.event_name != 'workflow_dispatch' && 'none' || inputs.debug && 'debug' || 'manual' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           [[ "$INPUT_ISSUE_NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::issue_number must be a positive integer, got '$INPUT_ISSUE_NUMBER'."; exit 1; }
           echo "issue_number=$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+          if [ "$RUN_KIND" != none ]; then
+            printf 'run_note<<EOF\n> [!NOTE]\n> Posted by a maintainer %s run ([workflow run](%s)).\nEOF\n' "$RUN_KIND" "$RUN_URL" >> "$GITHUB_OUTPUT"
+          fi
 
       # 'submitted' is set first, so that it blocks a second rerun as early as possible.
       - name: Reset status labels
@@ -69,6 +75,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ steps.determine_issue_number.outputs.issue_number }}
+          RUN_NOTE: ${{ steps.determine_issue_number.outputs.run_note }}
         run: |
           body=$(gh api "repos/${{ github.repository }}/issues/$ISSUE_NUMBER" --jq .body)
           json_block=$(echo "$body" \
@@ -96,7 +103,7 @@ jobs:
              [ "$(printf '%s\n' "$MIN_BACKEND_TAG" "$backend_tag" | sort -V | head -n1)" != "$MIN_BACKEND_TAG" ]; then
             echo "::warning title=Backend tag too old::${backend_tag} predates ${MIN_BACKEND_TAG}, using ${MIN_BACKEND_TAG} instead."
             gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body \
-              "Backend version \`${backend_tag}\` is no longer supported. This request will be processed with \`${MIN_BACKEND_TAG}\` instead."
+              "${RUN_NOTE:+$RUN_NOTE$'\n\n'}Backend version \`${backend_tag}\` is no longer supported. This request will be processed with \`${MIN_BACKEND_TAG}\` instead."
             backend_tag=$MIN_BACKEND_TAG
           fi
 
@@ -107,6 +114,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           JSON_ERROR: ${{ steps.extract_backend_tag.outputs.json_error }}
+          RUN_NOTE: ${{ steps.determine_issue_number.outputs.run_note }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -150,7 +158,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue_number,
-              body: message
+              body: [process.env.RUN_NOTE, message].filter(Boolean).join('\n\n')
             })
 
             await github.rest.issues.addLabels({
@@ -211,15 +219,16 @@ jobs:
       # The run directory holds the workspace and the pipeline log. The EXIT
       # trap of run_pipeline.sh removes only the workspace, so the log survives.
       # It is named run-<N>-<run_id>, where N counts the runs of the issue. A
-      # re-run from the Actions UI keeps N and appends -<run_attempt>.
+      # re-run from the Actions UI keeps N and appends -<run_attempt>, a debug
+      # run appends -debug.
       - name: Create remote workspace
         id: create_remote_workspace
         run: |
           request_dir=/ssd/c2sm-services/zonda-request-runs/request-${{ steps.determine_issue_number.outputs.issue_number }}
-          run_dir=$(ssh iacdipl7 bash -s -- "$request_dir" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" << 'REMOTE'
+          run_dir=$(ssh iacdipl7 bash -s -- "$request_dir" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "${{ inputs.debug == true }}" << 'REMOTE'
           shopt -s nullglob
           mkdir -p "$1" && cd "$1" || exit 1
-          repeated=(run-*-"$2")
+          repeated=(run-*-"$2" run-*-"$2"-*)
           if [ ${#repeated[@]} -gt 0 ]; then
             n=$(cut -d- -f2 <<< "${repeated[0]}")
           else
@@ -228,6 +237,7 @@ jobs:
           fi
           run_dir="$PWD/run-$n-$2"
           [ "$3" -gt 1 ] && run_dir+="-$3"
+          [ "$4" = true ] && run_dir+="-debug"
           mkdir -p "$run_dir/workspace" && echo "$run_dir"
           REMOTE
           )
@@ -239,10 +249,13 @@ jobs:
       # The heredoc travels over stdin, so nothing lands in argv on iacdipl-7.
       # setsid and all three redirections let ssh return; do not add `ssh -n`.
       - name: Launch pipeline on iacdipl-7 (detached)
+        env:
+          RUN_NOTE: ${{ steps.determine_issue_number.outputs.run_note }}
         run: |
           ssh iacdipl7 bash -s << REMOTE
           export ISSUE_ID='${{ steps.determine_issue_number.outputs.issue_number }}'
           export RUN_ID='${{ github.run_id }}-${{ github.run_attempt }}'
+          $(printf 'export RUN_NOTE=%q' "$RUN_NOTE")
           cd '${{ steps.create_remote_workspace.outputs.run_dir }}/workspace'
           setsid nohup bash scripts/run_pipeline.sh ${{ inputs.debug && '--debug' || '' }} >'${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &
           disown

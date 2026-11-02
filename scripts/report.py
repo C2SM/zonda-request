@@ -87,6 +87,7 @@ if __name__ == "__main__":
     add_app_arguments(parser)
     parser.add_argument("--issue-id", type=int, required=True, help="Number of the GitHub issue to report to")
     parser.add_argument("--hash-file", type=str, required=True)
+    parser.add_argument("--note", type=str, default="", help="Markdown note put on top of the comment")
     parser.add_argument("--no-logs", action="store_true", help="The log files were not published, so no link to them is given")
 
     group = parser.add_mutually_exclusive_group()
@@ -166,6 +167,9 @@ if __name__ == "__main__":
 
     else:
         raise ValueError("No valid report status was selected!")
+
+    if args.note:
+        comment = f"{args.note}\n\n{comment}"
 
     repository = app_repository(parser, args)
 

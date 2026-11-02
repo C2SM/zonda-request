@@ -58,7 +58,7 @@ archive_and_report() {
     fi
 
     "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
-        --issue-id "$ISSUE_ID" "${logs_flag[@]}" "$flag" || status=1
+        --issue-id "$ISSUE_ID" ${RUN_NOTE:+--note "$RUN_NOTE"} "${logs_flag[@]}" "$flag" || status=1
 
     return "$status"
 }
