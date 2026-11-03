@@ -1,0 +1,233 @@
+
+# ICON External Parameter Request
+
+## Request: Patagonia and Drake Passage — nested ICON grids
+
+This request aims to generate three successively nested regional ICON grids for Patagonia and the Drake Passage, using the existing global MPIM grid `icon_grid_0049_R02B04_G.nc` as the parent.
+
+The requested grid hierarchy is:
+
+- DOM01: R02B04 — global parent grid (~160 km)
+- DOM02: R02B05 — broad South American/Southern Ocean region (~80 km)
+- DOM03: R02B06 — Patagonia and Drake Passage (~40 km)
+- DOM04: R02B07 — higher-resolution regional domain (~20 km)
+
+The request includes external parameter generation (EXTPAR) and topography diagnostics for all four domains.
+
+## Zonda JSON configuration
+
+```json
+{
+  "zonda": {
+    "request_name": "patagonia_0049_R02B04_to_R02B07_v2",
+    "backend_tag": "v2.2",
+    "icontools_tag": "latest",
+    "extpar_tag": "latest"
+  },
+  "globals": {
+    "keep_basegrid_files": false,
+    "grid_root": 2,
+    "grid_level": 4,
+    "icorotation": 0,
+    "icopole_lat": 90,
+    "icopole_lon": 0,
+    "centre": 252,
+    "subcentre": 0
+  },
+  "domains": [
+    {
+      "domain_id": 1,
+      "input_grid": {
+        "filepath": "",
+        "institution": "mpim",
+        "filename": "icon_grid_0049_R02B04_G.nc"
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 1,
+        "it_cl_type": 1,
+        "iera_type": 1,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 2,
+      "icontools": {
+        "parent_id": 1,
+        "region_type": 3,
+        "center_lat": -53.0,
+        "center_lon": -72.0,
+        "hwidth_lat": 32.0,
+        "hwidth_lon": 45.0,
+        "lrotate": false,
+        "pole_lat": 90,
+        "pole_lon": -180
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 1,
+        "it_cl_type": 1,
+        "iera_type": 1,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 3,
+      "icontools": {
+        "parent_id": 2,
+        "region_type": 3,
+        "center_lat": -53.0,
+        "center_lon": -72.0,
+        "hwidth_lat": 18.0,
+        "hwidth_lon": 22.0,
+        "lrotate": false,
+        "pole_lat": 90,
+        "pole_lon": -180
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 1,
+        "it_cl_type": 1,
+        "iera_type": 1,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    },
+    {
+      "domain_id": 4,
+      "icontools": {
+        "parent_id": 3,
+        "region_type": 3,
+        "center_lat": -55.0,
+        "center_lon": -72.0,
+        "hwidth_lat": 8.0,
+        "hwidth_lon": 9.0,
+        "lrotate": false,
+        "pole_lat": 90,
+        "pole_lon": -180
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 1,
+        "it_cl_type": 1,
+        "iera_type": 1,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Previous execution and proposed correction
+
+The initial configuration (`v1`) failed during ICON grid generation.
+
+The grid-generation log reported:
+
+- DOM02: 445 cells marked for refinement; 1,780 cells generated.
+- DOM03: 0 cells marked for refinement.
+- The grid generator terminated with `STOP 99`.
+
+The previous regional domain extents may have been insufficient for the required nesting and boundary zones.
+
+This revised configuration (`v2`) enlarges DOM02 and DOM03 and adjusts DOM04 to improve the nesting geometry.
+
+The correction has not yet been validated by a successful grid-generation run.
+
+## Intended application
+
+The resulting grids are intended for an ICON-NWP atmospheric simulation over Patagonia and the Drake Passage, including atmospheric dynamics, regional climate variability, and subsequent analysis of model-generated time series.
+
+The computational environment uses ICON 2025.10 on an HPC cluster.
+
+Once the grid and EXTPAR files are available, their compatibility with the atmospheric configuration and land-surface setup will be checked independently.
+
+Thank you for processing this revised request.
+
