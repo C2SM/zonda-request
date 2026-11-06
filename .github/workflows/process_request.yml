@@ -182,16 +182,23 @@ jobs:
 
             core.setFailed("Invalid JSON snippet!")
 
-      - name: Checkout repository
+      # The ssh action comes from this workflow's commit, not from backend_tag, so
+      # requests pinned to older tags still get the current host keys.
+      - name: Checkout ssh action
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.extract_backend_tag.outputs.backend_tag }}
+          sparse-checkout: .github/actions
 
       - name: Configure SSH
         uses: ./.github/actions/configure-ssh
         with:
           fog-key: ${{ secrets.FOG_SSH_KEY }}
           iacdipl7-key: ${{ secrets.IACDIPL7_SSH_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.extract_backend_tag.outputs.backend_tag }}
 
       # The run directory holds the workspace and the pipeline log. The EXIT
       # trap of run_pipeline.sh removes only the workspace, so the log survives.
