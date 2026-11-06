@@ -1,0 +1,52 @@
+```json
+{
+  "zonda": {
+    "request_name": "italia_R19B07_abruzzo_R19B08",
+    "icontools_tag": "latest",
+    "extpar_tag": "latest"
+  },
+  "globals": {
+    "grid_root": 19,
+    "grid_level": 7,
+    "icopole_lon": 0.0,
+    "icopole_lat": 90.0,
+    "icorotation": 0.0,
+    "lspring_dynamics": true,
+    "maxit": 2000,
+    "beta_spring": 0.9,
+    "bdy_indexing_depth": 14,
+    "lfixed_boundary": true,
+    "centre": 78,
+    "subcentre": 255
+  },
+  "domains": [
+    {
+      "domain_id": 1,
+      "icontools": {
+        "parent_id": 0,
+        "region_type": 3,
+        "center_lon": 12.6,
+        "center_lat": 41.6,
+        "hwidth_lon": 6.8,
+        "hwidth_lat": 6.2,
+        "lrotate": false
+      },
+      "extpar": {"iaot_type": 1, "ilu_type": 1, "ialb_type": 1, "isoil_type": 1, "itopo_type": 2, "it_cl_type": 2, "iera_type": 1, "iemiss_type": 1, "lradtopo": false, "enable_cdnc": false, "enable_edgar": false, "enable_art": false, "enable_gfasclim": false, "l_terra_urb": false, "l_use_corine": false, "infill_corine": false, "radtopo_radius": 40000, "nhori": 24, "ilookup_table_lu": 1, "tcorr_lapse_rate": 0.0065, "tcorr_offset": 0, "use_array_cache": false}
+    },
+    {
+      "domain_id": 2,
+      "icontools": {
+        "parent_id": 1,
+        "region_type": 3,
+        "center_lon": 13.9,
+        "center_lat": 42.25,
+        "hwidth_lon": 1.6,
+        "hwidth_lat": 1.2,
+        "lrotate": false
+      },
+      "extpar": {"iaot_type": 1, "ilu_type": 1, "ialb_type": 1, "isoil_type": 1, "itopo_type": 2, "it_cl_type": 2, "iera_type": 1, "iemiss_type": 1, "lradtopo": false, "enable_cdnc": false, "enable_edgar": false, "enable_art": false, "enable_gfasclim": false, "l_terra_urb": false, "l_use_corine": false, "infill_corine": false, "radtopo_radius": 40000, "nhori": 24, "ilookup_table_lu": 1, "tcorr_lapse_rate": 0.0065, "tcorr_offset": 0, "use_array_cache": false}
+    }
+  ]
+}
+```
+
