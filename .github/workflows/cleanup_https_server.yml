@@ -1,0 +1,22 @@
+name: Cleanup HTTPS server
+
+# Dispatch-only stub. It exists on the default branch so that the full
+# workflow can be dispatched from a feature branch with --ref for testing.
+# It is replaced by the real workflow when jenkins-migration-epic is merged.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only list what would be deleted'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Stub. Dispatch with --ref gha-cleanup."
