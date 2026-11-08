@@ -1,4 +1,4 @@
-name: Cleanup HTTPS server
+name: Cleanup iacdipl-7
 
 # Dispatch-only stub. It exists on the default branch so that the full
 # workflow can be dispatched from a feature branch with --ref for testing.
