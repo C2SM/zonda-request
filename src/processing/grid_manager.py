@@ -343,6 +343,7 @@ class GridManager:
 
 
     def generate_icon_grids(self, nesting_group, logging_indentation_level=0):
+        raise RuntimeError("Deliberate failure to verify that the testsuite turns red (#2912).")
         logging.info(f"{LOG_INDENTATION_STR*logging_indentation_level}Generate/retrieve ICON grids.")
 
         primary_domain_id = nesting_group[0]
