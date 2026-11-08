@@ -1,7 +1,7 @@
 name: Cleanup HTTPS server
 
 # Daily housekeeping on iacdipl-7:
-# - deletes published request output older than 7 days, except file_index
+# - deletes published request output older than 7 days
 # - removes request run directories under /ssd older than 7 days, debug runs
 #   after 30 days. A detached run that dies without its EXIT trap leaves its
 #   workspace behind, so this also catches orphaned workspaces.
@@ -49,7 +49,7 @@ jobs:
       # The script travels over stdin, so nothing needs to be uploaded.
       - name: Delete old output from the HTTPS server
         run: |
-          ssh iacdipl7 python3 - --path "$DATA_PATH" --threshold 7 --exclude "$DATA_PATH/file_index" \
+          ssh iacdipl7 python3 - --path "$DATA_PATH" --threshold 7 \
             ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }} < scripts/cleanup_data_server.py
 
       # The testsuite cleans its own run directories in testsuite.yml.
