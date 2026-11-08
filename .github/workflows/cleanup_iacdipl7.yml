@@ -1,0 +1,83 @@
+name: Cleanup iacdipl-7
+
+# Daily housekeeping on iacdipl-7:
+# - deletes published request output older than 7 days
+# - deletes run directories under /ssd: request runs after 7 days, debug
+#   request runs and testsuite runs after 30 days. This also removes the
+#   workspaces of detached runs that died before their EXIT trap could run.
+# - prunes stopped containers, dangling images and build cache in podman
+#
+# A manual run with dry_run only lists what would be deleted.
+
+on:
+  # Off the full hour, where scheduled runs are most often delayed or dropped.
+  schedule:
+    - cron: '30 0 * * *'
+      timezone: 'Europe/Zurich'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only list what would be deleted'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cleanup-iacdipl7
+
+env:
+  DATA_PATH: /net/co2/c2sm-services/zonda-request
+  RUNS_ROOT: /ssd/c2sm-services/zonda-request-runs
+  DRY_RUN: ${{ inputs.dry_run == true }}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        uses: ./.github/actions/configure-ssh
+        with:
+          fog-key: ${{ secrets.FOG_SSH_KEY }}
+          iacdipl7-key: ${{ secrets.IACDIPL7_SSH_KEY }}
+
+      # The script is sent over stdin, so it does not need to be copied first.
+      - name: Delete old output from the HTTPS server
+        run: |
+          if [ "$DRY_RUN" = true ]; then
+            ssh iacdipl7 python3 - --path "$DATA_PATH" --threshold 7 --dry-run < scripts/cleanup_data_server.py
+          else
+            ssh iacdipl7 python3 - --path "$DATA_PATH" --threshold 7 < scripts/cleanup_data_server.py
+          fi
+
+      - name: Delete old run directories
+        run: |
+          ssh iacdipl7 bash -s -- "$RUNS_ROOT" "$DRY_RUN" << 'REMOTE'
+          runs_root=$1
+          dry_run=$2
+
+          find "$runs_root" -mindepth 2 -maxdepth 2 -type d \( \
+                 \( -path "$runs_root/request-*/run-*" ! -name '*-debug' -mtime +7 \) \
+              -o \( -path "$runs_root/request-*/run-*-debug" -mtime +30 \) \
+              -o \( -path "$runs_root/testsuite/run-*" -mtime +30 \) \
+            \) | while read -r run_dir; do
+            echo "$run_dir"
+            if [ "$dry_run" != true ]; then
+              rm -rf "$run_dir"
+            fi
+          done
+
+          if [ "$dry_run" != true ]; then
+            find "$runs_root" -mindepth 1 -maxdepth 1 -type d -name 'request-*' -empty -print -delete
+          fi
+          REMOTE
+
+      # Covers what 'podman container prune' and 'podman image prune' remove.
+      - name: Prune podman
+        if: env.DRY_RUN != 'true'
+        run: ssh iacdipl7 podman system prune -f
