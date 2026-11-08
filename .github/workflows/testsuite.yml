@@ -1,0 +1,99 @@
+name: Testsuite
+
+# Processes the fixture requests in the issues labeled 'testsuite' with the
+# code under review, synchronously, as a regular pass/fail check. Nothing is
+# archived, published, commented or relabeled (run_pipeline.sh --testsuite).
+# The fixture issues only hold the request JSON, which is fetched live.
+#
+# Triggered by the 'run testsuite' label on a pull request, nightly on main,
+# or manually via workflow_dispatch. The label is removed once the run is done,
+# so adding it again starts a new run.
+
+on:
+  pull_request:
+    types: [labeled]
+  # Off the full hour, where scheduled runs are most often delayed or dropped.
+  schedule:
+    - cron: '17 1 * * *'
+      timezone: 'Europe/Zurich'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testsuite-${{ github.event.pull_request.number || github.ref }}-${{ github.event.label.name || github.event_name }}
+  cancel-in-progress: true
+
+env:
+  RUNS_ROOT: /ssd/c2sm-services/zonda-request-runs/testsuite
+
+jobs:
+  testsuite:
+    name: ${{ matrix.name }} (#${{ matrix.issue_number }})
+    # Pull requests from forks have no access to the ssh secrets.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event.label.name == 'run testsuite' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { issue_number: 1697, name: DWD ICON-D2 }
+          - { issue_number: 1698, name: MCH ICON-CH2 }
+          - { issue_number: 1699, name: CORDEX EUR-12 }
+          - { issue_number: 1700, name: DWD ICON-Global-Eu }
+          - { issue_number: 1701, name: Input grid with nesting }
+          - { issue_number: 1702, name: Circular domain over North Pole }
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        uses: ./.github/actions/configure-ssh
+        with:
+          fog-key: ${{ secrets.FOG_SSH_KEY }}
+          iacdipl7-key: ${{ secrets.IACDIPL7_SSH_KEY }}
+
+      # The run directory holds the workspace and the pipeline log and is kept
+      # after the run. Run directories older than 30 days are removed here.
+      - name: Create remote workspace
+        id: create_remote_workspace
+        run: |
+          run_dir="$RUNS_ROOT/run-${{ matrix.issue_number }}-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          ssh iacdipl7 "mkdir -p '$run_dir/workspace' && find '$RUNS_ROOT' -mindepth 1 -maxdepth 1 -type d -mtime +30 -exec rm -rf {} +"
+          echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
+          echo "::notice title=Run directory::$run_dir, log $run_dir/pipeline.log"
+
+      - name: Upload repository to iacdipl-7
+        run: rsync -avh --exclude='.git' ./ "iacdipl7:${{ steps.create_remote_workspace.outputs.run_dir }}/workspace/"
+
+      # The pty makes a cancelled job send SIGHUP to run_pipeline.sh, which then stops the pipeline.
+      # The matrix value is part of RUN_ID so the parallel jobs get distinct hashes.
+      - name: Run testsuite request on iacdipl-7
+        env:
+          RUN_DIR: ${{ steps.create_remote_workspace.outputs.run_dir }}
+          ISSUE_ID: ${{ matrix.issue_number }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.issue_number }}
+        run: |
+          ssh -tt iacdipl7 "bash -o pipefail -c 'cd $RUN_DIR/workspace && ISSUE_ID=$ISSUE_ID RUN_ID=$RUN_ID bash scripts/run_pipeline.sh --testsuite --debug 2>&1 | tee ../pipeline.log'"
+
+  # Not after a cancelled run: a cancel by a re-added label would remove the new label.
+  remove-label:
+    needs: testsuite
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && needs.testsuite.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Remove 'run testsuite' label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels/run%20testsuite" --silent \
+            || echo "::warning::Could not remove the 'run testsuite' label, it may have been removed already."
