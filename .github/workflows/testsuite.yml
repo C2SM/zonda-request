@@ -60,7 +60,7 @@ jobs:
           iacdipl7-key: ${{ secrets.IACDIPL7_SSH_KEY }}
 
       # The run directory holds the workspace and the pipeline log and is kept
-      # after the run. cleanup_iacdipl7.yml removes it after 30 days.
+      # after the run. cleanup_iacdipl7.yml removes it after 7 days.
       - name: Create remote workspace
         id: create_remote_workspace
         run: |

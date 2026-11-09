@@ -2,9 +2,9 @@ name: Cleanup iacdipl-7
 
 # Daily housekeeping on iacdipl-7:
 # - deletes published request output older than 7 days
-# - deletes run directories under /ssd: request runs after 7 days, debug
-#   request runs and testsuite runs after 30 days. This also removes the
-#   workspaces of detached runs that died before their EXIT trap could run.
+# - deletes request and testsuite run directories under /ssd after 7 days.
+#   This also removes the workspaces of detached runs that died before their
+#   EXIT trap could run. Debug runs (*-debug) are kept and removed by hand.
 # - prunes stopped containers, dangling images and build cache in podman
 #
 # A manual run with dry_run only lists what would be deleted.
@@ -61,11 +61,9 @@ jobs:
           runs_root=$1
           dry_run=$2
 
-          find "$runs_root" -mindepth 2 -maxdepth 2 -type d \( \
-                 \( -path "$runs_root/request-*/run-*" ! -name '*-debug' -mtime +7 \) \
-              -o \( -path "$runs_root/request-*/run-*-debug" -mtime +30 \) \
-              -o \( -path "$runs_root/testsuite/run-*" -mtime +30 \) \
-            \) | while read -r run_dir; do
+          find "$runs_root" -mindepth 2 -maxdepth 2 -type d -mtime +7 ! -name '*-debug' \
+              \( -path "$runs_root/request-*/run-*" -o -path "$runs_root/testsuite/run-*" \) \
+            | while read -r run_dir; do
             echo "$run_dir"
             if [ "$dry_run" != true ]; then
               rm -rf "$run_dir"
