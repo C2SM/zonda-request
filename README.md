@@ -210,7 +210,7 @@ under **Settings > Secrets and variables > Actions**:
 | `IACDIPL7_SSH_KEY` | Secret | Private key for `l_c2sm` on `iacdipl-7.ethz.ch` |
 
 Set them from a file, for example
-`gh secret set FOG_SSH_KEY --repo C2SM/zonda-request < ~/.ssh/id_ed25519_fog`,
+`gh secret set FOG_SSH_KEY --repo C2SM/zonda-request < ~/.ssh/id_ed25519_iac_ti`,
 so that the trailing newline is kept. Setting secrets requires admin
 permission on the repository. See
 [#2914](https://github.com/C2SM/zonda-request/issues/2914) for details.
