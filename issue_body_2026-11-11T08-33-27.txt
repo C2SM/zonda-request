@@ -1,0 +1,68 @@
+# ICON External Parameter Request
+
+```json
+{
+  "zonda": {
+    "request_name": "Zou2024_TP_3p3km",
+    "backend_tag": "v2.2",
+    "icontools_tag": "latest",
+    "extpar_tag": "latest"
+  },
+  "globals": {
+    "keep_basegrid_files": false,
+    "grid_root": 3,
+    "grid_level": 9,
+    "icorotation": 0,
+    "icopole_lat": 90,
+    "icopole_lon": 0,
+    "centre": 215,
+    "subcentre": 0
+  },
+  "domains": [
+    {
+      "domain_id": 1,
+      "icontools": {
+        "parent_id": 0,
+        "region_type": 3,
+        "center_lat": 31,
+        "center_lon": 88,
+        "hwidth_lat": 14,
+        "hwidth_lon": 24,
+        "lrotate": false,
+        "pole_lat": 90,
+        "pole_lon": -180
+      },
+      "extpar": {
+        "use_array_cache": false,
+        "iaot_type": 1,
+        "ilu_type": 1,
+        "ialb_type": 1,
+        "isoil_type": 1,
+        "itopo_type": 1,
+        "it_cl_type": 1,
+        "iera_type": 1,
+        "iemiss_type": 1,
+        "lradtopo": false,
+        "enable_cdnc": false,
+        "enable_edgar": false,
+        "enable_art": false,
+        "enable_gfasclim": false,
+        "l_terra_urb": false,
+        "l_use_corine": false,
+        "infill_corine": false,
+        "radtopo_radius": 40000,
+        "nhori": 24,
+        "ilookup_table_lu": 1,
+        "tcorr_lapse_rate": 0.0065,
+        "tcorr_offset": 0
+      },
+      "extpar_plots": [
+        {
+          "variable_name": "topography_c"
+        }
+      ]
+    }
+  ]
+}
+```
+
