@@ -60,12 +60,12 @@ jobs:
           iacdipl7-key: ${{ secrets.IACDIPL7_SSH_KEY }}
 
       # The run directory holds the workspace and the pipeline log and is kept
-      # after the run. Run directories older than 30 days are removed here.
+      # after the run. cleanup_iacdipl7.yml removes it after 7 days.
       - name: Create remote workspace
         id: create_remote_workspace
         run: |
           run_dir="$RUNS_ROOT/run-${{ matrix.issue_number }}-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          ssh iacdipl7 "mkdir -p '$run_dir/workspace' && find '$RUNS_ROOT' -mindepth 1 -maxdepth 1 -type d -mtime +30 -exec rm -rf {} +"
+          ssh iacdipl7 "mkdir -p '$run_dir/workspace'"
           echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
           echo "::notice title=Run directory::$run_dir, log $run_dir/pipeline.log"
 
