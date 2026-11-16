@@ -16,41 +16,32 @@ once the data is ready.
 
 ## Submitting a Request
 
-1. Configure your grids on [zonda.ethz.ch](https://zonda.ethz.ch/) and copy
+1. Configure your domains on [zonda.ethz.ch](https://zonda.ethz.ch/) and copy
    the request to the clipboard.
 2. Open a new issue with the
    [data request template](https://github.com/C2SM/zonda-request/issues/new?template=data_request.md),
-   give it a meaningful title and paste the request into the `json` code block.
+   give it a meaningful title and paste the request into the `json` code block
+   in the issue description. Make sure to only replace the line containing the
+   string `PASTE_YOUR_REQUEST_HERE`.
 3. Create the issue. Processing starts automatically, and the issue is
    labeled `submitted`.
 4. When processing has finished, a comment on the issue links to your data,
-   or to the log files if processing failed. Large requests can take several
-   hours, and requests may wait in a queue when the server is busy.
+   or only to the log files if processing failed. Large requests can take
+   several hours, and requests may wait in a queue when the server is busy.
 
 The data is available for **7 days**. Afterwards, it is deleted and the issue
 is closed.
 
 To process a request again, for example after correcting the JSON in the
-issue description, write a comment containing only `rerun request`. This works
-on open issues that are not currently `submitted`, and always uses the JSON in
-the current issue description.
-
-## Status Labels
-
-| Label | Meaning |
-|---|---|
-| ![submitted](https://img.shields.io/badge/submitted-yellow) | The request is queued or being processed |
-| ![invalid](https://img.shields.io/badge/invalid-lightblue) | The JSON in the issue is missing or invalid. Correct it and comment `rerun request` |
-| ![completed](https://img.shields.io/badge/completed-green) | The data is ready for download |
-| ![failed](https://img.shields.io/badge/failed-red) | Processing failed, see the log files linked in the comment |
-| ![aborted](https://img.shields.io/badge/aborted-lightgray) | The request hit the 24-hour limit or was terminated |
+issue description, write a comment containing (only) the string
+**rerun request**. This works on open issues that are not currently
+`submitted`, and always uses the JSON in the current issue description.
 
 ## Documentation
 
-- [Zonda documentation](https://zonda.ethz.ch/docs/): how to use the website,
-  and a description of the [output files](https://zonda.ethz.ch/docs/backend).
-- [C2SM internal documentation](https://intranet.c2sm.ethz.ch/docs/webtools/zonda/zonda-request/)
-  (C2SM members only): how the backend works and how to operate it.
+Comprehensive documentation for the Zonda Request backend is available at:
+
+<https://zonda.ethz.ch/docs/backend>
 
 ## Getting Help
 
