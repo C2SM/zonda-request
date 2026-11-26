@@ -43,8 +43,8 @@ jobs:
       - name: Configure SSH
         uses: ./.github/actions/configure-ssh
         with:
-          fog-key: ${{ secrets.FOG_SSH_KEY }}
-          iacdipl7-key: ${{ secrets.IACDIPL7_SSH_KEY }}
+          fog-ssh-key: ${{ secrets.FOG_SSH_KEY }}
+          iacdipl7-ssh-key: ${{ secrets.IACDIPL7_SSH_KEY }}
 
       # The script is sent over stdin, so it does not need to be copied first.
       - name: Delete old output from the HTTPS server

@@ -56,8 +56,8 @@ jobs:
       - name: Configure SSH
         uses: ./.github/actions/configure-ssh
         with:
-          fog-key: ${{ secrets.FOG_SSH_KEY }}
-          iacdipl7-key: ${{ secrets.IACDIPL7_SSH_KEY }}
+          fog-ssh-key: ${{ secrets.FOG_SSH_KEY }}
+          iacdipl7-ssh-key: ${{ secrets.IACDIPL7_SSH_KEY }}
 
       # The run directory holds the workspace and the pipeline log and is kept
       # after the run. cleanup_iacdipl7.yml removes it after 7 days.

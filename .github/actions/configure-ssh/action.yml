@@ -14,13 +14,13 @@ runs:
   steps:
     - shell: bash
       env:
-        ID_FOG: ${{ inputs.fog-key }}
-        ID_TARGET: ${{ inputs.iacdipl7-key }}
+        FOG_SSH_KEY: ${{ inputs.fog-ssh-key }}
+        IACDIPL_SSH_KEY: ${{ inputs.iacdipl7-ssh-key }}
       run: |
         umask 077
         mkdir -p ~/.ssh
-        echo "${ID_FOG}" > ~/.ssh/id_ed25519_fog
-        echo "${ID_TARGET}" > ~/.ssh/id_ed25519_iacdipl7
+        echo "${FOG_SSH_KEY}" > ~/.ssh/id_ed25519_fog
+        echo "${IACDIPL_SSH_KEY}" > ~/.ssh/id_ed25519_iacdipl7
 
         cat > ~/.ssh/config << 'EOF'
         Host fog
