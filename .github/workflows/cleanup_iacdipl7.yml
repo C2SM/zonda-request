@@ -64,19 +64,22 @@ jobs:
           dry_run=$3
 
           # Find and delete run directories older than 7 days
-          find "$request_runs_root" "$testsuite_runs_root" -mindepth 2 -maxdepth 2 -type d -mtime +7 ! -name '*-debug' \
-              \( -path "$request_runs_root/request-*/run-*" -o -path "$testsuite_runs_root/testsuite-*/run-*" \) \
-            | while read -r run_dir; do
-              echo "$run_dir"
-              if [ "$dry_run" != true ]; then
-                rm -rf "$run_dir"
-              fi
-            done
+          {
+            find "$request_runs_root" -mindepth 2 -maxdepth 2 -type d -mtime +7 ! -name '*-debug' \
+              -path "$request_runs_root/request-*/run-*"
+            find "$testsuite_runs_root" -mindepth 3 -maxdepth 3 -type d -mtime +7 \
+              -path "$testsuite_runs_root/*/testsuite-*/run-*"
+          } | while read -r run_dir; do
+            echo "$run_dir"
+            if [ "$dry_run" != true ]; then
+              rm -rf "$run_dir"
+            fi
+          done
 
           if [ "$dry_run" != true ]; then
-            # Find and delete empty request and testsuite directories
+            # Find and delete empty request and testsuite (and its parent, e.g. PR-123) directories
             find "$request_runs_root" -mindepth 1 -maxdepth 1 -type d -name 'request-*' -empty -print -delete
-            find "$testsuite_runs_root" -mindepth 1 -maxdepth 1 -type d -name 'testsuite-*' -empty -print -delete
+            find "$testsuite_runs_root" -mindepth 1 -maxdepth 2 -type d -empty -print -delete
           fi
           REMOTE
 

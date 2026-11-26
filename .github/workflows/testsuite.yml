@@ -62,14 +62,17 @@ jobs:
 
       # The run directory holds the workspace and the pipeline log and is kept
       # after the run. cleanup_iacdipl7.yml removes it after 7 days. It is named
-      # run-<N>-<run_id>, where N counts the testsuite runs of the issue. A
-      # re-run from the Actions UI keeps N and appends -<run_attempt>.
+      # <PR-<number> or branch>/testsuite-<issue>/run-<N>-<run_id>, where N counts
+      # the testsuite runs of that PR or branch. A re-run from the Actions UI
+      # keeps N and appends -<run_attempt>.
       - name: Create remote workspace
         id: create_remote_workspace
         env:
           ISSUE_NUMBER: ${{ matrix.issue_number }}
+          REF_NAME: ${{ github.event.pull_request.number && format('PR-{0}', github.event.pull_request.number) || github.ref_name }}
         run: |
-          testsuite_dir="$TESTSUITE_RUNS_ROOT/testsuite-$ISSUE_NUMBER"
+          ref_dir="${REF_NAME//[^A-Za-z0-9._-]/-}"
+          testsuite_dir="$TESTSUITE_RUNS_ROOT/$ref_dir/testsuite-$ISSUE_NUMBER"
           run_dir=$(ssh iacdipl7 bash -s -- "$testsuite_dir" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" << 'REMOTE'
           shopt -s nullglob
           mkdir -p "$1" && cd "$1" || exit 1
