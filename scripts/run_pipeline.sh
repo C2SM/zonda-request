@@ -15,7 +15,7 @@ set -uo pipefail
 #   RUN_ID    unique-ish value hashed into the download path
 #
 # Optional environment variables:
-#   RUN_NOTE  Markdown note put on top of the report comment
+#   DISPATCH_NOTE  Markdown note put on top of the report comment
 #
 # GitHub is accessed as the Zonda-Bot App, whose private key is expected at
 # ~/.config/zonda/bot.pem. Run from a checkout of this repo, with uv installed

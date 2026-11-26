@@ -2,7 +2,7 @@
 # Constants shared by the run scripts. Sourced, not executed.
 
 export extpar_input_data=/net/co2/c2sm-data/extpar-input-data/
-export https_public_root=/net/co2/c2sm-services/zonda-request/
+export public_output_data_path=/net/co2/c2sm-services/zonda-request/
 export n_threads=24
 export netcdf_format=NETCDF4
 export config_filename=config.json

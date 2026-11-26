@@ -46,7 +46,7 @@ archive_and_report() {
     local logs_flag=()
 
     if ! "$uv" run --frozen python scripts/archive_output.py --config "$config_filename" --workspace "$workspace_dir" \
-        --destination "$https_public_root" --logfile "$log_filename" --hash-file "$hash_filename"; then
+        --destination "$public_output_data_path" --logfile "$log_filename" --hash-file "$hash_filename"; then
         status=1
         logs_flag=('--no-logs')
 
@@ -58,7 +58,7 @@ archive_and_report() {
     fi
 
     "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
-        --issue-id "$ISSUE_ID" ${RUN_NOTE:+--note "$RUN_NOTE"} "${logs_flag[@]}" "$flag" || status=1
+        --issue-id "$ISSUE_ID" ${DISPATCH_NOTE:+--note "$DISPATCH_NOTE"} "${logs_flag[@]}" "$flag" || status=1
 
     return "$status"
 }

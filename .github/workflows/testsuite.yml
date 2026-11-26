@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUNS_ROOT: /ssd/c2sm-services/zonda-request-runs/testsuite
+  TESTSUITE_RUNS_ROOT: ${{ vars.RUNS_ROOT }}/testsuite
 
 jobs:
   testsuite:
@@ -64,7 +64,7 @@ jobs:
       - name: Create remote workspace
         id: create_remote_workspace
         run: |
-          run_dir="$RUNS_ROOT/run-${{ matrix.issue_number }}-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          run_dir="$TESTSUITE_RUNS_ROOT/run-${{ matrix.issue_number }}-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           ssh iacdipl7 "mkdir -p '$run_dir/workspace'"
           echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
           echo "::notice title=Run directory::$run_dir, log $run_dir/pipeline.log"

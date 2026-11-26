@@ -53,13 +53,13 @@ jobs:
         id: determine_issue_number
         env:
           INPUT_ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
-          RUN_KIND: ${{ github.event_name != 'workflow_dispatch' && 'none' || inputs.debug && 'debug' || 'manual' }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DISPATCH_MODE: ${{ (github.event_name != 'workflow_dispatch' && 'none') || (inputs.debug && 'debug') || 'manual' }}
+          DISPATCH_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           [[ "$INPUT_ISSUE_NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::issue_number must be a positive integer, got '$INPUT_ISSUE_NUMBER'."; exit 1; }
           echo "issue_number=$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
-          if [ "$RUN_KIND" != none ]; then
-            printf "run_note<<EOF\n> [!NOTE]\n> Posted by a maintainer's [%s run](%s).\nEOF\n" "$RUN_KIND" "$RUN_URL" >> "$GITHUB_OUTPUT"
+          if [ "$DISPATCH_MODE" != none ]; then
+            printf "dispatch_note<<EOF\n> [!NOTE]\n> Posted by a maintainer's [%s dispatch](%s).\nEOF\n" "$DISPATCH_MODE" "$DISPATCH_URL" >> "$GITHUB_OUTPUT"
           fi
 
       # 'submitted' is set first, so that it blocks a second rerun as early as possible.
@@ -75,7 +75,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ steps.determine_issue_number.outputs.issue_number }}
-          RUN_NOTE: ${{ steps.determine_issue_number.outputs.run_note }}
+          DISPATCH_NOTE: ${{ steps.determine_issue_number.outputs.dispatch_note }}
         run: |
           body=$(gh api "repos/${{ github.repository }}/issues/$ISSUE_NUMBER" --jq .body)
           json_block=$(echo "$body" \
@@ -103,7 +103,7 @@ jobs:
              [ "$(printf '%s\n' "$MIN_BACKEND_TAG" "$backend_tag" | sort -V | head -n1)" != "$MIN_BACKEND_TAG" ]; then
             echo "::warning title=Backend tag too old::${backend_tag} predates ${MIN_BACKEND_TAG}, using ${MIN_BACKEND_TAG} instead."
             gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body \
-              "${RUN_NOTE:+$RUN_NOTE$'\n\n'}Backend version \`${backend_tag}\` is no longer supported. This request will be processed with \`${MIN_BACKEND_TAG}\` instead."
+              "${DISPATCH_NOTE:+$DISPATCH_NOTE$'\n\n'}Backend version \`${backend_tag}\` is no longer supported. This request will be processed with \`${MIN_BACKEND_TAG}\` instead."
             backend_tag=$MIN_BACKEND_TAG
           fi
 
@@ -114,7 +114,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           JSON_ERROR: ${{ steps.extract_backend_tag.outputs.json_error }}
-          RUN_NOTE: ${{ steps.determine_issue_number.outputs.run_note }}
+          DISPATCH_NOTE: ${{ steps.determine_issue_number.outputs.dispatch_note }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -158,7 +158,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue_number,
-              body: [process.env.RUN_NOTE, message].filter(Boolean).join('\n\n')
+              body: [process.env.DISPATCH_NOTE, message].filter(Boolean).join('\n\n')
             })
 
             await github.rest.issues.addLabels({
@@ -234,12 +234,12 @@ jobs:
       # setsid and all three redirections let ssh return; do not add `ssh -n`.
       - name: Launch pipeline on iacdipl-7 (detached)
         env:
-          RUN_NOTE: ${{ steps.determine_issue_number.outputs.run_note }}
+          DISPATCH_NOTE: ${{ steps.determine_issue_number.outputs.dispatch_note }}
         run: |
           ssh iacdipl7 bash -s << REMOTE
           export ISSUE_ID='${{ steps.determine_issue_number.outputs.issue_number }}'
           export RUN_ID='${{ github.run_id }}-${{ github.run_attempt }}'
-          $(printf 'export RUN_NOTE=%q' "$RUN_NOTE")
+          $(printf 'export DISPATCH_NOTE=%q' "$DISPATCH_NOTE")
           cd '${{ steps.create_remote_workspace.outputs.run_dir }}/workspace'
           setsid nohup bash scripts/run_pipeline.sh ${{ inputs.debug && '--debug' || '' }} >'${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &
           disown

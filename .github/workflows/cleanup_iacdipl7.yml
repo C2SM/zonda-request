@@ -28,7 +28,7 @@ concurrency:
   group: cleanup-iacdipl7
 
 env:
-  DATA_PATH: /net/co2/c2sm-services/zonda-request
+  PUBLIC_OUTPUT_DATA_PATH: ${{ vars.PUBLIC_OUTPUT_DATA_PATH }}
   RUNS_ROOT: /ssd/c2sm-services/zonda-request-runs
   DRY_RUN: ${{ inputs.dry_run == true }}
 
@@ -50,9 +50,9 @@ jobs:
       - name: Delete old output from the HTTPS server
         run: |
           if [ "$DRY_RUN" = true ]; then
-            ssh iacdipl7 python3 - --path "$DATA_PATH" --threshold 7 --dry-run < scripts/cleanup_data_server.py
+            ssh iacdipl7 python3 - --path "$PUBLIC_OUTPUT_DATA_PATH" --threshold 7 --dry-run < scripts/cleanup_data_server.py
           else
-            ssh iacdipl7 python3 - --path "$DATA_PATH" --threshold 7 < scripts/cleanup_data_server.py
+            ssh iacdipl7 python3 - --path "$PUBLIC_OUTPUT_DATA_PATH" --threshold 7 < scripts/cleanup_data_server.py
           fi
 
       - name: Delete old run directories
