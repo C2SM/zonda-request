@@ -34,7 +34,7 @@ permissions:
 env:
   # Oldest supported release tag. Older release tags are raised to it.
   MIN_BACKEND_TAG: ${{ vars.MIN_BACKEND_TAG }}
-  RUNS_ROOT: ${{ vars.RUNS_ROOT }}
+  REQUEST_RUNS_ROOT: ${{ vars.REQUEST_RUNS_ROOT }}
 
 jobs:
   data-request:
@@ -220,7 +220,7 @@ jobs:
         env:
           ISSUE_NUMBER: ${{ steps.determine_issue_number.outputs.issue_number }}
         run: |
-          request_dir="$RUNS_ROOT/request-$ISSUE_NUMBER"
+          request_dir="$REQUEST_RUNS_ROOT/request-$ISSUE_NUMBER"
           run_dir=$(ssh iacdipl7 bash -s -- "$request_dir" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "${{ inputs.debug == true }}" << 'REMOTE'
           shopt -s nullglob
           mkdir -p "$1" && cd "$1" || exit 1

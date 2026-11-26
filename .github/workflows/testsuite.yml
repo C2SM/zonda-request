@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TESTSUITE_RUNS_ROOT: ${{ vars.RUNS_ROOT }}/testsuite
+  TESTSUITE_RUNS_ROOT: ${{ vars.TESTSUITE_RUNS_ROOT }}
 
 jobs:
   testsuite:
@@ -61,14 +61,32 @@ jobs:
           iacdipl7-ssh-key: ${{ secrets.IACDIPL7_SSH_KEY }}
 
       # The run directory holds the workspace and the pipeline log and is kept
-      # after the run. cleanup_iacdipl7.yml removes it after 7 days.
+      # after the run. cleanup_iacdipl7.yml removes it after 7 days. It is named
+      # run-<N>-<run_id>, where N counts the testsuite runs of the issue. A
+      # re-run from the Actions UI keeps N and appends -<run_attempt>.
       - name: Create remote workspace
         id: create_remote_workspace
+        env:
+          ISSUE_NUMBER: ${{ matrix.issue_number }}
         run: |
-          run_dir="$TESTSUITE_RUNS_ROOT/run-${{ matrix.issue_number }}-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          ssh iacdipl7 "mkdir -p '$run_dir/workspace'"
-          echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
+          testsuite_dir="$TESTSUITE_RUNS_ROOT/testsuite-$ISSUE_NUMBER"
+          run_dir=$(ssh iacdipl7 bash -s -- "$testsuite_dir" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" << 'REMOTE'
+          shopt -s nullglob
+          mkdir -p "$1" && cd "$1" || exit 1
+          dirs_previous_run_attempts=(run-*-"$2" run-*-"$2"-*)
+          if [ ${#dirs_previous_run_attempts[@]} -gt 0 ]; then
+            n=$(cut -d- -f2 <<< "${dirs_previous_run_attempts[0]}")
+          else
+            last_run_n=$(printf '%s\n' run-* | cut -d- -f2 | sort -n | tail -n1)
+            n=$(( ${last_run_n:-0} + 1 ))
+          fi
+          run_dir="$PWD/run-$n-$2"
+          [ "$3" -gt 1 ] && run_dir+="-$3"
+          mkdir -p "$run_dir/workspace" && echo "$run_dir"
+          REMOTE
+          )
           echo "::notice title=Run directory::Run directory: $run_dir"
+          echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
 
       - name: Upload repository to iacdipl-7
         run: rsync -avh --exclude='.git' ./ "iacdipl7:${{ steps.create_remote_workspace.outputs.run_dir }}/workspace/"

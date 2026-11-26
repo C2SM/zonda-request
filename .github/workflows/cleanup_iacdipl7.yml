@@ -29,7 +29,8 @@ concurrency:
 
 env:
   PUBLIC_OUTPUT_DATA_PATH: ${{ vars.PUBLIC_OUTPUT_DATA_PATH }}
-  RUNS_ROOT: ${{ vars.RUNS_ROOT }}
+  REQUEST_RUNS_ROOT: ${{ vars.REQUEST_RUNS_ROOT }}
+  TESTSUITE_RUNS_ROOT: ${{ vars.TESTSUITE_RUNS_ROOT }}
   DRY_RUN: ${{ inputs.dry_run == true }}
 
 jobs:
@@ -57,13 +58,14 @@ jobs:
 
       - name: Delete old run directories
         run: |
-          ssh iacdipl7 bash -s -- "$RUNS_ROOT" "$DRY_RUN" << 'REMOTE'
-          runs_root=$1
-          dry_run=$2
+          ssh iacdipl7 bash -s -- "$REQUEST_RUNS_ROOT" "$TESTSUITE_RUNS_ROOT" "$DRY_RUN" << 'REMOTE'
+          request_runs_root=$1
+          testsuite_runs_root=$2
+          dry_run=$3
 
           # Find and delete run directories older than 7 days
-          find "$runs_root" -mindepth 2 -maxdepth 2 -type d -mtime +7 ! -name '*-debug' \
-              \( -path "$runs_root/request-*/run-*" -o -path "$runs_root/testsuite/run-*" \) \
+          find "$request_runs_root" "$testsuite_runs_root" -mindepth 2 -maxdepth 2 -type d -mtime +7 ! -name '*-debug' \
+              \( -path "$request_runs_root/request-*/run-*" -o -path "$testsuite_runs_root/testsuite-*/run-*" \) \
             | while read -r run_dir; do
               echo "$run_dir"
               if [ "$dry_run" != true ]; then
@@ -72,8 +74,9 @@ jobs:
             done
 
           if [ "$dry_run" != true ]; then
-            # Find and delete empty request directories
-            find "$runs_root" -mindepth 1 -maxdepth 1 -type d -name 'request-*' -empty -print -delete
+            # Find and delete empty request and testsuite directories
+            find "$request_runs_root" -mindepth 1 -maxdepth 1 -type d -name 'request-*' -empty -print -delete
+            find "$testsuite_runs_root" -mindepth 1 -maxdepth 1 -type d -name 'testsuite-*' -empty -print -delete
           fi
           REMOTE
 
