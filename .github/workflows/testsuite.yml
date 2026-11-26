@@ -2,8 +2,9 @@ name: Testsuite
 
 # Processes the fixture requests in the issues labeled 'testsuite' with the
 # code under review, synchronously, as a regular pass/fail check. Nothing is
-# archived, published, commented or relabeled (run_pipeline.sh --testsuite).
-# The fixture issues only hold the request JSON, which is fetched live.
+# archived, published, commented or relabeled
+# (run_pipeline.sh --skip-archive-and-report). The fixture issues only hold the
+# request JSON, which is fetched live.
 #
 # Triggered by the 'run testsuite' label on a pull request, nightly on main,
 # or manually via workflow_dispatch. The label is removed once the run is done,
@@ -80,7 +81,7 @@ jobs:
           ISSUE_NUMBER: ${{ matrix.issue_number }}
           RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.issue_number }}
         run: |
-          ssh -tt iacdipl7 "bash -o pipefail -c 'cd $RUN_DIR/workspace && ISSUE_NUMBER=$ISSUE_NUMBER RUN_ID=$RUN_ID bash scripts/run_pipeline.sh --testsuite --debug 2>&1 | tee ../pipeline.log'"
+          ssh -tt iacdipl7 "bash -o pipefail -c 'cd $RUN_DIR/workspace && ISSUE_NUMBER=$ISSUE_NUMBER RUN_ID=$RUN_ID bash scripts/run_pipeline.sh --skip-archive-and-report --keep-workspace 2>&1 | tee ../pipeline.log'"
 
   # Single required check for the ruleset, independent of the matrix entries.
   gather-matrix-results:

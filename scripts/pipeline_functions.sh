@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# shellcheck disable=SC2154 # testsuite, pipeline_pid, workspace_dir are set by run_pipeline.sh
+# shellcheck disable=SC2154 # skip_archive_and_report, pipeline_pid, workspace_dir are set by run_pipeline.sh
 # Function definitions for run_pipeline.sh. Sourced, not executed.
 
 # shellcheck source=SCRIPTDIR/env.sh
@@ -63,9 +63,8 @@ archive_and_report() {
     return "$status"
 }
 
-# Testsuite runs are neither archived nor reported.
 finish() {
-    if [ "$testsuite" = true ]; then
+    if [ "$skip_archive_and_report" = true ]; then
         return 0
     fi
     archive_and_report "$1"

@@ -243,7 +243,7 @@ jobs:
           export PUBLIC_OUTPUT_DATA_PATH='${{ vars.PUBLIC_OUTPUT_DATA_PATH }}'
           $(printf 'export COMMENT_NOTE=%q' "$DISPATCH_NOTE")
           cd '${{ steps.create_remote_workspace.outputs.run_dir }}/workspace'
-          setsid nohup bash scripts/run_pipeline.sh ${{ inputs.debug && '--debug' || '' }} >'${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &
+          setsid nohup bash scripts/run_pipeline.sh ${{ inputs.debug && '--keep-workspace' || '' }} >'${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &
           disown
           REMOTE
           echo "::notice title=Pipeline launched::Run directory ${{ steps.create_remote_workspace.outputs.run_dir }}, log ${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log"
