@@ -1,4 +1,4 @@
-name: Process data request
+name: Data request
 
 # Triggered by the 'data request' label, by a 'rerun request' comment on an
 # open issue that is not currently processing, or manually via workflow_dispatch.
