@@ -182,9 +182,9 @@ jobs:
 
             core.setFailed("Invalid JSON snippet!")
 
-      # The ssh action comes from this workflow's commit, not from backend_tag, so
+      # The SSH action comes from this workflow's commit, not from backend_tag, so
       # requests pinned to older tags still get the current host keys.
-      - name: Checkout ssh action
+      - name: Checkout SSH action
         uses: actions/checkout@v4
         with:
           sparse-checkout: .github/actions

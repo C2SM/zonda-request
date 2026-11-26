@@ -1,12 +1,12 @@
 name: Configure SSH
-description: Sets up ssh access to iacdipl-7 through the fog.ethz.ch proxy.
+description: Sets up SSH access to iacdipl-7 through the fog.ethz.ch proxy.
 
 inputs:
-  fog-key:
-    description: Private key for ti16102 on fog.ethz.ch
+  fog-ssh-key:
+    description: Private SSH key for ti16102 on fog.ethz.ch
     required: true
-  iacdipl7-key:
-    description: Private key for l_c2sm on iacdipl-7.ethz.ch
+  iacdipl7-ssh-key:
+    description: Private SSH key for l_c2sm on iacdipl-7.ethz.ch
     required: true
 
 runs:
