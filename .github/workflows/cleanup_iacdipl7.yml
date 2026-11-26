@@ -29,7 +29,7 @@ concurrency:
 
 env:
   PUBLIC_OUTPUT_DATA_PATH: ${{ vars.PUBLIC_OUTPUT_DATA_PATH }}
-  RUNS_ROOT: /ssd/c2sm-services/zonda-request-runs
+  RUNS_ROOT: ${{ vars.RUNS_ROOT }}
   DRY_RUN: ${{ inputs.dry_run == true }}
 
 jobs:

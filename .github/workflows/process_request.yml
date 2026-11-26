@@ -33,7 +33,7 @@ permissions:
 
 env:
   # Oldest supported release tag. Older release tags are raised to it.
-  MIN_BACKEND_TAG: v3.0
+  MIN_BACKEND_TAG: ${{ vars.MIN_BACKEND_TAG }}
 
 jobs:
   process:
