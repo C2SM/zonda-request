@@ -34,6 +34,7 @@ permissions:
 env:
   # Oldest supported release tag. Older release tags are raised to it.
   MIN_BACKEND_TAG: ${{ vars.MIN_BACKEND_TAG }}
+  RUNS_ROOT: ${{ vars.RUNS_ROOT }}
 
 jobs:
   data-request:
@@ -216,8 +217,10 @@ jobs:
       # run appends -debug.
       - name: Create remote workspace
         id: create_remote_workspace
+        env:
+          ISSUE_NUMBER: ${{ steps.determine_issue_number.outputs.issue_number }}
         run: |
-          request_dir=/ssd/c2sm-services/zonda-request-runs/request-${{ steps.determine_issue_number.outputs.issue_number }}
+          request_dir="$RUNS_ROOT/request-$ISSUE_NUMBER"
           run_dir=$(ssh iacdipl7 bash -s -- "$request_dir" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "${{ inputs.debug == true }}" << 'REMOTE'
           shopt -s nullglob
           mkdir -p "$1" && cd "$1" || exit 1
@@ -234,6 +237,7 @@ jobs:
           mkdir -p "$run_dir/workspace" && echo "$run_dir"
           REMOTE
           )
+          echo "::notice title=Run directory::Run directory: $run_dir"
           echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
 
       - name: Upload repository to iacdipl-7
@@ -254,4 +258,4 @@ jobs:
           setsid nohup bash scripts/run_pipeline.sh ${{ inputs.debug && '--keep-workspace' || '' }} >'${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &
           disown
           REMOTE
-          echo "::notice title=Pipeline launched::Run directory ${{ steps.create_remote_workspace.outputs.run_dir }}, log ${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log"
+          echo "::notice title=Pipeline launched::Pipeline launched on IACDIPL7."
