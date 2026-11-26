@@ -61,21 +61,23 @@ jobs:
           runs_root=$1
           dry_run=$2
 
+          # Find and delete run directories older than 7 days
           find "$runs_root" -mindepth 2 -maxdepth 2 -type d -mtime +7 ! -name '*-debug' \
               \( -path "$runs_root/request-*/run-*" -o -path "$runs_root/testsuite/run-*" \) \
             | while read -r run_dir; do
-            echo "$run_dir"
-            if [ "$dry_run" != true ]; then
-              rm -rf "$run_dir"
-            fi
-          done
+              echo "$run_dir"
+              if [ "$dry_run" != true ]; then
+                rm -rf "$run_dir"
+              fi
+            done
 
           if [ "$dry_run" != true ]; then
+            # Find and delete empty request directories
             find "$runs_root" -mindepth 1 -maxdepth 1 -type d -name 'request-*' -empty -print -delete
           fi
           REMOTE
 
-      # Covers what 'podman container prune' and 'podman image prune' remove.
+      # Also covers what 'podman container prune' and 'podman image prune' remove.
       - name: Prune podman
         if: env.DRY_RUN != 'true'
         run: ssh iacdipl7 podman system prune -f

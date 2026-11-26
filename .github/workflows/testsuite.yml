@@ -95,7 +95,7 @@ jobs:
   # Not after a cancelled run: a cancel by a re-added label would remove the new label.
   remove-label:
     needs: testsuite
-    if: ${{ !cancelled() && github.event_name == 'pull_request' && needs.testsuite.result != 'skipped' }}
+    if: ${{ !cancelled() && needs.testsuite.result != 'skipped' && github.event_name == 'pull_request' && github.event.label.name == 'run testsuite' }}
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

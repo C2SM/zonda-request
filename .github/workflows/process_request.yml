@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: 'GitHub issue number to (re-)process'
+        description: 'GitHub issue number to (re-)run'
         required: true
       debug:
         description: 'Keep the workspace on iacdipl-7 after the run'
@@ -66,8 +66,9 @@ jobs:
       - name: Reset status labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.determine_issue_number.outputs.issue_number }}
         run: |
-          gh issue edit "${{ steps.determine_issue_number.outputs.issue_number }}" --repo "${{ github.repository }}" \
+          gh issue edit "$ISSUE_NUMBER" --repo "${{ github.repository }}" \
             --remove-label completed,failed,aborted,invalid --add-label submitted
 
       - name: Extract backend_tag
@@ -86,7 +87,7 @@ jobs:
           if [ -z "$json_block" ]; then
             echo "json_error=missing" >> "$GITHUB_OUTPUT"
             exit 0
-          elif ! echo "$json_block" | jq . > /dev/null 2> jq_error.txt; then
+          elif ! echo "$json_block" | jq . 1> /dev/null 2> jq_error.txt; then
             echo "json_error=syntax" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -168,7 +169,7 @@ jobs:
               labels: ['invalid']
             })
 
-            // Left in place, 'submitted' would block every further rerun.
+            // If left in place, 'submitted' would block every further rerun.
             try {
               await github.rest.issues.removeLabel({
                 owner: context.repo.owner,
