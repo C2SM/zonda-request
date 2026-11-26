@@ -71,12 +71,11 @@ jobs:
           gh issue edit "$ISSUE_NUMBER" --repo "${{ github.repository }}" \
             --remove-label completed,failed,aborted,invalid --add-label submitted
 
-      - name: Extract backend_tag
-        id: extract_backend_tag
+      - name: Read and validate JSON block
+        id: read_json_block
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ steps.determine_issue_number.outputs.issue_number }}
-          DISPATCH_NOTE: ${{ steps.determine_issue_number.outputs.dispatch_note }}
         run: |
           body=$(gh api "repos/${{ github.repository }}/issues/$ISSUE_NUMBER" --jq .body)
           json_block=$(echo "$body" \
@@ -86,35 +85,19 @@ jobs:
 
           if [ -z "$json_block" ]; then
             echo "json_error=missing" >> "$GITHUB_OUTPUT"
-            exit 0
+            exit 1
           elif ! echo "$json_block" | jq . 1> /dev/null 2> jq_error.txt; then
             echo "json_error=syntax" >> "$GITHUB_OUTPUT"
-            exit 0
+            exit 1
           fi
 
-          backend_tag=$(echo "$json_block" | jq -r '.zonda.backend_tag // empty')
-
-          if [ -z "$backend_tag" ]; then
-            backend_tag=$(gh api "repos/${{ github.repository }}/tags" --jq '.[0].name')
-            echo "::warning title=Backend tag missing::backend_tag not found in JSON code-block, falling back to latest release (${backend_tag})."
-          fi
-
-          # Only release tags are raised; branch names are used as given, for development and testing.
-          if [[ "$backend_tag" =~ ^v[0-9] ]] &&
-             [ "$(printf '%s\n' "$MIN_BACKEND_TAG" "$backend_tag" | sort -V | head -n1)" != "$MIN_BACKEND_TAG" ]; then
-            echo "::warning title=Backend tag too old::${backend_tag} predates ${MIN_BACKEND_TAG}, using ${MIN_BACKEND_TAG} instead."
-            gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body \
-              "${DISPATCH_NOTE:+$DISPATCH_NOTE$'\n\n'}Backend version \`${backend_tag}\` is no longer supported. This request will be processed with \`${MIN_BACKEND_TAG}\` instead."
-            backend_tag=$MIN_BACKEND_TAG
-          fi
-
-          echo "backend_tag=$backend_tag" >> "$GITHUB_OUTPUT"
+          echo "$json_block" > "$RUNNER_TEMP/tmp_config.json"
 
       - name: Report status on invalid JSON
-        if: steps.extract_backend_tag.outputs.json_error
+        if: failure() && steps.read_json_block.outputs.json_error
         uses: actions/github-script@v7
         env:
-          JSON_ERROR: ${{ steps.extract_backend_tag.outputs.json_error }}
+          JSON_ERROR: ${{ steps.read_json_block.outputs.json_error }}
           DISPATCH_NOTE: ${{ steps.determine_issue_number.outputs.dispatch_note }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -182,6 +165,31 @@ jobs:
             }
 
             core.setFailed("Invalid JSON snippet!")
+
+      - name: Extract backend_tag
+        id: extract_backend_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.determine_issue_number.outputs.issue_number }}
+          DISPATCH_NOTE: ${{ steps.determine_issue_number.outputs.dispatch_note }}
+        run: |
+          backend_tag=$(jq -r '.zonda.backend_tag // empty' "$RUNNER_TEMP/tmp_config.json")
+
+          if [ -z "$backend_tag" ]; then
+            backend_tag=$(gh api "repos/${{ github.repository }}/tags" --jq '.[0].name')
+            echo "::warning title=Backend tag missing::backend_tag not found in JSON code-block, falling back to latest release (${backend_tag})."
+          fi
+
+          # Only release tags are raised; branch names are used as given, for development and testing.
+          if [[ "$backend_tag" =~ ^v[0-9] ]] &&
+             [ "$(printf '%s\n' "$MIN_BACKEND_TAG" "$backend_tag" | sort -V | head -n1)" != "$MIN_BACKEND_TAG" ]; then
+            echo "::warning title=Backend tag too old::${backend_tag} predates ${MIN_BACKEND_TAG}, using ${MIN_BACKEND_TAG} instead."
+            gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body \
+              "${DISPATCH_NOTE:+$DISPATCH_NOTE$'\n\n'}Backend version \`${backend_tag}\` is no longer supported. This request will be processed with \`${MIN_BACKEND_TAG}\` instead."
+            backend_tag=$MIN_BACKEND_TAG
+          fi
+
+          echo "backend_tag=$backend_tag" >> "$GITHUB_OUTPUT"
 
       # The SSH action comes from this workflow's commit, not from backend_tag, so
       # requests pinned to older tags still get the current host keys.
