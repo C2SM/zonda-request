@@ -1,20 +1,20 @@
 # shellcheck shell=bash
 # Constants shared by the run scripts. Sourced, not executed.
 
-export extpar_input_data=/net/co2/c2sm-data/extpar-input-data/
-export n_threads=24
-export netcdf_format=NETCDF4
-export config_filename=config.json
-export hash_filename=hash.txt
-export log_filename=zonda_request.log
+export EXTPAR_INPUT_DATA=/net/co2/c2sm-data/extpar-input-data/
+export N_THREADS=24
+export NETCDF_FORMAT=NETCDF4
+export CONFIG_FILENAME=config.json
+export HASH_FILENAME=hash.txt
+export LOG_FILENAME=zonda_request.log
 
-# Absolute path: non-interactive ssh sessions do not source ~/.bashrc, so
+# Absolute path: non-interactive SSH sessions do not source ~/.bashrc, so
 # uv is not on PATH. All Python runs through it to use the synced venv.
-export uv="$HOME/.local/bin/uv"
+export UV="$HOME/.local/bin/uv"
 
 # Concurrency cap shared by all runs on this machine.
-export n_slots=6
-export slots_dir="$HOME/.zonda/slots"
+export N_SLOTS=6
+export SLOTS_DIR="$HOME/.zonda/slots"
 
 # Identity of the Zonda-Bot GitHub App. Not secret; only its private key is.
 export ZONDA_APP_ID=4546985

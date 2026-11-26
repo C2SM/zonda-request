@@ -8,21 +8,21 @@ source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 process_request() {
     # The hash is created before the config deliberately: the reporting path
     # always reads hash.txt, so it must exist even when config creation fails.
-    "$uv" sync --frozen &&
-    "$uv" run --frozen python scripts/hash.py --run-id "$RUN_ID" --hash-file "$hash_filename" &&
-    "$uv" run --frozen python scripts/create_config_file.py --config "$config_filename" --issue-id "$ISSUE_NUMBER" &&
-    PYTHONPATH=src OMP_NUM_THREADS="$n_threads" NETCDF_OUTPUT_FILETYPE="$netcdf_format" \
-        "$uv" run --frozen python src/processing/process_request.py --config "$config_filename" \
-            --workspace "$(pwd)" --extpar-raw-data "$extpar_input_data" --logfile "$log_filename"
+    "$UV" sync --frozen &&
+    "$UV" run --frozen python scripts/hash.py --run-id "$RUN_ID" --hash-file "$HASH_FILENAME" &&
+    "$UV" run --frozen python scripts/create_config_file.py --config "$CONFIG_FILENAME" --issue-id "$ISSUE_NUMBER" &&
+    PYTHONPATH=src OMP_NUM_THREADS="$N_THREADS" NETCDF_OUTPUT_FILETYPE="$NETCDF_FORMAT" \
+        "$UV" run --frozen python src/processing/process_request.py --config "$CONFIG_FILENAME" \
+            --workspace "$(pwd)" --extpar-raw-data "$EXTPAR_INPUT_DATA" --logfile "$LOG_FILENAME"
 }
 
-# Waits for a free slot among $n_slots.
+# Waits for a free slot among $N_SLOTS.
 # For a request, must run after the caller applied the "submitted" label.
 acquire_slot() {
-    mkdir -p "$slots_dir"
+    mkdir -p "$SLOTS_DIR"
     while :; do
-        for slot in $(seq 0 $((n_slots - 1))); do
-            exec {lock_fd}>"$slots_dir/slot-$slot.lock"
+        for slot in $(seq 0 $((N_SLOTS - 1))); do
+            exec {lock_fd}>"$SLOTS_DIR/slot-$slot.lock"
             if flock -n "$lock_fd"; then
                 return 0
             fi
@@ -45,8 +45,8 @@ archive_and_report() {
     local status=0
     local logs_flag=()
 
-    if ! "$uv" run --frozen python scripts/archive_output.py --config "$config_filename" --workspace "$workspace_dir" \
-        --destination "$PUBLIC_OUTPUT_DATA_PATH" --logfile "$log_filename" --hash-file "$hash_filename"; then
+    if ! "$UV" run --frozen python scripts/archive_output.py --config "$CONFIG_FILENAME" --workspace "$workspace_dir" \
+        --destination "$PUBLIC_OUTPUT_DATA_PATH" --logfile "$LOG_FILENAME" --hash-file "$HASH_FILENAME"; then
         status=1
         logs_flag=('--no-logs')
 
@@ -57,7 +57,7 @@ archive_and_report() {
         fi
     fi
 
-    "$uv" run --frozen python scripts/report.py --config "$config_filename" --hash-file "$hash_filename" \
+    "$UV" run --frozen python scripts/report.py --config "$CONFIG_FILENAME" --hash-file "$HASH_FILENAME" \
         --issue-id "$ISSUE_NUMBER" ${COMMENT_NOTE:+--note "$COMMENT_NOTE"} "${logs_flag[@]}" "$flag" || status=1
 
     return "$status"
