@@ -240,6 +240,7 @@ jobs:
           ssh iacdipl7 bash -s << REMOTE
           export ISSUE_NUMBER='${{ steps.determine_issue_number.outputs.issue_number }}'
           export RUN_ID='${{ github.run_id }}-${{ github.run_attempt }}'
+          export PUBLIC_OUTPUT_DATA_PATH='${{ vars.PUBLIC_OUTPUT_DATA_PATH }}'
           $(printf 'export COMMENT_NOTE=%q' "$DISPATCH_NOTE")
           cd '${{ steps.create_remote_workspace.outputs.run_dir }}/workspace'
           setsid nohup bash scripts/run_pipeline.sh ${{ inputs.debug && '--debug' || '' }} >'${{ steps.create_remote_workspace.outputs.run_dir }}/pipeline.log' 2>&1 < /dev/null &

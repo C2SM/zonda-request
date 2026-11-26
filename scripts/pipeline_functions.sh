@@ -46,7 +46,7 @@ archive_and_report() {
     local logs_flag=()
 
     if ! "$uv" run --frozen python scripts/archive_output.py --config "$config_filename" --workspace "$workspace_dir" \
-        --destination "$public_output_data_path" --logfile "$log_filename" --hash-file "$hash_filename"; then
+        --destination "$PUBLIC_OUTPUT_DATA_PATH" --logfile "$log_filename" --hash-file "$hash_filename"; then
         status=1
         logs_flag=('--no-logs')
 

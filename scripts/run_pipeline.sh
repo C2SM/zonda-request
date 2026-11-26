@@ -11,8 +11,9 @@ set -uo pipefail
 # No `set -e`: the failure branch must report even when a command in it fails.
 #
 # Required environment variables:
-#   ISSUE_NUMBER  number of the GitHub issue the request was submitted in
-#   RUN_ID        unique-ish value hashed into the download path
+#   ISSUE_NUMBER             number of the GitHub issue the request was submitted in
+#   RUN_ID                   unique-ish value hashed into the download path
+#   PUBLIC_OUTPUT_DATA_PATH  public directory where the output data is moved (not required for testsuite runs)
 #
 # Optional environment variables:
 #   COMMENT_NOTE  Markdown note put on top of the report comment
