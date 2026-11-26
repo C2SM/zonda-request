@@ -47,15 +47,15 @@ class GitHubRepo:
 
         self.repo_api_url = f"https://api.github.com/repos/{self.group}/{self.repo}"
 
-    def comment(self, issue_id, text):
-        url = f"{self.repo_api_url}/issues/{issue_id}/comments"
+    def comment(self, issue_number, text):
+        url = f"{self.repo_api_url}/issues/{issue_number}/comments"
 
         response = requests.post(url, headers=self.headers, json={"body": text})
         response.raise_for_status()
 
-    def remove_labels(self, issue_id, labels):
+    def remove_labels(self, issue_number, labels):
         for label in labels:
-            url = f"{self.repo_api_url}/issues/{issue_id}/labels/{label}"
+            url = f"{self.repo_api_url}/issues/{issue_number}/labels/{label}"
 
             response = requests.delete(url, headers=self.headers)
 
@@ -64,15 +64,15 @@ class GitHubRepo:
             if response.status_code != 404:
                 response.raise_for_status()
 
-    def add_labels(self, issue_id, labels):
+    def add_labels(self, issue_number, labels):
         if labels:
-            url = f"{self.repo_api_url}/issues/{issue_id}/labels"
+            url = f"{self.repo_api_url}/issues/{issue_number}/labels"
 
             response = requests.post(url, headers=self.headers, json={"labels": labels})
             response.raise_for_status()
 
-    def get_issue(self, issue_id):
-        url = f"{self.repo_api_url}/issues/{issue_id}"
+    def get_issue(self, issue_number):
+        url = f"{self.repo_api_url}/issues/{issue_number}"
 
         issue = requests.get(url, headers=self.headers)
         issue.raise_for_status()
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     repository = app_repository(parser, args)
 
-    repository.comment(issue_id=args.issue_id, text=comment)
+    repository.comment(issue_number=args.issue_number, text=comment)
 
-    repository.remove_labels(issue_id=args.issue_id, labels=["submitted"])
-    repository.add_labels(issue_id=args.issue_id, labels=[label])
+    repository.remove_labels(issue_number=args.issue_number, labels=["submitted"])
+    repository.add_labels(issue_number=args.issue_number, labels=[label])

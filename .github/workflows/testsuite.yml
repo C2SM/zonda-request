@@ -77,10 +77,10 @@ jobs:
       - name: Run testsuite request on iacdipl-7
         env:
           RUN_DIR: ${{ steps.create_remote_workspace.outputs.run_dir }}
-          ISSUE_ID: ${{ matrix.issue_number }}
+          ISSUE_NUMBER: ${{ matrix.issue_number }}
           RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.issue_number }}
         run: |
-          ssh -tt iacdipl7 "bash -o pipefail -c 'cd $RUN_DIR/workspace && ISSUE_ID=$ISSUE_ID RUN_ID=$RUN_ID bash scripts/run_pipeline.sh --testsuite --debug 2>&1 | tee ../pipeline.log'"
+          ssh -tt iacdipl7 "bash -o pipefail -c 'cd $RUN_DIR/workspace && ISSUE_NUMBER=$ISSUE_NUMBER RUN_ID=$RUN_ID bash scripts/run_pipeline.sh --testsuite --debug 2>&1 | tee ../pipeline.log'"
 
   # Single required check for the ruleset, independent of the matrix entries.
   gather-matrix-results:

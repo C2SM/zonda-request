@@ -39,6 +39,6 @@ if __name__ == "__main__":
 
     repository = app_repository(parser, args)
 
-    json_config_str = extract_json_from_issue(repository.get_issue(args.issue_id)).strip()
+    json_config_str = extract_json_from_issue(repository.get_issue(args.issue_number)).strip()
 
     write_config_file(config_filename, json_config_str)
