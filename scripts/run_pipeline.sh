@@ -33,7 +33,7 @@ done
 
 # shellcheck source=SCRIPTDIR/pipeline_functions.sh
 source "$(dirname "${BASH_SOURCE[0]}")/pipeline_functions.sh"
-export -f extract
+export -f process_request
 
 workspace_dir="$(pwd)"
 if [ "$debug" = false ]; then
@@ -47,7 +47,7 @@ acquire_slot
 
 # setsid puts the whole subtree in its own process group, killable as a unit.
 # The slot descriptor is closed so no process outliving the pipeline holds it.
-setsid timeout 24h bash -c extract {lock_fd}>&- &
+setsid timeout 24h bash -c process_request {lock_fd}>&- &
 pipeline_pid=$!
 
 wait "$pipeline_pid"

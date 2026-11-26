@@ -83,7 +83,7 @@ jobs:
           ssh -tt iacdipl7 "bash -o pipefail -c 'cd $RUN_DIR/workspace && ISSUE_ID=$ISSUE_ID RUN_ID=$RUN_ID bash scripts/run_pipeline.sh --testsuite --debug 2>&1 | tee ../pipeline.log'"
 
   # Single required check for the ruleset, independent of the matrix entries.
-  gate:
+  gather-matrix-results:
     name: Testsuite
     needs: testsuite
     if: ${{ always() && github.event_name == 'pull_request' && github.event.label.name == 'run testsuite' }}

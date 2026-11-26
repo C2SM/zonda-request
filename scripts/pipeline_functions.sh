@@ -5,7 +5,7 @@
 # shellcheck source=SCRIPTDIR/env.sh
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
-extract() {
+process_request() {
     # The hash is created before the config deliberately: the reporting path
     # always reads hash.txt, so it must exist even when config creation fails.
     "$uv" sync --frozen &&

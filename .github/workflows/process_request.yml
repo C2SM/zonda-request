@@ -36,7 +36,7 @@ env:
   MIN_BACKEND_TAG: ${{ vars.MIN_BACKEND_TAG }}
 
 jobs:
-  process:
+  data-request:
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issues' && github.event.label.name == 'data request') ||
@@ -213,11 +213,11 @@ jobs:
           run_dir=$(ssh iacdipl7 bash -s -- "$request_dir" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "${{ inputs.debug == true }}" << 'REMOTE'
           shopt -s nullglob
           mkdir -p "$1" && cd "$1" || exit 1
-          repeated=(run-*-"$2" run-*-"$2"-*)
-          if [ ${#repeated[@]} -gt 0 ]; then
-            n=$(cut -d- -f2 <<< "${repeated[0]}")
+          dirs_previous_run_attempts=(run-*-"$2" run-*-"$2"-*)
+          if [ ${#dirs_previous_run_attempts[@]} -gt 0 ]; then
+            n=$(cut -d- -f2 <<< "${dirs_previous_run_attempts[0]}")
           else
-            last=$(printf '%s\n' run-* | cut -d- -f2 | sort -n | tail -n1)
+            last_run_n=$(printf '%s\n' run-* | cut -d- -f2 | sort -n | tail -n1)
             n=$(( ${last:-0} + 1 ))
           fi
           run_dir="$PWD/run-$n-$2"
