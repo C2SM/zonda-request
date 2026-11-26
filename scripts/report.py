@@ -85,7 +85,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
     add_app_arguments(parser)
-    parser.add_argument("--issue-id", type=int, required=True, help="Number of the GitHub issue to report to")
+    parser.add_argument("--issue-number", type=int, required=True, help="Number of the GitHub issue to report to")
     parser.add_argument("--hash-file", type=str, required=True)
     parser.add_argument("--note", type=str, default="", help="Markdown note put on top of the comment")
     parser.add_argument("--no-logs", action="store_true", help="The log files were not published, so no link to them is given")

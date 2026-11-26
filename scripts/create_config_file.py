@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create config file and validate JSON input")
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
     add_app_arguments(parser)
-    parser.add_argument("--issue-id", type=int, required=True, help="Number of the GitHub issue holding the request")
+    parser.add_argument("--issue-number", type=int, required=True, help="Number of the GitHub issue holding the request")
 
     args = parser.parse_args()
     config_filename = args.config

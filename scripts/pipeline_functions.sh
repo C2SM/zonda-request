@@ -10,7 +10,7 @@ process_request() {
     # always reads hash.txt, so it must exist even when config creation fails.
     "$UV" sync --frozen &&
     "$UV" run --frozen python scripts/hash.py --run-id "$RUN_ID" --hash-file "$HASH_FILENAME" &&
-    "$UV" run --frozen python scripts/create_config_file.py --config "$CONFIG_FILENAME" --issue-id "$ISSUE_NUMBER" &&
+    "$UV" run --frozen python scripts/create_config_file.py --config "$CONFIG_FILENAME" --issue-number "$ISSUE_NUMBER" &&
     PYTHONPATH=src OMP_NUM_THREADS="$N_THREADS" NETCDF_OUTPUT_FILETYPE="$NETCDF_FORMAT" \
         "$UV" run --frozen python src/processing/process_request.py --config "$CONFIG_FILENAME" \
             --workspace "$(pwd)" --extpar-raw-data "$EXTPAR_INPUT_DATA" --logfile "$LOG_FILENAME"
@@ -58,7 +58,7 @@ archive_and_report() {
     fi
 
     "$UV" run --frozen python scripts/report.py --config "$CONFIG_FILENAME" --hash-file "$HASH_FILENAME" \
-        --issue-id "$ISSUE_NUMBER" ${COMMENT_NOTE:+--note "$COMMENT_NOTE"} "${logs_flag[@]}" "$flag" || status=1
+        --issue-number "$ISSUE_NUMBER" ${COMMENT_NOTE:+--note "$COMMENT_NOTE"} "${logs_flag[@]}" "$flag" || status=1
 
     return "$status"
 }
