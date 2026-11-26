@@ -218,7 +218,7 @@ jobs:
             n=$(cut -d- -f2 <<< "${dirs_previous_run_attempts[0]}")
           else
             last_run_n=$(printf '%s\n' run-* | cut -d- -f2 | sort -n | tail -n1)
-            n=$(( ${last:-0} + 1 ))
+            n=$(( ${last_run_n:-0} + 1 ))
           fi
           run_dir="$PWD/run-$n-$2"
           [ "$3" -gt 1 ] && run_dir+="-$3"
