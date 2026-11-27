@@ -11,7 +11,7 @@ if __name__ == "__main__":
     parser.add_argument("--workspace", type=str, required=True, help="The workspace folder")
     parser.add_argument("--destination", type=str, required=True, help="The destination folder to store the zip file")
     parser.add_argument("--logfile", type=str, help="Path to the log file")
-    parser.add_argument("--hash-file", type=str, required=True, help="Hash file")
+    parser.add_argument("--run-id", type=str, required=True, help="The ID of the Zonda pipeline")
 
     args = parser.parse_args()
 
@@ -19,21 +19,18 @@ if __name__ == "__main__":
     with open(config_path, "r") as file:
         config = json.load(file)
 
-    with open(args.hash_file, "r") as file:
-        hash = file.read().strip()
-
     request_name = config["zonda"]["request_name"]
 
-    hashed_destination_dir = os.path.join(args.destination, hash)
-    os.makedirs(hashed_destination_dir, exist_ok=True)
+    destination_dir = os.path.join(args.destination, args.run_id)
+    os.makedirs(destination_dir, exist_ok=True)
 
     zip_filepath = os.path.join(args.workspace, f"zonda_output_{request_name}.zip")
     try:
-        shutil.move(zip_filepath, hashed_destination_dir)
+        shutil.move(zip_filepath, destination_dir)
     except FileNotFoundError:
         print(f"Warning: zip file not found at \"{zip_filepath}\". Skipping move.")
 
     try:
-        shutil.copy(args.logfile, hashed_destination_dir)
+        shutil.copy(args.logfile, destination_dir)
     except FileNotFoundError:
         print(f"Warning: log-file not found at \"{args.logfile}\". Skipping copy.")

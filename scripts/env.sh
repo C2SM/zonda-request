@@ -5,7 +5,6 @@ export EXTPAR_INPUT_DATA=/net/co2/c2sm-data/extpar-input-data/
 export N_THREADS=24
 export NETCDF_FORMAT=NETCDF4
 export CONFIG_FILENAME=config.json
-export HASH_FILENAME=hash.txt
 export LOG_FILENAME=zonda_request.log
 
 # Absolute path: non-interactive SSH sessions do not source ~/.bashrc, so

@@ -6,10 +6,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
 process_request() {
-    # The hash is created before the config deliberately: the reporting path
-    # always reads hash.txt, so it must exist even when config creation fails.
     "$UV" sync --frozen &&
-    "$UV" run --frozen python scripts/hash.py --run-id "$RUN_ID" --hash-file "$HASH_FILENAME" &&
     "$UV" run --frozen python scripts/create_config_file.py --config "$CONFIG_FILENAME" --issue-number "$ISSUE_NUMBER" &&
     PYTHONPATH=src OMP_NUM_THREADS="$N_THREADS" NETCDF_OUTPUT_FILETYPE="$NETCDF_FORMAT" \
         "$UV" run --frozen python src/processing/process_request.py --config "$CONFIG_FILENAME" \
@@ -46,7 +43,7 @@ archive_and_report() {
     local logs_flag=()
 
     if ! "$UV" run --frozen python scripts/archive_output.py --config "$CONFIG_FILENAME" --workspace "$workspace_dir" \
-        --destination "$PUBLIC_OUTPUT_DATA_PATH" --logfile "$LOG_FILENAME" --hash-file "$HASH_FILENAME"; then
+        --destination "$PUBLIC_OUTPUT_DATA_PATH" --logfile "$LOG_FILENAME" --run-id "$ZONDA_RUN_ID"; then
         status=1
         logs_flag=('--no-logs')
 
@@ -57,7 +54,7 @@ archive_and_report() {
         fi
     fi
 
-    "$UV" run --frozen python scripts/report.py --config "$CONFIG_FILENAME" --hash-file "$HASH_FILENAME" \
+    "$UV" run --frozen python scripts/report.py --config "$CONFIG_FILENAME" --run-id "$ZONDA_RUN_ID" \
         --issue-number "$ISSUE_NUMBER" ${COMMENT_NOTE:+--note "$COMMENT_NOTE"} "${logs_flag[@]}" "$flag" || status=1
 
     return "$status"

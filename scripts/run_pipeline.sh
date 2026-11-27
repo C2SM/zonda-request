@@ -12,7 +12,7 @@ set -uo pipefail
 #
 # Required environment variables:
 #   ISSUE_NUMBER             number of the GitHub issue the request was submitted in
-#   RUN_ID                   unique-ish value hashed into the download path
+#   ZONDA_RUN_ID             unique identifier for a single pipeline (i.e., <n>-<issue_number>-<github_run_id>-<attempt>)
 #   PUBLIC_OUTPUT_DATA_PATH  public directory where the output data is moved (not required with --skip-archive-and-report)
 #
 # Optional environment variables:

@@ -212,7 +212,7 @@ jobs:
 
       # The run directory holds the workspace and the pipeline log. The EXIT
       # trap of run_pipeline.sh removes only the workspace, so the log survives.
-      # It is named run-<N>-<run_id>, where N counts the runs of the issue. A
+      # It is named run-<N>-<github_run_id>, where N counts the runs of the issue. A
       # re-run from the Actions UI keeps N and appends -<run_attempt>, a debug
       # run appends -debug.
       - name: Create remote workspace
@@ -238,6 +238,7 @@ jobs:
           REMOTE
           )
           echo "::notice title=Run directory::Run directory: $run_dir"
+          echo "n=$(basename "$run_dir" | cut -d- -f2)" >> "$GITHUB_OUTPUT"
           echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
 
       - name: Upload repository to iacdipl-7
@@ -251,7 +252,7 @@ jobs:
         run: |
           ssh iacdipl7 bash -s << REMOTE
           export ISSUE_NUMBER='${{ steps.determine_issue_number.outputs.issue_number }}'
-          export RUN_ID='${{ github.run_id }}-${{ github.run_attempt }}'
+          export ZONDA_RUN_ID='${{ steps.determine_issue_number.outputs.issue_number }}-${{ steps.create_remote_workspace.outputs.n }}-${{ github.run_id }}-${{ github.run_attempt }}'
           export PUBLIC_OUTPUT_DATA_PATH='${{ vars.PUBLIC_OUTPUT_DATA_PATH }}'
           $(printf 'export COMMENT_NOTE=%q' "$DISPATCH_NOTE")
           cd '${{ steps.create_remote_workspace.outputs.run_dir }}/workspace'
