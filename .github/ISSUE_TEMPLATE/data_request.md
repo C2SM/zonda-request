@@ -21,7 +21,7 @@ PASTE_YOUR_REQUEST_HERE
 
 Zonda Request will now process your data based on your request. Once the processing is successful, it will post a link in the issue you have just created. The processed data will be available under that link for up to **7 days**.
 
-If you want to re-submit the data request, you can write a comment containing (only) the string "**rerun request**". Note that this new submission uses the JSON snippet in the current description, thus editing it will also change the behavior of your data request. Also note that resubmission only works if the issue is not closed and the request is not already running.
+If you want to re-submit the data request, you can write a comment containing (only) the string **rerun request**. Note that this new submission uses the JSON snippet in the current description, thus editing it will also change the behavior of your data request. Also note that resubmission only works if the issue is not closed and the request is not already running.
 
 If you encounter any problems, please ping a maintainer (e.g., `@stelliom` or `@mjaehn`) on the issue. Make sure you post all relevant information from the logfiles in the issue directly.
 
@@ -31,7 +31,7 @@ Labels reflect the current state of your request:
 
 ![Static Badge](https://img.shields.io/badge/submitted-yellow) - Your request is currently under processing. Please wait for further updates.
 
-![Static Badge](https://img.shields.io/badge/invalid-lightblue) - The JSON snippet in your request is invalid. Please close the current request and try again.
+![Static Badge](https://img.shields.io/badge/invalid-lightblue) - The JSON snippet in your request is invalid. Please edit the issue description to correct it, then comment **rerun request**.
 
 ![Static Badge](https://img.shields.io/badge/completed-green) - Your request has been successfully processed. You can download your data using the provided link.
 

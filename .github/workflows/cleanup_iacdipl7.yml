@@ -1,10 +1,19 @@
 name: Cleanup iacdipl-7
 
-# Dispatch-only stub. It exists on the default branch so that the full
-# workflow can be dispatched from a feature branch with --ref for testing.
-# It is replaced by the real workflow when jenkins-migration-epic is merged.
+# Daily housekeeping on iacdipl-7:
+# - deletes published request output older than 7 days
+# - deletes request and testsuite run directories under /ssd after 7 days.
+#   This also removes the workspaces of detached runs that died before their
+#   EXIT trap could run. Debug runs (*-debug) are kept and removed by hand.
+# - prunes stopped containers, dangling images and build cache in podman
+#
+# A manual run with dry_run only lists what would be deleted.
 
 on:
+  # Off the full hour, where scheduled runs are most often delayed or dropped.
+  schedule:
+    - cron: '30 0 * * *'
+      timezone: 'Europe/Zurich'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -15,8 +24,66 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: cleanup-iacdipl7
+
+env:
+  PUBLIC_OUTPUT_DATA_PATH: ${{ vars.PUBLIC_OUTPUT_DATA_PATH }}
+  REQUEST_RUNS_ROOT: ${{ vars.REQUEST_RUNS_ROOT }}
+  TESTSUITE_RUNS_ROOT: ${{ vars.TESTSUITE_RUNS_ROOT }}
+  DRY_RUN: ${{ inputs.dry_run == true }}
+
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - run: echo "Stub. Dispatch with --ref gha-cleanup."
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Configure SSH
+        uses: ./.github/actions/configure-ssh
+        with:
+          fog-ssh-key: ${{ secrets.FOG_SSH_KEY }}
+          iacdipl7-ssh-key: ${{ secrets.IACDIPL7_SSH_KEY }}
+
+      # The script is sent over stdin, so it does not need to be copied first.
+      - name: Delete old output from the HTTPS server
+        run: |
+          if [ "$DRY_RUN" = true ]; then
+            ssh iacdipl7 python3 - --path "$PUBLIC_OUTPUT_DATA_PATH" --threshold 7 --dry-run < scripts/cleanup_data_server.py
+          else
+            ssh iacdipl7 python3 - --path "$PUBLIC_OUTPUT_DATA_PATH" --threshold 7 < scripts/cleanup_data_server.py
+          fi
+
+      - name: Delete old run directories
+        run: |
+          ssh iacdipl7 bash -s -- "$REQUEST_RUNS_ROOT" "$TESTSUITE_RUNS_ROOT" "$DRY_RUN" << 'REMOTE'
+          request_runs_root=$1
+          testsuite_runs_root=$2
+          dry_run=$3
+
+          # Find and delete run directories older than 7 days
+          {
+            find "$request_runs_root" -mindepth 2 -maxdepth 2 -type d -mtime +7 ! -name '*-debug' \
+              -path "$request_runs_root/request-*/run-*"
+            find "$testsuite_runs_root" -mindepth 3 -maxdepth 3 -type d -mtime +7 \
+              -path "$testsuite_runs_root/*/testsuite-*/run-*"
+          } | while read -r run_dir; do
+            echo "$run_dir"
+            if [ "$dry_run" != true ]; then
+              rm -rf "$run_dir"
+            fi
+          done
+
+          if [ "$dry_run" != true ]; then
+            # Find and delete empty request and testsuite (and its parent, e.g. PR-123) directories
+            find "$request_runs_root" -mindepth 1 -maxdepth 1 -type d -name 'request-*' -empty -print -delete
+            find "$testsuite_runs_root" -mindepth 1 -maxdepth 2 -type d -empty -print -delete
+          fi
+          REMOTE
+
+      # Also covers what 'podman container prune' and 'podman image prune' remove.
+      - name: Prune podman
+        if: env.DRY_RUN != 'true'
+        run: ssh iacdipl7 podman system prune -f
