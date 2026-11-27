@@ -101,6 +101,7 @@ class ExtparManager:
                 else:
                     container_cmd = [
                         "podman", "run",
+                        "--init",  # Necessary to kill processes inside the container when stopping a Zonda request from the GitHub Actions UI
                         "-e", f"OMP_NUM_THREADS={num_threads}",
                         "-e", f"NETCDF_OUTPUT_FILETYPE={netcdf_filetype}",
                         "-v", f"{self.extpar_raw_data_path}:/data",
