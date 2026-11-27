@@ -12,7 +12,7 @@ set -uo pipefail
 #
 # Required environment variables:
 #   ISSUE_NUMBER             number of the GitHub issue the request was submitted in
-#   ZONDA_RUN_ID             unique identifier for a single pipeline (i.e., <n>-<issue_number>-<github_run_id>-<attempt>)
+#   ZONDA_RUN_ID             unique identifier for a single pipeline (i.e., <issue_number>-<n>-<github_run_id>-<attempt>; not required with --skip-archive-and-report)
 #   PUBLIC_OUTPUT_DATA_PATH  public directory where the output data is moved (not required with --skip-archive-and-report)
 #
 # Optional environment variables:
@@ -58,6 +58,7 @@ if [ "$status" -eq 0 ]; then
     finish '--success'
     exit $?
 elif [ "$status" -eq 124 ]; then
+    stop_containers
     finish '--aborted'
     exit 1
 else

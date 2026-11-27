@@ -67,12 +67,21 @@ finish() {
     archive_and_report "$1"
 }
 
+# A signal sent to the script does not always reach the containers (a podman run
+# client can die without stopping its container), so stop them by label.
+# Using the workspace directory as label, since it's unique and exists also for
+# manual runs.
+stop_containers() {
+    podman ps -q --filter "label=zonda.workspace=$workspace_dir" | xargs -r podman stop -t 10
+}
+
 # The pipeline is not running yet when the signal arrives during the slot wait.
 # shellcheck disable=SC2329 # invoked indirectly via the signal trap
 on_terminate() {
     if [ -n "$pipeline_pid" ]; then
         kill -TERM -"$pipeline_pid" 2>/dev/null
         wait "$pipeline_pid" 2>/dev/null
+        stop_containers
     fi
     finish '--aborted'
     exit 143

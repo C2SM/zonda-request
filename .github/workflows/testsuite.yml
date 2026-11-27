@@ -89,7 +89,6 @@ jobs:
           REMOTE
           )
           echo "::notice title=Run directory::Run directory: $run_dir"
-          echo "n=$(basename "$run_dir" | cut -d- -f2)" >> "$GITHUB_OUTPUT"
           echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
 
       - name: Upload repository to iacdipl-7
@@ -100,9 +99,8 @@ jobs:
         env:
           RUN_DIR: ${{ steps.create_remote_workspace.outputs.run_dir }}
           ISSUE_NUMBER: ${{ matrix.issue_number }}
-          ZONDA_RUN_ID: ${{ matrix.issue_number }}-${{ steps.create_remote_workspace.outputs.n }}-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
-          ssh -tt iacdipl7 "bash -o pipefail -c 'cd $RUN_DIR/workspace && ISSUE_NUMBER=$ISSUE_NUMBER ZONDA_RUN_ID=$ZONDA_RUN_ID bash scripts/run_pipeline.sh --skip-archive-and-report --keep-workspace 2>&1 | tee ../pipeline.log'"
+          ssh -tt iacdipl7 "bash -o pipefail -c 'cd $RUN_DIR/workspace && ISSUE_NUMBER=$ISSUE_NUMBER bash scripts/run_pipeline.sh --skip-archive-and-report --keep-workspace 2>&1 | tee ../pipeline.log'"
 
   # Single required check for the ruleset, independent of the matrix entries.
   gather-matrix-results:

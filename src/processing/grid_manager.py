@@ -269,7 +269,7 @@ class GridManager:
         else:
             container_command = [
                 "podman", "run",
-                "--init",  # Necessary to kill processes inside the container when stopping a Zonda request from the GitHub Actions UI
+                "--init", "--label", f"zonda.workspace={self.workspace_path}",  # Necessary to kill processes inside the container when stopping a Zonda request
                 "-t",
                 "-u", "0",
                 "-w", "/work",
