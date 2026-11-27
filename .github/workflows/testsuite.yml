@@ -52,7 +52,7 @@ jobs:
     timeout-minutes: 350
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configure SSH
         uses: ./.github/actions/configure-ssh

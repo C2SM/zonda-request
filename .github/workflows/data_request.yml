@@ -96,7 +96,7 @@ jobs:
 
       - name: Report status on invalid JSON
         if: failure() && steps.read_json_block.outputs.json_error
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           JSON_ERROR: ${{ steps.read_json_block.outputs.json_error }}
           DISPATCH_NOTE: ${{ steps.determine_issue_number.outputs.dispatch_note }}
@@ -195,7 +195,7 @@ jobs:
       # The SSH action comes from this workflow's commit, not from backend_tag, so
       # requests pinned to older tags still get the current host keys.
       - name: Checkout SSH action
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: .github/actions
 
@@ -206,7 +206,7 @@ jobs:
           iacdipl7-ssh-key: ${{ secrets.IACDIPL7_SSH_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ steps.extract_backend_tag.outputs.backend_tag }}
 
